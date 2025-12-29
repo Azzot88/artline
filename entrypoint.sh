@@ -30,20 +30,35 @@ done
 
 echo "Postgres is up."
 
-# Check if alembic folder exists
-if [ ! -d "/app/app/alembic" ] && [ ! -d "/app/alembic" ]; then
-    echo "ERROR: Alembic directory not found in /app/app/alembic or /app/alembic"
-    # Failsafe: if we are in dev/local and it's missing, we might want to warn but not crash?
-    # But user requirements said 'soft diagnostic' or 'fail with clear message'
-    # We will fail if we can't find it because migration attempt will fail anyway.
-    # Actually, let's list the directory to be helpful in logs
-    ls -R /app
-    exit 1
+# Determine if we should run migrations
+# We only run migrations if the command is starting the web server (gunicorn)
+# This prevents workers from clashing or failing if they start before DB is ready
+COMMAND="$@"
+if [[ "$COMMAND" == *"gunicorn"* ]]; then
+    echo "This is the WEB container. Checking for Alembic..."
+    
+    # Check for Alembic directory at root level /app/alembic
+    if [ -d "/app/alembic" ]; then
+        echo "Found Alembic directory. Running migrations..."
+        alembic upgrade head
+    else
+        echo "WARNING: /app/alembic not found. Trying /app/app/alembic (legacy path)..."
+        if [ -d "/app/app/alembic" ]; then
+             echo "Found legacy Alembic path. Running migrations..."
+             # We might need to adjust alembic.ini if it expects relative path
+             # But assuming alembic command handles it via script_location
+             alembic upgrade head
+        else
+             echo "ERROR: Alembic directory not found in /app/alembic or /app/app/alembic"
+             echo "Listing /app content:"
+             ls -F /app
+             # We fail hard on web container if migrations can't run
+             exit 1
+        fi
+    fi
+else
+    echo "This is likely a WORKER container (cmd: $COMMAND). Skipping migrations."
 fi
-
-echo "Running migrations..."
-# Assuming 'alembic.ini' is at /app/alembic.ini, we run from /app
-alembic upgrade head
 
 echo "Starting command: $@"
 exec "$@"
