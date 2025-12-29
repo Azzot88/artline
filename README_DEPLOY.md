@@ -24,11 +24,13 @@ Run the stack locally with hot-reloading enabled.
    ```
 
 ### Usage
-- **Web**: [http://localhost:8000](http://localhost:8000)
-- **Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **Logs**: `docker compose logs -f`
+### Usage
+- **Web**: [http://localhost](http://localhost) (via Nginx proxy)
+- **Docs**: [http://localhost/docs](http://localhost/docs)
+- **Logs**: `docker-compose logs -f`
 
 Databases (Postgres & Redis) ports are exposed locally on `5432` and `6379`.
+The application is accessed via Nginx on port `80`.
 
 ---
 
