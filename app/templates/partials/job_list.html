@@ -1,0 +1,55 @@
+{% for job in jobs %}
+<div class="job-card fade-in" style="cursor: pointer;" onclick="openJobModal(this)" data-id="{{ job.id }}"
+    data-kind="{{ job.kind }}" data-url="{{ job.result_url|default('', true) }}"
+    data-prompt="{{ job.prompt | forceescape }}" data-status="{{ job.status }}" data-cost="{{ job.cost_credits }}"
+    data-date="{{ job.created_at.strftime('%Y-%m-%d %H:%M') }}">
+    <div class="job-img-wrapper">
+        <!-- Status Badge -->
+        <!-- Media Preview -->
+        {% if job.status == 'completed' or job.status == 'succeeded' and job.result_url %}
+        {% if job.kind == 'video' %}
+        <video src="{{ job.result_url }}" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video>
+        {% else %}
+        <img src="{{ job.result_url }}" alt="Generation result"
+            onerror="this.onerror=null;this.src='/static/placeholder.png';">
+        {% endif %}
+        {% else %}
+        <!-- Placeholder for Processing/Failed/Missing -->
+        <img src="/static/placeholder.png" alt="Processing or Placeholder" style="opacity: 0.8;">
+        {% endif %}
+
+        {% if job.kind == 'video' %}
+        <i class="bi bi-play-fill video-indicator"></i>
+        {% endif %}
+
+        <!-- Hover Actions -->
+        <!-- Hover Actions -->
+        <div class="job-actions-overlay">
+            {% if job.status == 'completed' %}
+            <!-- Direct Download (Stop propagation) -->
+            <a href="{{ job.result_url }}" download target="_blank"
+                class="btn btn-light rounded-circle shadow-sm p-2 action-btn" title="Download"
+                onclick="event.stopPropagation()">
+                <i class="bi bi-download"></i>
+            </a>
+            {% endif %}
+
+            <!-- Delete Button (Always available) -->
+            <button class="btn btn-danger rounded-circle shadow-sm p-2 action-btn"
+                hx-delete="/dashboard/jobs/{{ job.id }}" hx-confirm="Delete this art?" hx-target="closest .job-card"
+                hx-swap="outerHTML" title="Delete" onclick="event.stopPropagation()">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    </div>
+    <div class="job-card-body">
+        <small class="text-muted d-block text-truncate">{{ job.prompt }}</small>
+        <small class="text-secondary" style="font-size: 0.7em;">{{ job.created_at.strftime("%Y-%m-%d %H:%M") }}</small>
+    </div>
+</div>
+{% else %}
+<div class="col-12 text-center text-muted py-5">
+    <i class="bi bi-inbox fs-1 opacity-25"></i>
+    <p class="mt-3">No jobs found. Start creating!</p>
+</div>
+{% endfor %}

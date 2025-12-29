@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Sidebar / Top up -->
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <h5 class="card-title">{{ t.balance_title|default('Balance') }}</h5>
+                    {% include "partials/balance_badge.html" %}
+                    <small class="text-muted d-block mt-1 mb-3" style="font-size: 0.75rem;">{{
+                        t.balance_desc|default('Credits (CR) used for generation') }}</small>
+                    <hr>
+                    <div class="d-grid gap-2">
+                        <!-- Simplified Checkout Links -->
+                        <form action="/services/billing/checkout" method="post">
+                            <button disabled class="btn btn-outline-success btn-sm w-100 mb-2">{{
+                                t.buy_credits|default('Buy 100 Credits') }}</button>
+                        </form>
+                        <small class="text-muted">{{ t.payment_integ|default('(Payment integration required)')
+                            }}</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card pricing-calculator">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>{{ t.create_job|default('Create Job') }}</span>
+                    <!-- Cost moved to button only -->
+                </div>
+                <div class="card-body">
+                    <form hx-post="/dashboard/jobs/new" hx-swap="none" id="createJobForm">
+
+                        <!-- Format Selection -->
+                        <label class="form-label small text-muted text-uppercase fw-bold mb-2">{{
+                            t.format_label|default('Format') }}</label>
+                        <div class="btn-group w-100 mb-3" role="group">
+                            <input type="radio" class="btn-check" name="kind" id="kind-image" value="image" checked
+                                onchange="updateUI()">
+                            <label class="btn btn-outline-secondary btn-sm" for="kind-image"><i class="bi bi-image"></i>
+                                {{ t.fmt_image|default('Image') }}</label>
+
+                            <input type="radio" class="btn-check" name="kind" id="kind-video" value="video"
+                                onchange="updateUI()">
+                            <label class="btn btn-outline-secondary btn-sm" for="kind-video"><i
+                                    class="bi bi-camera-reels"></i> {{ t.fmt_video|default('Video') }}</label>
+                        </div>
+
+                        <!-- Model Selection sorted by Price (Desc) -->
+                        <label class="form-label small text-muted text-uppercase fw-bold mb-2">{{
+                            t.model_label|default('AI Model') }}</label>
+                        <select name="model" id="modelSelect" class="form-select mb-3" onchange="updateUI()">
+                            <!-- Tier 1: Premium -->
+                            <option value="runway" data-name="Runway Gen-2">Runway</option>
+                            <!-- Tier 2: Standard -->
+                            <option value="replicate" data-name="Flux (Replicate)" selected>Flux</option>
+                            <option value="flux-pro" data-name="Flux 1.1 Pro (SOTA)">Flux 1.1 Pro</option>
+                            <option value="openai" data-name="DALL-E 3">DALL-E 3</option>
+                            <option value="stability" data-name="Stable Diffusion XL">SDXL</option>
+                            <!-- Tier 3: Budget -->
+                            <option value="luma" data-name="Luma Dream Machine">Luma</option>
+                        </select>
+
+                        <!-- Prompt -->
+                        <div class="mb-3">
+                            <label class="form-label small text-muted text-uppercase fw-bold">{{
+                                t.prompt_label|default('Prompt') }}</label>
+                            <textarea name="prompt" class="form-control" rows="4" required
+                                placeholder="{{ t.prompt_placeholder|default('A futuristic city...') }}"></textarea>
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary" id="generateBtn">
+                                {{ t.generate_btn|default('Generate') }} <span class="badge bg-light text-dark ms-1"
+                                    id="btn-cost">10 CR</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <script>
+                function updateUI() {
+                    const kind = document.querySelector('input[name="kind"]:checked').value;
+                    const modelSelect = document.getElementById('modelSelect');
+                    const model = modelSelect.value;
+
+                    let base = (kind === 'image') ? 10 : 50;
+
+                    // Update Options Text
+                    for (let opt of modelSelect.options) {
+                        let multiplier = 1.0;
+                        if (opt.value === 'runway') multiplier = 1.3;
+                        if (opt.value === 'luma') multiplier = 0.8;
+                        if (opt.value === 'flux-pro') multiplier = 5.5;
+
+                        let optCost = Math.ceil(base * multiplier);
+                        if (opt.value === 'flux-pro') optCost = 55; // Fixed price for Pro
+
+                        // Maintain data-name but append cost
+                        opt.textContent = `${opt.dataset.name} (${optCost} CR)`;
+                    }
+
+                    // Update Total Cost Button
+                    let multiplier = 1.0;
+                    if (model === 'runway') multiplier = 1.3;
+                    if (model === 'luma') multiplier = 0.8;
+                    // if (model === 'flux-pro') multiplier = 5.5; // Removed multiplier logic
+
+                    let totalCost = Math.ceil(base * multiplier);
+                    if (model === 'flux-pro') totalCost = 55;
+
+                    document.getElementById('btn-cost').textContent = totalCost + ' CR';
+                }
+                // Init
+                document.addEventListener('DOMContentLoaded', updateUI);
+            </script>
+        </div>
+
+        <!-- Job List -->
+        <div class="col-md-9">
+            <h3 class="mb-4">{{ t.gallery_title|default('Your Gallery') }}</h3>
+
+            {% if message %}
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endif %}
+
+            <!-- Gallery Grid Container -->
+            <div class="job-grid" id="job-list" hx-get="/dashboard/jobs/partial"
+                hx-trigger="load, jobsChanged from:body">
+                {% include "partials/job_list.html" %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Job Details Modal -->
+<div class="modal fade" id="jobDetailsModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(10px);">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content dark-theme-modal"
+            style="background: rgba(10, 10, 10, 0.98); border: 1px solid rgba(255,255,255,0.1);">
+            <div class="modal-body p-0 position-relative">
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 z-3"
+                    data-bs-dismiss="modal"></button>
+
+                <!-- Media Container -->
+                <div id="modalMediaContainer" class="d-flex align-items-center justify-content-center bg-black"
+                    style="width: 100%; min-height: 250px; max-height: 60vh; overflow: auto; padding: 10px;">
+                </div>
+
+                <!-- Footer / Details -->
+                <div class="p-3 border-top border-secondary bg-dark">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h6 class="text-white mb-2">{{ t.modal_details|default('Job Details') }}</h6>
+                            <div class="d-flex flex-wrap gap-2 mb-2 text-muted small">
+                                <div><strong class="text-white" id="lbl_id">{{ t.modal_id }}:</strong> <span
+                                        id="modalJobId" class="text-secondary font-monospace">...</span></div>
+                                <div class="vr bg-secondary"></div>
+                                <div><strong class="text-white" id="lbl_date">{{ t.modal_date }}:</strong> <span
+                                        id="modalDate">...</span></div>
+                                <div class="vr bg-secondary"></div>
+                                <div><strong class="text-white" id="lbl_status">{{ t.modal_status }}:</strong> <span
+                                        id="modalStatus" class="badge bg-secondary">...</span></div>
+                            </div>
+
+                            <h6 class="text-white mb-1 mt-3">{{ t.modal_prompt|default('Prompt') }}</h6>
+                            <p class="text-light small border-start border-2 border-primary ps-2" id="modalPrompt"
+                                style="font-size: 0.85rem; line-height: 1.4; white-space: pre-wrap; max-height: 80px; overflow-y: auto;">
+                                ...</p>
+
+                            <a href="#" id="modalDownloadBtn" download target="_blank"
+                                class="btn btn-primary btn-sm w-100 mt-2">
+                                <i class="bi bi-download"></i> {{ t.modal_download|default('Download Original') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const jobModalEl = document.getElementById('jobDetailsModal');
+        if (!jobModalEl) return;
+
+        const jobModal = new bootstrap.Modal(jobModalEl);
+
+        // Expose function globally
+        window.openJobModal = function (btn) {
+            console.log("Opening modal for:", btn);
+            if (!btn) return;
+
+            // Elements
+            const container = document.getElementById('modalMediaContainer');
+            const promptEl = document.getElementById('modalPrompt');
+            const idEl = document.getElementById('modalJobId');
+            const dateEl = document.getElementById('modalDate');
+            const statusEl = document.getElementById('modalStatus');
+            const dlBtn = document.getElementById('modalDownloadBtn');
+
+            // Populate Data
+            const d = btn.dataset;
+
+            idEl.textContent = d.id || 'N/A';
+            dateEl.textContent = d.date || '-';
+            promptEl.textContent = d.prompt || '(No prompt)';
+
+            // Translate status if simple? 
+            // We have t.status_running etc. but we can't access them easily for dynamic 'd.status'.
+            // For MVP, we'll keep Status as raw EN from DB or capitalize.
+            statusEl.textContent = (d.status || 'unknown').toUpperCase();
+
+            dlBtn.href = d.url || '#';
+
+            // Render Media
+            container.innerHTML = '';
+
+            if (d.kind === 'video') {
+                const vid = document.createElement('video');
+                vid.src = d.url;
+                vid.controls = true;
+                vid.autoplay = true;
+                vid.loop = true;
+                vid.className = "detail-view-media";
+                container.appendChild(vid);
+            } else {
+                const img = document.createElement('img');
+                img.src = d.url;
+                img.className = "detail-view-media";
+                img.onerror = function () { this.src = '/static/placeholder.png'; };
+                container.appendChild(img);
+            }
+
+            jobModal.show();
+        };
+
+        // Stop video on close
+        jobModalEl.addEventListener('hidden.bs.modal', event => {
+            document.getElementById('modalMediaContainer').innerHTML = '';
+        });
+    });
+</script>
+{% endblock %}

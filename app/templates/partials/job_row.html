@@ -1,0 +1,26 @@
+<tr>
+    <td><small>{{ job.id[:8] }}...</small></td>
+    <td><span class="badge bg-secondary">{{ job.kind }}</span></td>
+    <td class="text-truncate" style="max-width: 200px;">{{ job.prompt }}</td>
+    <td>
+        {% if job.status == 'queued' %}
+        <span class="badge bg-warning text-dark">Queued</span>
+        {% elif job.status == 'running' %}
+        <span class="badge bg-info text-dark">Running ({{ job.progress }}%)</span>
+        {% elif job.status == 'succeeded' %}
+        <span class="badge bg-success">Success</span>
+        {% else %}
+        <span class="badge bg-danger">Failed</span>
+        {% endif %}
+    </td>
+    <td>
+        {% if job.status == 'succeeded' and job.result_url %}
+        <a href="{{ job.result_url }}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
+        {% elif job.status == 'failed' %}
+        <span class="text-danger small">{{ job.error_message }}</span>
+        {% else %}
+        <span class="text-muted small">-</span>
+        {% endif %}
+    </td>
+    <td><small class="text-muted">{{ job.created_at.strftime('%Y-%m-%d %H:%M') }}</small></td>
+</tr>

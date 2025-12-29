@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="px-4 py-5 my-5 text-center">
+    <h1 class="display-5 fw-bold text-white">{{ t.land_hero_title|default('Generate Art with AI') }}</h1>
+    <div class="col-lg-6 mx-auto">
+        <p class="lead mb-4">{{ t.land_hero_desc|default('Create stunning images...') }}</p>
+        <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+            {% if user %}
+            <a href="/dashboard" class="btn btn-primary btn-lg px-4 gap-3">{{ t.land_cta_dash|default('Go to Dashboard')
+                }}</a>
+            {% else %}
+            <a href="/signup" class="btn btn-primary btn-lg px-4 gap-3">{{ t.land_cta_start|default('Get Started')
+                }}</a>
+            <a href="/login" class="btn btn-outline-secondary btn-lg px-4">{{ t.land_cta_login|default('Log In') }}</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="container px-4 py-5" id="pricing">
+    <h2 class="pb-2 border-bottom text-center">{{ t.land_pricing_title|default('Pricing') }}</h2>
+    <div class="row row-cols-1 row-cols-md-3 mb-3 text-center mt-4">
+        <div class="col">
+            <div class="card mb-4 rounded-3 shadow-sm">
+                <div class="card-header py-3">
+                    <h4 class="my-0 fw-normal">{{ t.price_starter|default('Starter') }}</h4>
+                </div>
+                <div class="card-body">
+                    <h1 class="card-title pricing-card-title">$10</h1>
+                    <ul class="list-unstyled mt-3 mb-4">
+                        <li>100 {{ t.price_credits|default('Credits') }}</li>
+                        <li>10 {{ t.price_img|default('Images') }}</li>
+                        <li>{{ t.price_vid|default('Videos') }} (1)</li>
+                        <li>{{ t.price_std_speed|default('Standard Speed') }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card mb-4 rounded-3 shadow-lg"
+                style="border-color: var(--primary-glow); box-shadow: 0 0 20px rgba(123, 44, 191, 0.2);">
+                <div class="card-header py-3"
+                    style="background: rgba(123, 44, 191, 0.2); border-bottom-color: var(--primary-glow)">
+                    <h4 class="my-0 fw-normal text-white">{{ t.price_pro|default('Pro') }}</h4>
+                </div>
+                <div class="card-body">
+                    <h1 class="card-title pricing-card-title">$45</h1>
+                    <ul class="list-unstyled mt-3 mb-4">
+                        <li>500 {{ t.price_credits|default('Credits') }}</li>
+                        <li>50 {{ t.price_img|default('Images') }}</li>
+                        <li>8 {{ t.price_vid|default('Videos') }}</li>
+                        <li>{{ t.price_prio_supp|default('Priority Support') }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card mb-4 rounded-3 shadow-sm">
+                <div class="card-header py-3">
+                    <h4 class="my-0 fw-normal">{{ t.price_ent|default('Enterprise') }}</h4>
+                </div>
+                <div class="card-body">
+                    <h1 class="card-title pricing-card-title">$80</h1>
+                    <ul class="list-unstyled mt-3 mb-4">
+                        <li>1000 {{ t.price_credits|default('Credits') }}</li>
+                        <li>{{ t.price_bulk|default('Bulk Generation') }}</li>
+                        <li>{{ t.price_api|default('API Access') }}</li>
+                        <li>{{ t.price_247|default('24/7 Support') }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
