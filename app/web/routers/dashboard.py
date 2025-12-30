@@ -1,19 +1,19 @@
 from fastapi import APIRouter, Depends, Form, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.core.db import get_db
 from app.core.deps import get_current_user
-from app.models import User, Job
+from app.models import User, Job, AIModel
 from app.domain.jobs.service import create_job, get_user_jobs
 from app.domain.billing.service import get_user_balance
 from app.domain.jobs.runner import process_job
+from app.core.i18n import get_t, get_current_lang
+import json
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
-
-from app.core.i18n import get_t, get_current_lang
 
 @router.get("/", response_class=HTMLResponse)
 async def dashboard(
@@ -24,6 +24,10 @@ async def dashboard(
 ):
     balance = await get_user_balance(db, user.id)
     jobs = await get_user_jobs(db, user.id)
+    
+    # Fetch Active AI Models
+    models_result = await db.execute(select(AIModel).where(AIModel.is_active == True))
+    ai_models = models_result.scalars().all()
     
     msg = None
     if checkout == "success":
@@ -39,6 +43,7 @@ async def dashboard(
             "balance": balance, 
             "jobs": jobs,
             "message": msg,
+            "ai_models": ai_models,
             "t": get_t(request),
             "lang": get_current_lang(request)
         }
@@ -47,25 +52,41 @@ async def dashboard(
 @router.post("/jobs/new")
 async def new_job(
     request: Request,
-    kind: str = Form(...),
-    prompt: str = Form(...),
-    model: str = Form(...),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    if not prompt.strip():
-        # Using HTMX retargeting or just flashing
-        # For simplicity, returning a toast or flash message via OOB swap often used
-        # But we'll mostly rely on standard form handling or quick redirect
-        # Let's do a redirect with flash pattern or re-render 
-        pass 
+    form_data = await request.form()
+    
+    # Extract known fields
+    kind = form_data.get("kind", "image")
+    prompt = form_data.get("prompt", "")
+    model_id = form_data.get("model", "")
+    
+    # Extract dynamic parameters
+    # We filter out known keys
+    reserved = {"kind", "prompt", "model"}
+    params = {}
+    for key, value in form_data.items():
+        if key not in reserved and value:
+             params[key] = value
 
-    job, error = await create_job(db, user, kind, prompt, model)
+    if not prompt.strip():
+         # Error handling for empty prompt
+         pass
+
+    # Create Job
+    # We treat model_id as the 'model' arg.
+    # We pass 'params' potentially? 
+    # Since create_job signature is fixed, we might need to serialize params into prompt here 
+    # OR update create_job. Let's start with serializing into prompt to avoid changing service signature too much
+    # format: <json_params> prompt
+    # Actually service.py handles '[model] prompt'. 
+    # Let's keep logic in service.py? 
+    # Better: Update create_job to accept params dict.
+    
+    job, error = await create_job(db, user, kind, prompt, model_id, params)
     
     if error:
-        # We can return an error partial or use HX-Trigger to show toast
-        # For MVP, let's just re-render dashboard with error? 
-        # Or better, use hx-target="#flash-container"
         return templates.TemplateResponse(
             request=request,
             name="partials/flash.html",
@@ -75,13 +96,6 @@ async def new_job(
     # Queue task
     process_job.delay(job.id)
     
-    # Return success flash + trigger list update
-    # We can return multiple partials via OOB
-    # or just return the list and a trigger.
-    # Pattern: Return updated Job List row(s) or the whole list, 
-    # and use HX-Trigger to update balance.
-    
-    # Simplest: Return empty string/flash and trigger "jobsChanged"
     response = templates.TemplateResponse(
         request=request,
         name="partials/flash.html",
@@ -127,7 +141,6 @@ async def delete_job(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    # Find job
     result = await db.execute(select(Job).where(Job.id == job_id, Job.user_id == user.id))
     job = result.scalar_one_or_none()
     
@@ -135,5 +148,4 @@ async def delete_job(
         await db.delete(job)
         await db.commit()
     
-    # Return updated list or empty string
     return status.HTTP_200_OK

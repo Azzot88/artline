@@ -51,16 +51,21 @@
                         <label class="form-label small text-muted text-uppercase fw-bold mb-2">{{
                             t.model_label|default('AI Model') }}</label>
                         <select name="model" id="modelSelect" class="form-select mb-3" onchange="updateUI()">
-                            <!-- Tier 1: Premium -->
-                            <option value="runway" data-name="Runway Gen-2">Runway</option>
-                            <!-- Tier 2: Standard -->
-                            <option value="replicate" data-name="Flux (Replicate)" selected>Flux</option>
-                            <option value="flux-pro" data-name="Flux 1.1 Pro (SOTA)">Flux 1.1 Pro</option>
-                            <option value="openai" data-name="DALL-E 3">DALL-E 3</option>
-                            <option value="stability" data-name="Stable Diffusion XL">SDXL</option>
-                            <!-- Tier 3: Budget -->
-                            <option value="luma" data-name="Luma Dream Machine">Luma</option>
+                            {% for m in ai_models %}
+                            <option value="{{ m.id }}" data-name="{{ m.display_name }}"
+                                data-config='{{ m.ui_config|tojson }}'>
+                                {{ m.display_name }}
+                            </option>
+                            {% endfor %}
+
+                            <!-- Fallback for legacy if DB empty -->
+                            {% if not ai_models %}
+                            <option value="flux" data-name="Flux (Default)">Flux</option>
+                            {% endif %}
                         </select>
+
+                        <!-- Dynamic Parameters Container -->
+                        <div id="dynamicInputs" class="mb-3"></div>
 
                         <!-- Prompt -->
                         <div class="mb-3">
@@ -83,36 +88,62 @@
 
             <script>
                 function updateUI() {
-                    const kind = document.querySelector('input[name="kind"]:checked').value;
                     const modelSelect = document.getElementById('modelSelect');
-                    const model = modelSelect.value;
+                    const selectedOpt = modelSelect.options[modelSelect.selectedIndex];
+                    const dynamicDiv = document.getElementById('dynamicInputs');
 
-                    let base = (kind === 'image') ? 10 : 50;
+                    // Simple cost logic checking kind
+                    let totalCost = 10;
+                    const kindEls = document.querySelectorAll('input[name="kind"]');
+                    let kind = 'image';
+                    kindEls.forEach(el => { if (el.checked) kind = el.value; });
 
-                    // Update Options Text
-                    for (let opt of modelSelect.options) {
-                        let multiplier = 1.0;
-                        if (opt.value === 'runway') multiplier = 1.3;
-                        if (opt.value === 'luma') multiplier = 0.8;
-                        if (opt.value === 'flux-pro') multiplier = 5.5;
+                    if (kind === 'video') totalCost = 50;
 
-                        let optCost = Math.ceil(base * multiplier);
-                        if (opt.value === 'flux-pro') optCost = 55; // Fixed price for Pro
-
-                        // Maintain data-name but append cost
-                        opt.textContent = `${opt.dataset.name} (${optCost} CR)`;
-                    }
-
-                    // Update Total Cost Button
-                    let multiplier = 1.0;
-                    if (model === 'runway') multiplier = 1.3;
-                    if (model === 'luma') multiplier = 0.8;
-                    // if (model === 'flux-pro') multiplier = 5.5; // Removed multiplier logic
-
-                    let totalCost = Math.ceil(base * multiplier);
-                    if (model === 'flux-pro') totalCost = 55;
+                    // Legacy overrides
+                    const val = selectedOpt.value;
+                    if (val === 'runway') totalCost = Math.ceil(totalCost * 1.3);
+                    if (val === 'flux-pro') totalCost = 55;
 
                     document.getElementById('btn-cost').textContent = totalCost + ' CR';
+
+                    // Render Dynamic Inputs
+                    if (dynamicDiv) {
+                        dynamicDiv.innerHTML = '';
+
+                        if (selectedOpt.dataset.config) {
+                            try {
+                                const config = JSON.parse(selectedOpt.dataset.config);
+                                // Sort? Or rely on iteration order (py 3.7+ preserves insertion order usually)
+                                const keys = Object.keys(config);
+
+                                keys.forEach(key => {
+                                    const conf = config[key];
+                                    if (conf.visible) {
+                                        // Skip prompt/kind as they are main fields
+                                        if (key === 'prompt' || key === 'kind') return;
+
+                                        const wrapper = document.createElement('div');
+                                        wrapper.className = 'mb-2';
+
+                                        const label = document.createElement('label');
+                                        label.className = 'form-label small text-muted fw-bold mb-1';
+                                        label.textContent = conf.label || key;
+
+                                        const input = document.createElement('input');
+                                        input.type = 'text';
+                                        input.className = 'form-control form-control-sm';
+                                        input.name = key;
+                                        if (conf.default != null) input.value = conf.default;
+
+                                        wrapper.appendChild(label);
+                                        wrapper.appendChild(input);
+                                        dynamicDiv.appendChild(wrapper);
+                                    }
+                                });
+                            } catch (e) { console.error("Config parse error", e); }
+                        }
+                    }
                 }
                 // Init
                 document.addEventListener('DOMContentLoaded', updateUI);

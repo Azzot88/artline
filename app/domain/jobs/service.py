@@ -29,7 +29,17 @@ def calculate_cost(kind: str, model: str) -> int:
         # Standard (flux, stable-diffusion, dall-e-3)
         return base
 
-async def create_job(db: AsyncSession, user: User, kind: str, prompt: str, model: str = "flux") -> tuple[Job | None, str | None]:
+import json
+
+async def create_job(
+    db: AsyncSession, 
+    user: User, 
+    kind: str, 
+    prompt: str, 
+    model: str = "flux",
+    params: dict = None
+) -> tuple[Job | None, str | None]:
+    
     cost = calculate_cost(kind, model)
     
     # Check balance
@@ -50,23 +60,30 @@ async def create_job(db: AsyncSession, user: User, kind: str, prompt: str, model
     job = Job(
         user_id=user.id,
         kind=kind,
-        prompt=prompt,
         cost_credits=cost,
         status="queued",
         progress=0,
-        # We might want to store model in metadata if we had a field, 
-        # but for now we won't change schema, just logic.
-        # Ideally we SHOULD add 'model' column but user didn't ask for DB migration, just UI/Logic.
-        # We can store it in prompt or add column?
-        # The prompt says "Job display... additional info". 
-        # I'll append model to prompt string strictly for MVP visible storage? 
-        # Or Just trust the price checks out.
-        # Let's prepend it " [model: runway] prompt..."
-        # Actually user asked to display "ID, date, prompt" in details.
-        # Storing in prompt text is hacky but effective MVP.
     )
-    # Let's prepend model to prompt for visibility
-    job.prompt = f"[{model}] {prompt}"
+    
+    # Serialize structure: [model_id] <json> | prompt
+    # If params exist, dump them.
+    params_str = ""
+    if params:
+        try:
+            params_str = json.dumps(params or {})
+        except:
+             pass
+    
+    if params_str:
+        job.prompt = f"[{model}] {params_str} | {prompt}"
+    else:
+        job.prompt = f"[{model}] {prompt}"
+    
+    db.add(job)
+    await db.commit()
+    await db.refresh(job)
+    
+    return job, None
     
     db.add(job)
     await db.commit()

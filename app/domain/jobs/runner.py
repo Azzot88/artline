@@ -54,64 +54,94 @@ def process_job(self, job_id: str):
             session.commit()
             return "Key Error"
             
-        model_name = "default"
-        prompt_text = job.prompt
-        
-        # Extract model from prompt hack "[model] prompt"
-        if prompt_text.startswith("[") and "]" in prompt_text:
-            parts = prompt_text.split("]", 1)
-            model_name = parts[0][1:].strip()
-            prompt_text = parts[1].strip()
+    # ... (Session setup) ...
+        # 2. Extract Model & Params from Prompt
+        raw_prompt = job.prompt
+        model_identifier = "flux" 
+        params = {}
+        prompt_text = raw_prompt
 
-        # Decide Version vs Model Name
-        version_hash = None
-        replicate_model_name = None
+        # Parsing logic: [model] {json} | prompt
+        if raw_prompt.startswith("["):
+            try:
+                end_sq = raw_prompt.find("]")
+                if end_sq != -1:
+                    model_identifier = raw_prompt[1:end_sq].strip()
+                    rest = raw_prompt[end_sq+1:].strip()
+                    
+                    # Check for params
+                    if "|" in rest:
+                        import json
+                        parts = rest.split("|", 1)
+                        json_str = parts[0].strip()
+                        prompt_text = parts[1].strip()
+                        if json_str.startswith("{"):
+                             params = json.loads(json_str)
+                    else:
+                        prompt_text = rest
+            except Exception as e:
+                logger.warning(f"Failed to parse prompt format: {e}")
+                prompt_text = raw_prompt
         
-        if model_name == "flux-pro":
-             # Use Model Endpoint
-             replicate_model_name = "black-forest-labs/flux-1.1-pro"
-             # Flux 1.1 Pro often requires output_format params or strictly typed inputs
-             input_data = {
-                 "prompt": prompt_text,
-                 "prompt_upsampling": True # As per user request snippet
-             }
-        elif job.kind == "video":
-             # SVD
-             version_hash = "3f0457e4619daac51203dedb952c1103d8d21c327575399554483ae59441113b"
-             input_data = {
-                 "prompt": prompt_text, 
-                 # SVD usually needs image. If text provided, we really should use AnimateDiff
-                 # But sticking to SVD hash for now as defined previously. 
-                 # Actually SVD is img2video. AnimateDiff is text2video.
-                 # Let's switch to AnimateDiff hash for better UX on "text prompt".
-                 # "beecf59c..."
-             }
-             version_hash = "beecf59c4aee8d81bf04f0381033dfa10dc16e845b4ae00d281e2fa377e48a9f"
-        else:
-             # Default Image (Flux Schnell)
-             version_hash = "bf25d41f77d346618e11e037136f33d74914c62e5421a12e2f60228747f4d546"
-             input_data = {
-                "prompt": prompt_text,
-                "go_fast": True
-             }
+        # 3. Resolve Model
+        replicate_version = "bf25d41f77d346618e11e037136f33d74914c62e5421a12e2f60228747f4d546" # Default Flux
+        replicate_model_ref = None # "owner/name"
         
-        # 3. Submit
+        # Check if UUID (Dynamic Model)
+        from app.domain.providers.models import AIModel
+        import uuid
+        
+        ai_model = None
         try:
-            # Note: submit_replicate_job signature updated to (input_data, api_key, webhook_url, version, model)
+            # Try parsing as UUID
+            model_uuid = uuid.UUID(model_identifier)
+            # Fetch from DB
+            ai_model = session.execute(select(AIModel).where(AIModel.id == model_uuid)).scalar_one_or_none()
+        except ValueError:
+            pass # Not a UUID, use legacy map
+            
+        if ai_model:
+            replicate_model_ref = ai_model.model_ref # "stability-ai/sdxl"
+            replicate_version = ai_model.version_id
+            
+            # Merge defaults from ui_config if params missing?
+            # User input params (from prompt) override defaults.
+            # But params only contains what form sent.
+            # We should probably merge: default < override
+            if ai_model.ui_config:
+                 for key, conf in ai_model.ui_config.items():
+                      if key not in params and "default" in conf:
+                           params[key] = conf["default"]
+        
+        else:
+             # Legacy Logic fallback
+             if model_identifier == "runway": 
+                  pass # ... (keep simple fallback or map to known)
+             elif model_identifier == "flux-pro":
+                  replicate_model_ref = "black-forest-labs/flux-1.1-pro"
+
+        # 4. Input Data Construction
+        input_data = {
+            "prompt": prompt_text,
+            **params
+        }
+        
+        # 5. Submit
+        try:
+            # We pass model=replicate_model_ref which allows client.run(ref) behavior
+            # If ref is None, it uses version
             provider_job_id = submit_replicate_job(
                 input_data=input_data,
                 api_key=api_key,
                 webhook_url=webhook_url,
-                version=version_hash,
-                model=replicate_model_name
+                version=replicate_version,
+                model=replicate_model_ref
             )
             
             job.status = "running"
             job.provider_job_id = provider_job_id
             job.provider = "replicate"
             session.commit()
-            
-            logger.info(f"Submitted job {job.id} to Replicate: {provider_job_id}")
             return f"Submitted: {provider_job_id}"
             
         except ReplicateError as e:
