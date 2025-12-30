@@ -10,7 +10,7 @@ from alembic import context
 from app.core.config import settings
 from app.core.db import Base
 # Import models so they are registered in metadata
-from app.models import User, LedgerEntry, Job, ProviderConfig, AIModel
+from app.models import User, LedgerEntry, Job, ProviderConfig
 
 config = context.config
 
