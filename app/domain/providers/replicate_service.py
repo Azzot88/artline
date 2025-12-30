@@ -3,6 +3,7 @@ from app.domain.providers.models import ProviderConfig, AIModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import logging
+from app.domain.providers.service import decrypt_key
 
 class ReplicateService:
     def __init__(self, api_key: str):
@@ -72,5 +73,5 @@ async def get_replicate_client(db: AsyncSession) -> ReplicateService:
     if not config or not config.encrypted_api_key:
         raise ValueError("Replicate provider not configured")
         
-    # In a real app, decrypt key. Here we assume plain text for MVP as per previous steps.
-    return ReplicateService(api_key=config.encrypted_api_key)
+    plain_key = decrypt_key(config.encrypted_api_key)
+    return ReplicateService(api_key=plain_key)
