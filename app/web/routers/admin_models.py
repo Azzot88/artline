@@ -13,6 +13,8 @@ import uuid
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
+from app.core.i18n import get_t, get_current_lang
+
 async def get_admin_user(user: User = Depends(get_current_user)):
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Admin required")
@@ -29,7 +31,12 @@ async def list_models(
     return templates.TemplateResponse(
         request=request,
         name="admin_models.html",
-        context={"user": user, "models": models}
+        context={
+            "user": user, 
+            "models": models,
+            "t": get_t(request),
+            "lang": get_current_lang(request)
+        }
     )
 
 @router.post("/add")
@@ -100,7 +107,9 @@ async def edit_model(
         context={
             "user": user, 
             "model": model,
-            "schema_inputs": schema_inputs
+            "schema_inputs": schema_inputs,
+            "t": get_t(request),
+            "lang": get_current_lang(request)
         }
     )
 
