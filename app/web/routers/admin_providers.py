@@ -108,14 +108,25 @@ async def save_provider_config(
     # Encrypt
     enc_key = encrypt_key(api_key)
     
-    new_config = ProviderConfig(
-        provider_id=provider_id,
-        name=name,
-        encrypted_api_key=enc_key,
-        status="not_tested",
-        is_active=True
-    )
-    db.add(new_config)
+    # Check for existing
+    result = await db.execute(select(ProviderConfig).where(ProviderConfig.provider_id == provider_id))
+    existing = result.scalars().first()
+    
+    if existing:
+        existing.encrypted_api_key = enc_key
+        existing.name = name or existing.name
+        existing.is_active = True
+        existing.status = "not_tested" # Reset status on update
+    else:
+        new_config = ProviderConfig(
+            provider_id=provider_id,
+            name=name,
+            encrypted_api_key=enc_key,
+            status="not_tested",
+            is_active=True
+        )
+        db.add(new_config)
+        
     await db.commit()
     
     return RedirectResponse(url="/admin/providers", status_code=302)
@@ -144,13 +155,16 @@ async def seed_demo_data(
     ]
     
     for pid, k, n in demos:
-        db.add(ProviderConfig(
-            provider_id=pid,
-            name=n,
-            encrypted_api_key=encrypt_key(k),
-            status="invalid", # Because it's a demo key, test would fail
-            error_message="Demo key"
-        ))
+        # Check exist
+        res = await db.execute(select(ProviderConfig).where(ProviderConfig.provider_id == pid))
+        if not res.scalars().first():
+            db.add(ProviderConfig(
+                provider_id=pid,
+                name=n,
+                encrypted_api_key=encrypt_key(k),
+                status="invalid", # Because it's a demo key, test would fail
+                error_message="Demo key"
+            ))
     await db.commit()
     await db.commit()
     return RedirectResponse(url="/admin/providers", status_code=302)

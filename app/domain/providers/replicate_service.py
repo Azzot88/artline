@@ -67,7 +67,13 @@ class ReplicateService:
 async def get_replicate_client(db: AsyncSession) -> ReplicateService:
     # Fetch API Key from ProviderConfig
     # Assuming 'replicate' is the provider ID
-    q = await db.execute(select(ProviderConfig).where(ProviderConfig.provider_id == 'replicate'))
+    # Use order_by desc + limit 1 to handle potential duplicates (get latest)
+    q = await db.execute(
+        select(ProviderConfig)
+        .where(ProviderConfig.provider_id == 'replicate')
+        .order_by(ProviderConfig.created_at.desc())
+        .limit(1)
+    )
     config = q.scalar_one_or_none()
     
     if not config or not config.encrypted_api_key:
