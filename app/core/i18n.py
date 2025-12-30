@@ -45,7 +45,7 @@ TRANSLATIONS = {
         # Dashboard / Sidebar
         "balance_title": "Balance",
         "balance_desc": "Credits (CR) used for image & video generation",
-        "buy_credits": "Buy 100 Credits ($10)",
+        "buy_credits": "Buy 100 Credits (1000 ₽)",
         "payment_integ": "(Payment integration required)",
         "create_job": "Create Job",
         "format_label": "Format",
@@ -148,7 +148,7 @@ TRANSLATIONS = {
 
         "balance_title": "Баланс",
         "balance_desc": "Кредиты (CR) используются для генерации",
-        "buy_credits": "Купить 100 CR ($10)",
+        "buy_credits": "Купить 100 CR (1000 ₽)",
         "payment_integ": "(Нужна интеграция оплаты)",
         "create_job": "Создать",
         "format_label": "Формат",
@@ -246,7 +246,7 @@ TRANSLATIONS = {
 
         "balance_title": "Баланс",
         "balance_desc": "Генерация үшін кредиттер (CR) қолданылады",
-        "buy_credits": "100 CR сатып алу ($10)",
+        "buy_credits": "100 CR сатып алу (1000 ₽)",
         "payment_integ": "(Төлем жүйесі қосылмаған)",
         "create_job": "Жаңа жұмыс",
         "format_label": "Формат",
@@ -344,7 +344,7 @@ TRANSLATIONS = {
 
         "balance_title": "Баланс",
         "balance_desc": "Генерация үчүн кредиттер (CR) колдонулат",
-        "buy_credits": "100 CR сатып алуу ($10)",
+        "buy_credits": "100 CR сатып алуу (1000 ₽)",
         "payment_integ": "(Төлөм системасы кошула элек)",
         "create_job": "Жаңы жумуш",
         "format_label": "Формат",
