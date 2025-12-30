@@ -72,8 +72,25 @@ async def add_model(
         return RedirectResponse(f"/admin/models/{new_model.id}", status_code=302)
         
     except Exception as e:
-        # Flash error? For now simple return
-        raise HTTPException(status_code=400, detail=str(e))
+        # Fetch models again to render the page
+        result = await db.execute(select(AIModel).order_by(AIModel.created_at.desc()))
+        models = result.scalars().all()
+        
+        error_msg = str(e)
+        if "Replicate provider not configured" in error_msg:
+             error_msg = "Please configure the Replicate API Key in the <a href='/admin/providers'>Providers</a> section first."
+
+        return templates.TemplateResponse(
+            request=request,
+            name="admin_models.html",
+            context={
+                "user": user, 
+                "models": models, 
+                "error": error_msg,
+                "t": get_t(request),
+                "lang": get_current_lang(request)
+            }
+        )
 
 @router.get("/{model_id}", response_class=HTMLResponse)
 async def edit_model(

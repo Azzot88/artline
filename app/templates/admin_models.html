@@ -12,6 +12,12 @@
         </div>
     </div>
 
+    {% if error %}
+    <div class="alert alert-danger" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error|safe }}
+    </div>
+    {% endif %}
+
     <!-- Models List -->
     <div class="card glass-panel">
         <div class="card-body p-0">
