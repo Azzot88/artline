@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>AI Models</h1>
+        <div class="btn-group">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModelModal">
+                <i class="bi bi-plus-lg"></i> Add Replicate Model
+            </button>
+            <a href="/admin" class="btn btn-outline-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <!-- Models List -->
+    <div class="card glass-panel">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Reference (ID)</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Example</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in models %}
+                    <tr>
+                        <td><strong>{{ m.display_name }}</strong></td>
+                        <td><small class="text-muted font-monospace">{{ m.model_ref }}</small></td>
+                        <td><span class="badge bg-secondary">{{ m.type }}</span></td>
+                        <td>
+                            {% if m.is_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-danger">Disabled</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if m.cover_image_url %}
+                            <img src="{{ m.cover_image_url }}" alt="cover"
+                                style="height: 30px; width: 30px; object-fit: cover;" class="rounded-circle">
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="/admin/models/{{ m.id }}" class="btn btn-sm btn-outline-primary">Configure</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">No models added yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Modal -->
+<div class="modal fade" id="addModelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content text-dark">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Model</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form action="/admin/models/add" method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Replicate Model ID</label>
+                        <input type="text" name="model_ref" class="form-control"
+                            placeholder="owner/name (e.g. stability-ai/sdxl)" required>
+                        <div class="form-text">We will fetch the latest version and schema automatically.</div>
+                    </div>
+                    <div class="d-grid">
+                        <button class="btn btn-primary">Fetch & Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
