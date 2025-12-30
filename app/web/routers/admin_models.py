@@ -41,6 +41,7 @@ async def list_models(
 
 @router.post("/add")
 async def add_model(
+    request: Request,
     model_ref: str = Form(...),
     user: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db)
@@ -72,6 +73,7 @@ async def add_model(
         return RedirectResponse(f"/admin/models/{new_model.id}", status_code=302)
         
     except Exception as e:
+        await db.rollback()
         # Fetch models again to render the page
         result = await db.execute(select(AIModel).order_by(AIModel.created_at.desc()))
         models = result.scalars().all()
