@@ -101,6 +101,9 @@ async def save_provider_config(
     
     if not adapter.validate_format(api_key):
         raise HTTPException(400, "Invalid key format")
+        
+    if " " in api_key:
+        raise HTTPException(400, "Key must not contain spaces")
     
     # Encrypt
     enc_key = encrypt_key(api_key)

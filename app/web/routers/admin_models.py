@@ -74,6 +74,7 @@ async def add_model(
         
     except Exception as e:
         await db.rollback()
+        await db.refresh(user)
         # Fetch models again to render the page
         result = await db.execute(select(AIModel).order_by(AIModel.created_at.desc()))
         models = result.scalars().all()
