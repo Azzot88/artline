@@ -23,23 +23,4 @@ class ProviderConfig(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
 
 
-class AIModel(Base):
-    __tablename__ = "ai_models"
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    display_name: Mapped[str] = mapped_column(String, nullable=False)
-    
-    provider: Mapped[str] = mapped_column(String, nullable=False, index=True) # replicate, openai
-    model_ref: Mapped[str] = mapped_column(String, nullable=False) # owner/name
-    version_id: Mapped[str | None] = mapped_column(String, nullable=True) # specific version hash
-    
-    type: Mapped[str] = mapped_column(String, default="image") # image, video, other
-    
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    
-    # JSON columns
-    param_schema: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    default_params: Mapped[dict | None] = mapped_column(JSON, nullable=True) 
-
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)

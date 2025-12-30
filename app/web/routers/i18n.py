@@ -10,7 +10,7 @@ async def set_language(code: str, request: Request):
     Set the interface language via cookie and redirect to the page the user came from.
     """
     if code not in SUPPORTED_LANGUAGES:
-        code = "en"
+        code = "ru"
         
     redirect_url = request.headers.get("referer", "/dashboard")
     

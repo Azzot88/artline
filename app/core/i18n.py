@@ -408,14 +408,14 @@ SUPPORTED_LANGUAGES = ["en", "ru", "kk", "ky"]
 
 def get_t(request: Request) -> dict:
     """Get translation dictionary for the current language."""
-    lang = request.cookies.get("artline_lang", "en")
+    lang = request.cookies.get("artline_lang", "ru")
     if lang not in TRANSLATIONS:
-        lang = "en"
+        lang = "ru"
     return TRANSLATIONS[lang]
 
 def get_current_lang(request: Request) -> str:
     """Get current language code."""
-    lang = request.cookies.get("artline_lang", "en")
+    lang = request.cookies.get("artline_lang", "ru")
     if lang not in SUPPORTED_LANGUAGES:
-        lang = "en"
+        lang = "ru"
     return lang
