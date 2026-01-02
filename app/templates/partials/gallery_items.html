@@ -1,0 +1,27 @@
+{% for job in jobs %}
+<div class="masonry-item border-0 mb-3" style="break-inside: avoid;">
+    <div class="position-relative overflow-hidden rounded-3 shadow-sm job-card">
+        {% if job.kind == 'video' %}
+        <video src="{{ job.result_url }}" class="w-100 d-block" autoplay loop muted playsinline
+            style="object-fit: cover;"></video>
+        {% else %}
+        <img src="{{ job.result_url }}" class="w-100 d-block" alt="{{ job.prompt[:50] }}" loading="lazy">
+        {% endif %}
+
+        <!-- Hover Overlay -->
+        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-end p-3 text-white opacity-0 opacity-100-hover transition-base"
+            style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); transition: opacity 0.2s ease-in-out;">
+            <p class="small mb-0 text-truncate">{{ job.prompt }}</p>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Sentinel for Infinite Scroll -->
+{% if next_page %}
+<div hx-get="/gallery/page/{{ next_page }}" hx-trigger="revealed" hx-swap="outerHTML" class="text-center py-4 w-100">
+    <div class="spinner-border text-primary spinner-border-sm" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
+{% endif %}
