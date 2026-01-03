@@ -14,7 +14,14 @@ class Job(Base):
     __tablename__ = "jobs"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    
+    # Ownership: either user_id or guest_id should be present
+    user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    guest_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("guest_profiles.id"), nullable=True, index=True)
+    
+    owner_type: Mapped[str] = mapped_column(String, default="user") # "user" | "guest"
+    expires_at: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     kind: Mapped[str] = mapped_column(String, nullable=False)  # "image" | "video"
     prompt: Mapped[str] = mapped_column(Text, nullable=False)
     provider: Mapped[str] = mapped_column(String, default="mock")

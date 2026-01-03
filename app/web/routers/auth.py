@@ -96,7 +96,32 @@ async def signup(
     new_user = User(email=email, hashed_password=hashed_pw)
     db.add(new_user)
     await db.commit()
-    
+    await db.refresh(new_user)
+
+    # Guest Migration
+    guest_id_cookie = request.cookies.get("guest_id")
+    if guest_id_cookie:
+        from app.models import Job
+        from sqlalchemy import update
+        import uuid
+        try:
+            gid = uuid.UUID(guest_id_cookie)
+            # Update jobs: set user_id, owner_type='user', clear guest_id, clear expires_at
+            stmt = (
+                update(Job)
+                .where(Job.guest_id == gid)
+                .values(
+                    user_id=new_user.id,
+                    owner_type="user",
+                    guest_id=None,
+                    expires_at=None
+                )
+            )
+            await db.execute(stmt)
+            await db.commit()
+        except ValueError:
+            pass
+
     # Auto-login
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(

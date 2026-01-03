@@ -33,37 +33,56 @@ import json
 
 async def create_job(
     db: AsyncSession, 
-    user: User, 
+    user: User | object, # GuestProfile
     kind: str, 
     prompt: str, 
     model: str = "flux",
     params: dict = None
 ) -> tuple[Job | None, str | None]:
     
+    # Determine if user or guest
+    is_guest = not isinstance(user, User)
+    
     cost = calculate_cost(kind, model)
     
     # Check balance
-    balance = await get_user_balance(db, user.id)
+    if is_guest:
+        balance = user.balance
+    else:
+        balance = await get_user_balance(db, user.id)
+        
     if balance < cost:
         return None, "Insufficient credits"
 
     # Deduct credits
-    await add_ledger_entry(
-        db, 
-        user.id, 
-        -cost, 
-        reason=f"job_cost:{model}", 
-        external_id=None
-    )
+    if is_guest:
+        user.balance -= cost
+        # Guest ledger not strictly required, balance field is source of truth
+    else:
+        await add_ledger_entry(
+            db, 
+            user.id, 
+            -cost, 
+            reason=f"job_cost:{model}", 
+            external_id=None
+        )
 
     # Create Job
     job = Job(
-        user_id=user.id,
         kind=kind,
         cost_credits=cost,
         status="queued",
         progress=0,
+        owner_type="guest" if is_guest else "user"
     )
+    
+    if is_guest:
+        job.guest_id = user.id
+        from datetime import datetime, timedelta
+        # Set expiry for guest jobs
+        job.expires_at = datetime.utcnow() + timedelta(days=15)
+    else:
+        job.user_id = user.id
     
     # Serialize structure: [model_id] <json> | prompt
     # If params exist, dump them.
@@ -78,12 +97,6 @@ async def create_job(
         job.prompt = f"[{model}] {params_str} | {prompt}"
     else:
         job.prompt = f"[{model}] {prompt}"
-    
-    db.add(job)
-    await db.commit()
-    await db.refresh(job)
-    
-    return job, None
     
     db.add(job)
     await db.commit()
