@@ -143,3 +143,34 @@ async def logout():
     response = RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
     response.delete_cookie("access_token")
     return response
+
+@router.post("/guest/init")
+async def init_guest(
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    from app.domain.users.guest_service import get_or_create_guest
+    
+    # Check if already has cookie
+    guest_id_cookie = request.cookies.get("guest_id")
+    import uuid
+    gid = None
+    if guest_id_cookie:
+        try:
+            gid = uuid.UUID(guest_id_cookie)
+        except ValueError:
+            pass
+            
+    guest = await get_or_create_guest(db, gid)
+    
+    response = JSONResponse({"ok": True, "guest_id": str(guest.id), "balance": guest.balance})
+    # Set cookie for 1 year
+    response.set_cookie(
+        key="guest_id",
+        value=str(guest.id),
+        max_age=31536000,
+        httponly=True,
+        samesite="lax",
+        secure=False 
+    )
+    return response
