@@ -1,5 +1,6 @@
 
 import pytest
+import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from typing import AsyncGenerator
@@ -24,11 +25,7 @@ import app.models # Ensure models are loaded
 # Let's try mocking get_db or using a test database URL if provided.
 # settings.SQLALCHEMY_DATABASE_URI will be used.
 
-@pytest.fixture(scope="session")
-def anyio_backend():
-    return "asyncio"
-
-@pytest.fixture
+@pytest_asyncio.fixture
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     # Pass connection to ensure rollback
     # Create engine logic duplication?
@@ -50,7 +47,7 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
     await transaction.rollback()
     await connection.close()
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client(db_session) -> AsyncGenerator[AsyncClient, None]:
     async def override_get_db():
         yield db_session
