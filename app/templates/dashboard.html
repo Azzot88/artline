@@ -10,13 +10,33 @@
 
             <!-- User Balance -->
             <div class="p-3 border-bottom border-secondary">
+                {% if user %}
                 <div class="d-flex justify-content-between align-items-center mb-2">
+                    {% if user.email %}
                     <h6 class="mb-0 text-white-50 text-uppercase small ls-1">{{ t.balance_title|default('Balance') }}
                     </h6>
                     <a href="/services/billing" class="btn btn-sm btn-outline-success border-0"><i
                             class="bi bi-plus-lg"></i> Top Up</a>
+                    {% else %}
+                    <!-- Guest Mode -->
+                    <h6 class="mb-0 text-white-50 text-uppercase small ls-1">Guest Mode</h6>
+                    <a href="/register?next=/" class="btn btn-sm btn-outline-primary border-0">Sign Up</a>
+                    {% endif %}
                 </div>
+
+                {% if user.email %}
                 {% include "partials/balance_badge.html" %}
+                {% endif %}
+
+                {% else %}
+                <div class="d-grid">
+                    <a href="/login?next=/" class="btn btn-outline-light btn-sm mb-2">Sign In</a>
+                    <a href="/register?next=/" class="btn btn-primary btn-sm">Create Account</a>
+                </div>
+                <div class="text-white-50 small mt-2">
+                    Log in to save your generations and top up credits.
+                </div>
+                {% endif %}
             </div>
 
             <!-- Navigation Links -->
@@ -25,14 +45,19 @@
                     onclick="showSection('create')">
                     <i class="bi bi-magic me-2"></i> {{ t.nav_create|default('Create') }}
                 </a>
+
+                <!-- Gallery: Open to all -->
                 <a href="#" class="list-group-item list-group-item-action bg-transparent text-white-50 border-0"
                     onclick="showSection('gallery')">
                     <i class="bi bi-images me-2"></i> {{ t.nav_gallery|default('Gallery') }}
                 </a>
+
+                {% if user %}
                 <a href="#" class="list-group-item list-group-item-action bg-transparent text-white-50 border-0"
                     onclick="showSection('history')">
                     <i class="bi bi-clock-history me-2"></i> {{ t.nav_history|default('History') }}
                 </a>
+                {% endif %}
             </div>
 
             <!-- Mini Gallery / Recent -->
@@ -218,11 +243,31 @@
 
                                 <!-- Right: Generate Button -->
                                 <div>
+                                    {% check if user.email %}
+                                    {% if user.email %}
                                     <button type="submit" id="mainGenerateBtn"
                                         class="btn btn-warning fw-bold px-4 py-2 d-flex align-items-center gap-2"
                                         style="background-color: #ffd600; border: none; color: #000;">
                                         Generate <span id="costDisplay">100</span> <i class="bi bi-stars"></i>
                                     </button>
+                                    {% else %}
+                                    <!-- Guest: No cost display? OR display cost but not balance. -->
+                                    <!-- User said "Guest must generate", but Balance is hidden. Cost display is local JS. -->
+                                    <!-- Let's keep cost display on button as it shows price of ACTION. -->
+                                    <button type="submit" id="mainGenerateBtn"
+                                        class="btn btn-warning fw-bold px-4 py-2 d-flex align-items-center gap-2"
+                                        style="background-color: #ffd600; border: none; color: #000;">
+                                        Generate <span id="costDisplay">100</span> <i class="bi bi-stars"></i>
+                                    </button>
+                                    {% endif %}
+                                    {% else %}
+                                    <!-- Fallback if no cookie/guest yet (though dashboard logic attempts to create/fetch) -->
+                                    <button type="submit" id="mainGenerateBtn"
+                                        class="btn btn-warning fw-bold px-4 py-2 d-flex align-items-center gap-2"
+                                        style="background-color: #ffd600; border: none; color: #000;">
+                                        Generate (Guest) <i class="bi bi-stars"></i>
+                                    </button>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>

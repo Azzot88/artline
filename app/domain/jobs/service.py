@@ -104,10 +104,18 @@ async def create_job(
     
     return job, None
 
-async def get_user_jobs(db: AsyncSession, user_id: uuid.UUID, limit: int = 50):
-    result = await db.execute(
-        select(Job).where(Job.user_id == user_id).order_by(Job.created_at.desc()).limit(limit)
-    )
+async def get_user_jobs(db: AsyncSession, user: User | object, limit: int = 50):
+    # Determine if guest
+    is_guest = not isinstance(user, User)
+    
+    stmt = select(Job).order_by(Job.created_at.desc()).limit(limit)
+    
+    if is_guest:
+        stmt = stmt.where(Job.guest_id == user.id)
+    else:
+        stmt = stmt.where(Job.user_id == user.id)
+        
+    result = await db.execute(stmt)
     return result.scalars().all()
 
 async def get_job(db: AsyncSession, job_id: str, user_id: uuid.UUID):

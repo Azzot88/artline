@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.core.db import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, get_current_user_optional, get_current_user_or_redirect
 from app.models import User, Job, AIModel
 from app.domain.jobs.service import create_job, get_user_jobs
 from app.domain.billing.service import get_user_balance
@@ -18,13 +18,24 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/", response_class=HTMLResponse)
 async def dashboard(
     request: Request, 
-    user: User = Depends(get_current_user),
+    user: User | object | None = Depends(get_current_user_optional), # User or GuestProfile
     db: AsyncSession = Depends(get_db),
     checkout: str | None = None
 ):
-    balance = await get_user_balance(db, user.id)
-    jobs = await get_user_jobs(db, user.id)
-    
+    # Handle Guest State
+    if user:
+        if isinstance(user, User):
+            balance = await get_user_balance(db, user.id)
+        else:
+            # GuestProfile
+            balance = user.balance
+        
+        # get_user_jobs now accepts object
+        jobs = await get_user_jobs(db, user)
+    else:
+        balance = 0
+        jobs = []
+
     # Fetch Active AI Models
     models_result = await db.execute(select(AIModel).where(AIModel.is_active == True))
     ai_models = models_result.scalars().all()
@@ -36,7 +47,7 @@ async def dashboard(
             "id": str(m.id),
             "name": m.display_name,
             "provider": m.provider,
-            "ref": m.model_ref,
+            "ref": m.model_ref if m.model_ref else "",
             "modes": m.modes or [],
             "resolutions": m.resolutions or [],
             "durations": m.durations or [],
@@ -59,7 +70,7 @@ async def dashboard(
             "balance": balance, 
             "jobs": jobs,
             "message": msg,
-            "ai_models": ai_models, # Keep for server-side if needed
+            "ai_models": ai_models, 
             "models_json": json.dumps(models_data),
             "t": get_t(request),
             "lang": get_current_lang(request)
@@ -69,45 +80,55 @@ async def dashboard(
 @router.post("/jobs/new")
 async def new_job(
     request: Request,
-    user: User = Depends(get_current_user),
+    user: User | object | None = Depends(get_current_user_optional), # Allow Guests
     db: AsyncSession = Depends(get_db)
 ):
+    # If strictly no user/guest (cookie missing), redirect
+    if not user:
+        from fastapi import HTTPException
+        # Or better, trigger HX-Redirect if HTMX
+        if request.headers.get("HX-Request"):
+             return templates.TemplateResponse(
+                request=request,
+                name="partials/flash.html",
+                context={"message": "Please sign in or enable cookies.", "level": "warning"}
+             )
+             # OR redirect?
+             # Let's start with redirect if no session at all.
+             # Actually create_job handles logic, but we need a user object.
+             # Redirect to login
+             from fastapi.responses import Response
+             response = Response(status_code=200)
+             response.headers["HX-Redirect"] = "/login"
+             return response
+
     form_data = await request.form()
     
-    # Extract known fields
     kind = form_data.get("kind", "image")
     prompt = form_data.get("prompt", "")
     model_id = form_data.get("model", "")
     
-    # Extract dynamic parameters
-    # We filter out known keys
     reserved = {"kind", "prompt", "model"}
     params = {}
     for key, value in form_data.items():
         if key not in reserved and value:
              params[key] = value
 
-    if not prompt.strip():
-         # Error handling for empty prompt
-         pass
-
-    # Create Job
-    # We treat model_id as the 'model' arg.
-    # We pass 'params' potentially? 
-    # Since create_job signature is fixed, we might need to serialize params into prompt here 
-    # OR update create_job. Let's start with serializing into prompt to avoid changing service signature too much
-    # format: <json_params> prompt
-    # Actually service.py handles '[model] prompt'. 
-    # Let's keep logic in service.py? 
-    # Better: Update create_job to accept params dict.
-    
     job, error = await create_job(db, user, kind, prompt, model_id, params)
     
     if error:
+        level = "danger"
+        if "Insufficient credits" in error:
+            level = "warning"
+            # If guest, maybe link to register?
+            # For now, flash message.
+            if not isinstance(user, User):
+                 error = "Please register to continue generating."
+        
         return templates.TemplateResponse(
             request=request,
             name="partials/flash.html",
-            context={"message": error, "level": "danger"}
+            context={"message": error, "level": level}
         )
 
     # Queue task
@@ -124,10 +145,11 @@ async def new_job(
 @router.get("/jobs/partial", response_class=HTMLResponse)
 async def jobs_partial(
     request: Request,
-    user: User = Depends(get_current_user),
+    user: User | object | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db)
 ):
-    jobs = await get_user_jobs(db, user.id)
+    if not user: return HTMLResponse("")
+    jobs = await get_user_jobs(db, user)
     return templates.TemplateResponse(
         request=request, 
         name="partials/job_list.html",
@@ -141,10 +163,15 @@ async def jobs_partial(
 @router.get("/balance/partial", response_class=HTMLResponse)
 async def balance_partial(
     request: Request,
-    user: User = Depends(get_current_user),
+    user: User | object | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db)
 ):
-    balance = await get_user_balance(db, user.id)
+    if not user: return HTMLResponse("")
+    if isinstance(user, User):
+        balance = await get_user_balance(db, user.id)
+    else:
+        balance = user.balance
+        
     return templates.TemplateResponse(
         request=request, 
         name="partials/balance_badge.html",
@@ -155,10 +182,18 @@ async def balance_partial(
 async def delete_job(
     request: Request,
     job_id: str,
-    user: User = Depends(get_current_user),
+    user: User | object | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(Job).where(Job.id == job_id, Job.user_id == user.id))
+    if not user: return status.HTTP_401_UNAUTHORIZED
+    
+    stmt = select(Job).where(Job.id == job_id)
+    if isinstance(user, User):
+        stmt = stmt.where(Job.user_id == user.id)
+    else:
+         stmt = stmt.where(Job.guest_id == user.id)
+         
+    result = await db.execute(stmt)
     job = result.scalar_one_or_none()
     
     if job:
@@ -166,3 +201,38 @@ async def delete_job(
         await db.commit()
     
     return status.HTTP_200_OK
+
+PAGE_SIZE = 20
+
+async def get_gallery_jobs(db: AsyncSession, page: int = 1):
+    offset = (page - 1) * PAGE_SIZE
+    query = (
+        select(Job)
+        .where(Job.status == 'succeeded')
+        .where(Job.result_url.isnot(None))
+        .order_by(Job.created_at.desc())
+        .limit(PAGE_SIZE)
+        .offset(offset)
+    )
+    result = await db.execute(query)
+    jobs = result.scalars().all()
+    
+    next_page = page + 1 if len(jobs) == PAGE_SIZE else None
+    return jobs, next_page
+
+@router.get("/gallery/page/{page}", response_class=HTMLResponse)
+async def gallery_fragment(
+    page: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    jobs, next_page = await get_gallery_jobs(db, page=page)
+    
+    return templates.TemplateResponse(
+        request=request, 
+        name="partials/gallery_items.html",
+        context={
+            "jobs": jobs,
+            "next_page": next_page
+        }
+    )
