@@ -16,6 +16,7 @@ os.environ["POSTGRES_DB"] = "artline_test"
 from app.core.config import settings
 from app.core.db import Base, get_db
 from app.main import app
+import app.models # Ensure models are loaded
 
 # Use in-memory SQLite for speed and isolation if possible, 
 # but models use specific PG types maybe? 
