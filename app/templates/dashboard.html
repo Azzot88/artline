@@ -70,22 +70,44 @@
                         <!-- Header: Toggles & Tabs -->
                         <div class="card-header border-0 pb-0 pt-3 px-4 d-flex align-items-center mb-2"
                             style="background: transparent;">
-                            <!-- Mode Switch (Image/Video as Icons) -->
-                            <div class="btn-group me-4 p-1 rounded bg-dark border border-secondary" role="group">
+                            <!-- Mode Switch (Custom Icons) -->
+                            <div class="d-flex gap-3 me-4 align-items-center">
                                 <input type="radio" class="btn-check" name="kind" id="modeImage" value="image" checked
                                     onchange="app.setMode('image')">
-                                <label class="btn btn-sm btn-link text-white text-decoration-none px-2 py-0 border-0"
-                                    for="modeImage" title="Image Mode">
-                                    <i class="bi bi-image fs-5"></i>
+                                <label class="cursor-pointer mode-icon-label" for="modeImage" title="Image Mode">
+                                    <img src="/static/icons/mode_image.png" class="mode-icon rounded-3" width="42"
+                                        height="42">
                                 </label>
 
                                 <input type="radio" class="btn-check" name="kind" id="modeVideo" value="video"
                                     onchange="app.setMode('video')">
-                                <label class="btn btn-sm btn-link text-white-50 text-decoration-none px-2 py-0 border-0"
-                                    for="modeVideo" title="Video Mode">
-                                    <i class="bi bi-camera-reels fs-5"></i>
+                                <label class="cursor-pointer mode-icon-label" for="modeVideo" title="Video Mode">
+                                    <img src="/static/icons/mode_video.png" class="mode-icon rounded-3" width="42"
+                                        height="42">
                                 </label>
                             </div>
+
+                            <style>
+                                .mode-icon {
+                                    transition: all 0.2s ease;
+                                    opacity: 0.4;
+                                    border: 1px solid transparent;
+                                    filter: grayscale(100%);
+                                }
+
+                                .mode-icon:hover {
+                                    opacity: 0.7;
+                                    filter: grayscale(0%);
+                                }
+
+                                /* Active State */
+                                .btn-check:checked+label .mode-icon {
+                                    opacity: 1;
+                                    border-color: rgba(255, 255, 255, 0.2);
+                                    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+                                    filter: grayscale(0%);
+                                }
+                            </style>
 
                             <!-- Source Tabs -->
                             <div class="d-flex gap-4">
