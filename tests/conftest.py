@@ -16,7 +16,7 @@ os.environ["POSTGRES_DB"] = "artline_test"
 
 from app.core.config import settings
 from app.core.db import Base, get_db
-from app.main import app
+from app.main import app as fastapi_app
 import app.models # Ensure models are loaded
 
 # Use in-memory SQLite for speed and isolation if possible, 
@@ -52,9 +52,9 @@ async def client(db_session) -> AsyncGenerator[AsyncClient, None]:
     async def override_get_db():
         yield db_session
         
-    app.dependency_overrides[get_db] = override_get_db
+    fastapi_app.dependency_overrides[get_db] = override_get_db
     
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=fastapi_app), base_url="http://test") as ac:
         yield ac
     
-    app.dependency_overrides.clear()
+    fastapi_app.dependency_overrides.clear()
