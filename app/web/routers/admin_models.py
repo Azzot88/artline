@@ -137,12 +137,13 @@ async def add_model(
         await db.commit()
         await db.refresh(new_model)
         
-        return RedirectResponse(f"/admin/models/{new_model.id}", status_code=302)
+        return RedirectResponse(f"/admin/models/?selected={new_model.id}", status_code=302)
         
     except Exception as e:
         await db.rollback()
-        await db.refresh(user)
-        # Fetch models again to render the page
+        # ... (keep error handling but maybe simplify to redirect with error param?)
+        # For now, keeping as is but ensuring no standalone page render if possible.
+        # Actually returning template with error is fine for /add error state.
         result = await db.execute(select(AIModel).order_by(AIModel.created_at.desc()))
         models = result.scalars().all()
         
@@ -152,7 +153,7 @@ async def add_model(
 
         return templates.TemplateResponse(
             request=request,
-            name="admin_models.html",
+            name="admin_models_list.html",
             context={
                 "user": user, 
                 "models": models, 
@@ -162,43 +163,9 @@ async def add_model(
             }
         )
 
-@router.get("/{model_id}", response_class=HTMLResponse)
-async def edit_model(
-    request: Request,
-    model_id: str,
-    user: User = Depends(get_admin_user),
-    db: AsyncSession = Depends(get_db)
-):
-    # Fetch model
-    result = await db.execute(select(AIModel).where(AIModel.id == uuid.UUID(model_id)))
-    model = result.scalar_one_or_none()
-    if not model:
-        raise HTTPException(404, "Model not found")
-
-    # Prepare schema inputs for templates
-    # Replicate OpenAPI schema usually has ["components"]["schemas"]["Input"]["properties"]
-    schema_inputs = {}
-    if model.param_schema:
-        try:
-            # Try standard Replicate structure
-            components = model.param_schema.get("components", {})
-            schemas = components.get("schemas", {})
-            input_schema = schemas.get("Input", {})
-            schema_inputs = input_schema.get("properties", {})
-        except:
-             pass # Fallback empty if unknown structure
-
-    return templates.TemplateResponse(
-        request=request,
-        name="admin_model_edit.html",
-        context={
-            "user": user, 
-            "model": model,
-            "schema_inputs": schema_inputs,
-            "t": get_t(request),
-            "lang": get_current_lang(request)
-        }
-    )
+@router.get("/{model_id}", response_class=RedirectResponse)
+async def map_legacy_edit_route(model_id: str):
+    return RedirectResponse(f"/admin/models/?selected={model_id}")
 
 @router.post("/{model_id}/save")
 async def save_model_config(

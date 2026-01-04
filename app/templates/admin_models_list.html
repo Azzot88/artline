@@ -297,7 +297,13 @@
 
         // Initial Load
         init() {
-            // ...
+            const urlParams = new URLSearchParams(window.location.search);
+            const selectedId = urlParams.get('selected');
+            if (selectedId) {
+                // Remove param from URL without reload to clean up
+                window.history.replaceState({}, document.title, window.location.pathname);
+                this.loadModel(selectedId);
+            }
         },
 
         async loadModel(id) {
