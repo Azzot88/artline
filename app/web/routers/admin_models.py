@@ -58,6 +58,8 @@ class ModelUpdateSchema(BaseModel):
     provider: str = "replicate"
     capabilities: ModelCapabilities
     ui_config: Dict[str, Any] = {}
+    
+    model_config = {"protected_namespaces": ()}
 
 @router.get("/{model_id}/details")
 async def get_model_details(
