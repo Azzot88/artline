@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from app.core.db import get_db
 from app.core.deps import get_current_user
 from app.models import User, AIModel
@@ -59,7 +59,7 @@ class ModelUpdateSchema(BaseModel):
     capabilities: ModelCapabilities
     ui_config: Dict[str, Any] = {}
     
-    model_config = {"protected_namespaces": ()}
+    model_config = ConfigDict(protected_namespaces=())
 
 @router.get("/{model_id}/details")
 async def get_model_details(
