@@ -127,6 +127,10 @@ def process_job(self, job_id: str):
         }
         
         # 5. Submit
+        # Ensure WEBHOOK_HOST is configured, otherwise fallback to example (or raise error in strict mode)
+        webhook_host = settings.WEBHOOK_HOST or "https://api.artline.dev"
+        webhook_url = f"{webhook_host}/webhooks/replicate"
+
         try:
             # We pass model=replicate_model_ref which allows client.run(ref) behavior
             # If ref is None, it uses version
