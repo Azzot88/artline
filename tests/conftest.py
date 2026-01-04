@@ -62,3 +62,20 @@ async def client(db_session) -> AsyncGenerator[AsyncClient, None]:
         yield ac
     
     fastapi_app.dependency_overrides.clear()
+
+@pytest_asyncio.fixture
+async def admin_user(db_session) -> "User":
+    from app.models import User
+    from app.core.security import get_password_hash
+    
+    user = User(
+        email="admin@test.com",
+        hashed_password=get_password_hash("password"),
+        is_active=True,
+        is_admin=True,
+        balance=1000
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+    return user
