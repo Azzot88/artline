@@ -210,6 +210,30 @@ async def save_model_config(
         except:
             pass
 
+    
+    # Update Capabilities
+    # Modes (CSV)
+    modes_str = form_data.get("modes", "")
+    model.modes = [x.strip().lower() for x in modes_str.split(",") if x.strip()]
+    
+    # Resolutions (CSV)
+    res_str = form_data.get("resolutions", "")
+    model.resolutions = [x.strip() for x in res_str.split(",") if x.strip()]
+    
+    # Durations (CSV Integers)
+    dur_str = form_data.get("durations", "")
+    model.durations = [int(x.strip()) for x in dur_str.split(",") if x.strip().isdigit()]
+    
+    # Costs (JSON String)
+    costs_str = form_data.get("costs", "{}")
+    import json
+    try:
+        model.costs = json.loads(costs_str)
+    except json.JSONDecodeError:
+        # Fallback to empty or don't update? 
+        # Safer to default to empty dict if partial/invalid
+        model.costs = {}
+
     model.ui_config = ui_config
     await db.commit()
     
