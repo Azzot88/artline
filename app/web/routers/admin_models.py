@@ -88,23 +88,52 @@ async def get_model_details(
         "param_schema": model.param_schema
     }
 
-@router.post("/sync")
-async def sync_schema(
-    request: Request,
-    body: Dict[str, str] = Body(...),
+@router.post("/{model_id}/sync-capabilities")
+async def sync_model_capabilities(
+    model_id: str,
     user: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
-    model_ref = body.get("model_ref")
-    if not model_ref:
-        raise HTTPException(400, "model_ref required")
+    # 1. Fetch Model
+    result = await db.execute(select(AIModel).where(AIModel.id == uuid.UUID(model_id)))
+    model = result.scalar_one_or_none()
+    if not model:
+        raise HTTPException(404, "Model not found")
         
+    if not model.model_ref:
+         raise HTTPException(400, "Model reference (owner/name) is missing")
+
+    # 2. Fetch Schema from Replicate
     try:
+        from app.domain.providers.replicate_service import ReplicateService
+        # Temporary instance or access via provider config
+        # Assuming get_replicate_client handles auth
         client = await get_replicate_client(db)
-        info = await client.fetch_model_schema(model_ref)
-        return info # {version_id, schema}
+        info = await client.fetch_model_schema(model.model_ref)
     except Exception as e:
-        raise HTTPException(400, str(e))
+        raise HTTPException(400, f"Replicate Sync Failed: {str(e)}")
+
+    # 3. Parse Capabilities
+    from app.domain.providers.replicate_capabilities import ReplicateCapabilitiesService
+    service = ReplicateCapabilitiesService()
+    
+    # Extract input properties
+    # Replicate structure: schema -> components -> schemas -> Input -> properties
+    try:
+        input_props = info["schema"]["components"]["schemas"]["Input"]["properties"]
+    except KeyError:
+        # Fallback or empty if structure differs
+        input_props = {}
+        
+    capabilities = service.parse_capabilities(input_props)
+    
+    return {
+        "status": "ok",
+        "synced_at": datetime.datetime.now().isoformat(),
+        "version_id": info["version_id"],
+        "capabilities": capabilities,
+        "raw_schema": info["schema"]
+    }
 
 @router.post("/add")
 async def add_model(

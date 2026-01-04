@@ -416,62 +416,53 @@
         },
 
         async syncSchema() {
-            const ref = document.getElementById('modelRef').value;
-            if (!ref) return alert("Enter Model Reference first");
+            const id = this.currentId;
+            if (!id) return;
 
             const btn = document.querySelector('button[onclick="app.syncSchema()"]');
             const originalText = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Syncing...';
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Analyzing...';
 
             try {
-                const res = await fetch('/admin/models/sync', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ model_ref: ref })
+                // Post to new endpoint
+                const res = await fetch(`/admin/models/${id}/sync-capabilities`, {
+                    method: 'POST'
                 });
 
-                if (!res.ok) throw new Error("Sync failed");
-                const info = await res.json();
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || "Sync failed");
+                }
+
+                const data = await res.json();
+                const caps = data.capabilities;
 
                 // 1. Update Version
-                if (info.version_id) {
-                    document.getElementById('versionId').value = info.version_id;
+                if (data.version_id) {
+                    document.getElementById('versionId').value = data.version_id;
                 }
 
-                // 2. Auto-detect Modes
-                const props = info.schema?.components?.schemas?.Input?.properties || {};
-
-                // Reset
+                // 2. Auto-Populate Modes
                 document.querySelectorAll('.cap-mode').forEach(el => el.checked = false);
+                (caps.modes || []).forEach(mode => {
+                    const el = document.getElementById(`mode_${mode}`);
+                    if (el) el.checked = true;
+                });
 
-                // Logic:
-                // prompt -> Text Input
-                // image -> Image Input
-                // if prompt & image -> likely supports separate or mixed
-
-                if (props.prompt) {
-                    document.getElementById('mode_text-to-image').checked = true;
-                }
-                if (props.image) {
-                    document.getElementById('mode_image-to-image').checked = true;
-                }
-                if (props.prompt && props.image) {
-                    // Could be styling or variation.
-                    // Ideally check description or tags via Replicate api (not exposed in schema directly often)
+                // 3. Auto-Populate Resolutions & Durations
+                if (caps.resolutions && caps.resolutions.length > 0) {
+                    document.getElementById('resolutions').value = caps.resolutions.join(", ");
                 }
 
-                // 3. Resolutions
-                // If model has aspect_ratio enum (common in Flux), maybe hint?
-                if (props.aspect_ratio?.enum) {
-                    // Just log for now, hard to map to exact pixels automatically without heuristics
-                    console.log("Detected Aspect Ratios:", props.aspect_ratio.enum);
+                if (caps.durations && caps.durations.length > 0) {
+                    document.getElementById('durations').value = caps.durations.join(", ");
                 }
 
-                alert("Synced! Version ID and Modes updated based on Schema.");
+                alert(`Sync Complete! \nDetected: ${caps.modes.join(", ")} \nResolutions: ${caps.resolutions.length} found`);
 
             } catch (e) {
-                alert(e.message);
+                alert("Error: " + e.message);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
