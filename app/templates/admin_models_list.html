@@ -13,35 +13,41 @@
 
         <div class="list-group list-group-flush overflow-auto flex-grow-1" id="modelList">
             {% for model in models %}
-            <button type="button"
-                class="list-group-item list-group-item-action bg-transparent text-white border-bottom border-secondary model-item"
-                data-id="{{ model.id }}" onclick="app.loadModel('{{ model.id }}')">
-                <div class="d-flex align-items-center gap-3">
-                    <!-- Icon/Cover -->
-                    <div class="rounded-3 overflow-hidden bg-secondary d-flex align-items-center justify-content-center"
-                        style="width: 48px; height: 48px;">
-                        {% if model.cover_image_url %}
-                        <img src="{{ model.cover_image_url }}" class="w-100 h-100 object-fit-cover">
-                        {% else %}
-                        <i class="bi bi-box text-white-50"></i>
-                        {% endif %}
-                    </div>
-
-                    <div class="flex-grow-1 overflow-hidden">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <strong class="text-truncate d-block">{{ model.display_name }}</strong>
-                            {% if model.is_active %}
-                            <span class="badge bg-success rounded-pill" style="font-size: 0.6em;">ON</span>
+            <div class="list-group-item list-group-item-action bg-transparent text-white border-bottom border-secondary model-item d-flex gap-0 p-0"
+                data-id="{{ model.id }}">
+                <button type="button" class="btn btn-link text-white text-decoration-none flex-grow-1 text-start p-3"
+                    onclick="app.loadModel('{{ model.id }}')">
+                    <div class="d-flex align-items-center gap-3">
+                        <!-- Icon/Cover -->
+                        <div class="rounded-3 overflow-hidden bg-secondary d-flex align-items-center justify-content-center flex-shrink-0"
+                            style="width: 48px; height: 48px;">
+                            {% if model.cover_image_url %}
+                            <img src="{{ model.cover_image_url }}" class="w-100 h-100 object-fit-cover">
                             {% else %}
-                            <span class="badge bg-secondary rounded-pill" style="font-size: 0.6em;">OFF</span>
+                            <i class="bi bi-box text-white-50"></i>
                             {% endif %}
                         </div>
-                        <div class="small text-white-50 text-truncate" style="font-size: 0.75rem;">
-                            {{ model.model_ref }}
+
+                        <div class="flex-grow-1 overflow-hidden">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <strong class="text-truncate d-block">{{ model.display_name }}</strong>
+                                {% if model.is_active %}
+                                <span class="badge bg-success rounded-pill" style="font-size: 0.6em;">ON</span>
+                                {% else %}
+                                <span class="badge bg-secondary rounded-pill" style="font-size: 0.6em;">OFF</span>
+                                {% endif %}
+                            </div>
+                            <div class="small text-white-50 text-truncate" style="font-size: 0.75rem;">
+                                {{ model.model_ref }}
+                            </div>
                         </div>
                     </div>
-                </div>
-            </button>
+                </button>
+                <button class="btn btn-link text-danger p-3" onclick="app.deleteModel('{{ model.id }}', event)"
+                    title="Delete Model">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
             {% endfor %}
         </div>
     </div>

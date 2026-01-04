@@ -11,6 +11,7 @@ from app.models import User, AIModel
 from app.domain.providers.replicate_service import get_replicate_client
 import uuid
 import json
+import datetime
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -114,26 +115,47 @@ async def sync_model_capabilities(
         raise HTTPException(400, f"Replicate Sync Failed: {str(e)}")
 
     # 3. Parse Capabilities
-    from app.domain.providers.replicate_capabilities import ReplicateCapabilitiesService
-    service = ReplicateCapabilitiesService()
-    
-    # Extract input properties
-    # Replicate structure: schema -> components -> schemas -> Input -> properties
     try:
-        input_props = info["schema"]["components"]["schemas"]["Input"]["properties"]
-    except KeyError:
-        # Fallback or empty if structure differs
-        input_props = {}
+        from app.domain.providers.replicate_capabilities import ReplicateCapabilitiesService
+        service = ReplicateCapabilitiesService()
         
-    capabilities = service.parse_capabilities(input_props)
-    
-    return {
-        "status": "ok",
-        "synced_at": datetime.datetime.now().isoformat(),
-        "version_id": info["version_id"],
-        "capabilities": capabilities,
-        "raw_schema": info["schema"]
-    }
+        # Extract input properties
+        try:
+            input_props = info["schema"]["components"]["schemas"]["Input"]["properties"]
+        except KeyError:
+            input_props = {}
+            
+        capabilities = service.parse_capabilities(input_props)
+        
+        return {
+            "status": "ok",
+            "synced_at": datetime.datetime.now().isoformat(),
+            "version_id": info["version_id"],
+            "capabilities": capabilities,
+            "raw_schema": info["schema"]
+        }
+    except Exception as e:
+        # Catch parsing errors or import errors
+        raise HTTPException(400, f"Sync/Parse Error: {str(e)}")
+
+@router.delete("/{model_id}")
+async def delete_model(
+    model_id: str,
+    user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        result = await db.execute(select(AIModel).where(AIModel.id == uuid.UUID(model_id)))
+        model = result.scalar_one_or_none()
+        if not model:
+            raise HTTPException(404, "Model not found")
+            
+        await db.delete(model)
+        await db.commit()
+        return {"status": "ok"}
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(400, f"Delete failed: {str(e)}")
 
 @router.post("/add")
 async def add_model(
