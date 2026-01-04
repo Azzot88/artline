@@ -1,282 +1,399 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <!-- Sidebar / Top up -->
-        <div class="col-md-3">
-            <div class="card mb-4">
-                <div class="card-body text-center">
-                    <h5 class="card-title">{{ t.balance_title|default('Balance') }}</h5>
-                    {% include "partials/balance_badge.html" %}
-                    <small class="text-muted d-block mt-1 mb-3" style="font-size: 0.75rem;">{{
-                        t.balance_desc|default('Credits (CR) used for generation') }}</small>
-                    <hr>
-                    <div class="d-grid gap-2">
-                        <!-- Simplified Checkout Links -->
-                        <form action="/services/billing/checkout" method="post">
-                            <button disabled class="btn btn-outline-success btn-sm w-100 mb-2">{{
-                                t.buy_credits|default('Buy 100 Credits') }}</button>
-                        </form>
-                        <small class="text-muted">{{ t.payment_integ|default('(Payment integration required)')
-                            }}</small>
-                    </div>
+<div class="container-fluid h-100 p-0" style="min-height: calc(100vh - 56px);">
+    <div class="row g-0 h-100">
+
+        <!-- LEFT COLUMN: Navigation & History (25%) -->
+        <div class="col-lg-3 col-md-4 d-none d-md-flex flex-column border-end border-secondary bg-dark bg-opacity-50"
+            style="backdrop-filter: blur(10px); height: calc(100vh - 56px); overflow-y: auto;">
+
+            <!-- User Balance -->
+            <div class="p-3 border-bottom border-secondary">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0 text-white-50 text-uppercase small ls-1">{{ t.balance_title|default('Balance') }}
+                    </h6>
+                    <a href="/services/billing" class="btn btn-sm btn-outline-success border-0"><i
+                            class="bi bi-plus-lg"></i> Top Up</a>
                 </div>
+                {% include "partials/balance_badge.html" %}
             </div>
 
-            <div class="card pricing-calculator">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>{{ t.create_job|default('Create Job') }}</span>
-                    <!-- Cost moved to button only -->
+            <!-- Navigation Links -->
+            <div class="list-group list-group-flush">
+                <a href="#" class="list-group-item list-group-item-action bg-transparent text-white active border-0"
+                    onclick="showSection('create')">
+                    <i class="bi bi-magic me-2"></i> {{ t.nav_create|default('Create') }}
+                </a>
+                <a href="#" class="list-group-item list-group-item-action bg-transparent text-white-50 border-0"
+                    onclick="showSection('gallery')">
+                    <i class="bi bi-images me-2"></i> {{ t.nav_gallery|default('Gallery') }}
+                </a>
+                <a href="#" class="list-group-item list-group-item-action bg-transparent text-white-50 border-0"
+                    onclick="showSection('history')">
+                    <i class="bi bi-clock-history me-2"></i> {{ t.nav_history|default('History') }}
+                </a>
+            </div>
+
+            <!-- Mini Gallery / Recent -->
+            <div class="p-3 mt-auto">
+                <h6 class="text-white-50 text-uppercase small ls-1 mb-3">Recent Generations</h6>
+                <div id="mini-gallery" class="d-grid gap-2" style="grid-template-columns: repeat(3, 1fr);">
+                    <!-- Partial load of recent jobs -->
+                    {% for job in jobs[:6] %}
+                    <div
+                        class="ratio ratio-1x1 bg-dark rounded border border-secondary overflow-hidden position-relative">
+                        {% if job.kind == 'video' %}
+                        <video src="{{ job.result_url }}" class="w-100 h-100 object-fit-cover"></video>
+                        <i class="bi bi-camera-reels position-absolute top-0 end-0 m-1 text-white small shadow"></i>
+                        {% else %}
+                        <img src="{{ job.icon_url or job.result_url }}" class="w-100 h-100 object-fit-cover">
+                        {% endif %}
+                    </div>
+                    {% endfor %}
                 </div>
-                <div class="card-body">
-                    <form hx-post="/dashboard/jobs/new" hx-swap="none" id="createJobForm">
+            </div>
+        </div>
 
-                        <!-- Format Selection -->
-                        <label class="form-label small text-muted text-uppercase fw-bold mb-2">{{
-                            t.format_label|default('Format') }}</label>
-                        <div class="btn-group w-100 mb-3" role="group">
-                            <input type="radio" class="btn-check" name="kind" id="kind-image" value="image" checked
-                                onchange="updateUI()">
-                            <label class="btn btn-outline-secondary btn-sm" for="kind-image"><i class="bi bi-image"></i>
-                                {{ t.fmt_image|default('Image') }}</label>
+        <!-- RIGHT COLUMN: Workspace (75%) -->
+        <div class="col-lg-9 col-md-8 bg-black">
+            <div class="container py-4" style="max-width: 900px;">
 
-                            <input type="radio" class="btn-check" name="kind" id="kind-video" value="video"
-                                onchange="updateUI()">
-                            <label class="btn btn-outline-secondary btn-sm" for="kind-video"><i
-                                    class="bi bi-camera-reels"></i> {{ t.fmt_video|default('Video') }}</label>
+                <!-- Main Form -->
+                <form id="generateForm" hx-post="/dashboard/jobs/new" hx-swap="none">
+
+                    <!-- 1. Mode Switcher -->
+                    <div class="d-flex justify-content-center mb-4">
+                        <div class="btn-group bg-dark rounded-pill p-1 border border-secondary" role="group">
+                            <input type="radio" class="btn-check" name="kind" id="modeImage" value="image" checked
+                                onchange="app.setMode('image')">
+                            <label class="btn btn-sm btn-dark rounded-pill px-4 text-uppercase fw-bold" for="modeImage">
+                                <i class="bi bi-image me-1"></i> Image
+                            </label>
+
+                            <input type="radio" class="btn-check" name="kind" id="modeVideo" value="video"
+                                onchange="app.setMode('video')">
+                            <label class="btn btn-sm btn-dark rounded-pill px-4 text-uppercase fw-bold" for="modeVideo">
+                                <i class="bi bi-camera-reels me-1"></i> Video
+                            </label>
                         </div>
+                    </div>
 
-                        <!-- Model Selection sorted by Price (Desc) -->
-                        <label class="form-label small text-muted text-uppercase fw-bold mb-2">{{
-                            t.model_label|default('AI Model') }}</label>
-                        <select name="model" id="modelSelect" class="form-select mb-3" onchange="updateUI()">
-                            {% for m in ai_models %}
-                            <option value="{{ m.id }}" data-name="{{ m.display_name }}"
-                                data-config='{{ m.ui_config|tojson }}'>
-                                {{ m.display_name }}
-                            </option>
-                            {% endfor %}
+                    <!-- 2. Source Switcher -->
+                    <div class="d-flex justify-content-center gap-2 mb-4">
+                        <button type="button" class="btn btn-outline-secondary btn-sm active" id="btnSourceText"
+                            onclick="app.setSource('text')">
+                            <i class="bi bi-fonts"></i> <span id="lblSourceText">Text to Image</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnSourceImage"
+                            onclick="app.setSource('image')">
+                            <i class="bi bi-card-image"></i> <span id="lblSourceImage">Image to Image</span>
+                        </button>
+                    </div>
 
-                            <!-- Fallback for legacy if DB empty -->
-                            {% if not ai_models %}
-                            <option value="flux" data-name="Flux (Default)">Flux</option>
-                            {% endif %}
-                        </select>
-
-                        <!-- Dynamic Parameters Container -->
-                        <div id="dynamicInputs" class="mb-3"></div>
-
-                        <!-- Prompt -->
-                        <div class="mb-3">
-                            <label class="form-label small text-muted text-uppercase fw-bold">{{
-                                t.prompt_label|default('Prompt') }}</label>
-                            <textarea name="prompt" class="form-control" rows="4" required
-                                placeholder="{{ t.prompt_placeholder|default('A futuristic city...') }}"></textarea>
+                    <!-- 3. Image Upload (Conditional) -->
+                    <div id="uploadArea" class="mb-4 d-none">
+                        <label class="form-label text-white-50 small">Input Image</label>
+                        <div class="border border-secondary border-dashed rounded p-4 text-center text-muted"
+                            onclick="document.getElementById('fileInput').click()" style="cursor: pointer;">
+                            <i class="bi bi-cloud-upload display-4"></i>
+                            <p class="mb-0 mt-2">Click to upload reference image</p>
+                            <input type="file" id="fileInput" name="init_image" class="d-none"
+                                onchange="app.handleFile(this)">
                         </div>
+                        <div id="filePreview" class="mt-2 d-none">
+                            <img src="" class="rounded" style="height: 100px;">
+                            <button type="button" class="btn btn-sm btn-danger ms-2"
+                                onclick="app.clearFile()">x</button>
+                        </div>
+                    </div>
 
-                        <!-- Submit -->
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary" id="generateBtn">
-                                {{ t.generate_btn|default('Generate') }} <span class="badge bg-light text-dark ms-1"
-                                    id="btn-cost">10 CR</span>
+                    <!-- 4. Prompt Area -->
+                    <div class="position-relative mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <label class="text-white-50 small text-uppercase fw-bold">Prompt</label>
+                            <button type="button" class="btn btn-link btn-sm p-0 text-primary text-decoration-none"
+                                onclick="app.fantazise()">
+                                <i class="bi bi-stars"></i> Fantazise
                             </button>
                         </div>
-                    </form>
-                </div>
-            </div>
+                        <textarea name="prompt" id="promptInput"
+                            class="form-control bg-dark text-white border-secondary fs-5" rows="3"
+                            placeholder="Describe what you want to see..." required
+                            oninput="app.updateState()"></textarea>
+                    </div>
 
-            <script>
-                function updateUI() {
-                    const modelSelect = document.getElementById('modelSelect');
-                    const selectedOpt = modelSelect.options[modelSelect.selectedIndex];
-                    const dynamicDiv = document.getElementById('dynamicInputs');
+                    <!-- 5. Model Selection -->
+                    <div class="mb-4">
+                        <label class="text-white-50 small text-uppercase fw-bold mb-2">Select Model</label>
+                        <div class="d-flex overflow-auto gap-3 pb-2" id="modelList">
+                            <!-- JS populates this -->
+                        </div>
+                        <input type="hidden" name="model" id="selectedModelId">
+                    </div>
 
-                    // Simple cost logic checking kind
-                    let totalCost = 10;
-                    const kindEls = document.querySelectorAll('input[name="kind"]');
-                    let kind = 'image';
-                    kindEls.forEach(el => { if (el.checked) kind = el.value; });
-
-                    if (kind === 'video') totalCost = 50;
-
-                    // Legacy overrides
-                    const val = selectedOpt.value;
-                    if (val === 'runway') totalCost = Math.ceil(totalCost * 1.3);
-                    if (val === 'flux-pro') totalCost = 55;
-
-                    document.getElementById('btn-cost').textContent = totalCost + ' CR';
-
-                    // Render Dynamic Inputs
-                    if (dynamicDiv) {
-                        dynamicDiv.innerHTML = '';
-
-                        if (selectedOpt.dataset.config) {
-                            try {
-                                const config = JSON.parse(selectedOpt.dataset.config);
-                                // Sort? Or rely on iteration order (py 3.7+ preserves insertion order usually)
-                                const keys = Object.keys(config);
-
-                                keys.forEach(key => {
-                                    const conf = config[key];
-                                    if (conf.visible) {
-                                        // Skip prompt/kind as they are main fields
-                                        if (key === 'prompt' || key === 'kind') return;
-
-                                        const wrapper = document.createElement('div');
-                                        wrapper.className = 'mb-2';
-
-                                        const label = document.createElement('label');
-                                        label.className = 'form-label small text-muted fw-bold mb-1';
-                                        label.textContent = conf.label || key;
-
-                                        const input = document.createElement('input');
-                                        input.type = 'text';
-                                        input.className = 'form-control form-control-sm';
-                                        input.name = key;
-                                        if (conf.default != null) input.value = conf.default;
-
-                                        wrapper.appendChild(label);
-                                        wrapper.appendChild(input);
-                                        dynamicDiv.appendChild(wrapper);
-                                    }
-                                });
-                            } catch (e) { console.error("Config parse error", e); }
-                        }
-                    }
-                }
-                // Init
-                document.addEventListener('DOMContentLoaded', updateUI);
-            </script>
-        </div>
-
-        <!-- Job List -->
-        <div class="col-md-9">
-            <h3 class="mb-4">{{ t.gallery_title|default('Your Gallery') }}</h3>
-
-            {% if message %}
-            <div class="alert alert-info alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            {% endif %}
-
-            <!-- Gallery Grid Container -->
-            <div class="job-grid" id="job-list" hx-get="/dashboard/jobs/partial"
-                hx-trigger="load, jobsChanged from:body">
-                {% include "partials/job_list.html" %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Job Details Modal -->
-<div class="modal fade" id="jobDetailsModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(10px);">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content dark-theme-modal"
-            style="background: rgba(10, 10, 10, 0.98); border: 1px solid rgba(255,255,255,0.1);">
-            <div class="modal-body p-0 position-relative">
-                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 z-3"
-                    data-bs-dismiss="modal"></button>
-
-                <!-- Media Container -->
-                <div id="modalMediaContainer" class="d-flex align-items-center justify-content-center bg-black"
-                    style="width: 100%; min-height: 250px; max-height: 60vh; overflow: auto; padding: 10px;">
-                </div>
-
-                <!-- Footer / Details -->
-                <div class="p-3 border-top border-secondary bg-dark">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <h6 class="text-white mb-2">{{ t.modal_details|default('Job Details') }}</h6>
-                            <div class="d-flex flex-wrap gap-2 mb-2 text-muted small">
-                                <div><strong class="text-white" id="lbl_id">{{ t.modal_id }}:</strong> <span
-                                        id="modalJobId" class="text-secondary font-monospace">...</span></div>
-                                <div class="vr bg-secondary"></div>
-                                <div><strong class="text-white" id="lbl_date">{{ t.modal_date }}:</strong> <span
-                                        id="modalDate">...</span></div>
-                                <div class="vr bg-secondary"></div>
-                                <div><strong class="text-white" id="lbl_status">{{ t.modal_status }}:</strong> <span
-                                        id="modalStatus" class="badge bg-secondary">...</span></div>
+                    <!-- 6. Parameters (Dynamic) -->
+                    <div class="card glass-panel mb-4">
+                        <div class="card-body p-3">
+                            <div class="row g-3" id="paramsContainer">
+                                <!-- JS populates this -->
                             </div>
-
-                            <h6 class="text-white mb-1 mt-3">{{ t.modal_prompt|default('Prompt') }}</h6>
-                            <p class="text-light small border-start border-2 border-primary ps-2" id="modalPrompt"
-                                style="font-size: 0.85rem; line-height: 1.4; white-space: pre-wrap; max-height: 80px; overflow-y: auto;">
-                                ...</p>
-
-                            <a href="#" id="modalDownloadBtn" download target="_blank"
-                                class="btn btn-primary btn-sm w-100 mt-2">
-                                <i class="bi bi-download"></i> {{ t.modal_download|default('Download Original') }}
-                            </a>
+                            <div class="mt-2 text-white-50 small font-monospace" id="paramsSummary">
+                                <!-- Summary -->
+                            </div>
                         </div>
                     </div>
-                </div>
+
+                    <!-- 7. Generate Button -->
+                    <div class="d-grid position-relative">
+                        <div id="emptyPromptMsg"
+                            class="position-absolute top-0 start-50 translate-middle-x bg-danger text-white px-2 rounded small d-none"
+                            style="margin-top: -25px;">
+                            Add prompt to generate
+                        </div>
+                        <button type="submit" id="mainGenerateBtn"
+                            class="btn btn-primary btn-lg py-3 fw-bold ls-1 shadow-lg" disabled>
+                            Generate <span class="badge bg-white text-primary ms-2" id="costBadge">10 CR</span>
+                        </button>
+                    </div>
+
+                </form>
+
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const jobModalEl = document.getElementById('jobDetailsModal');
-        if (!jobModalEl) return;
+    // Embed Models Data
+    const MODELS = {{ models_json| safe }};
 
-        const jobModal = new bootstrap.Modal(jobModalEl);
+    const app = {
+        state: {
+            mode: 'image', // image | video
+            source: 'text', // text | image
+            modelId: null,
+            hasFile: false
+        },
 
-        // Expose function globally
-        window.openJobModal = function (btn) {
-            console.log("Opening modal for:", btn);
-            if (!btn) return;
+        init() {
+            this.setMode('image');
+            // Auto select first valid model
+            this.updateModels();
+            this.updateState();
+        },
 
-            // Elements
-            const container = document.getElementById('modalMediaContainer');
-            const promptEl = document.getElementById('modalPrompt');
-            const idEl = document.getElementById('modalJobId');
-            const dateEl = document.getElementById('modalDate');
-            const statusEl = document.getElementById('modalStatus');
-            const dlBtn = document.getElementById('modalDownloadBtn');
+        setMode(mode) {
+            this.state.mode = mode;
 
-            // Populate Data
-            const d = btn.dataset;
+            // Update UI Labels
+            const txtBtn = document.getElementById('lblSourceText');
+            const imgBtn = document.getElementById('lblSourceImage');
 
-            idEl.textContent = d.id || 'N/A';
-            dateEl.textContent = d.date || '-';
-            promptEl.textContent = d.prompt || '(No prompt)';
-
-            // Translate status if simple? 
-            // We have t.status_running etc. but we can't access them easily for dynamic 'd.status'.
-            // For MVP, we'll keep Status as raw EN from DB or capitalize.
-            statusEl.textContent = (d.status || 'unknown').toUpperCase();
-
-            dlBtn.href = d.url || '#';
-
-            // Render Media
-            container.innerHTML = '';
-
-            if (d.kind === 'video') {
-                const vid = document.createElement('video');
-                vid.src = d.url;
-                vid.controls = true;
-                vid.autoplay = true;
-                vid.loop = true;
-                vid.className = "detail-view-media";
-                container.appendChild(vid);
+            if (mode === 'image') {
+                txtBtn.textContent = "Text to Image";
+                imgBtn.textContent = "Image to Image";
             } else {
-                const img = document.createElement('img');
-                img.src = d.url;
-                img.className = "detail-view-media";
-                img.onerror = function () { this.src = '/static/placeholder.png'; };
-                container.appendChild(img);
+                txtBtn.textContent = "Text to Video";
+                imgBtn.textContent = "Image to Video";
             }
 
-            jobModal.show();
-        };
+            this.setSource('text'); // Reset source preference? Or keep? Reset is safer.
+            this.updateModels();
+        },
 
-        // Stop video on close
-        jobModalEl.addEventListener('hidden.bs.modal', event => {
-            document.getElementById('modalMediaContainer').innerHTML = '';
-        });
-    });
+        setSource(source) {
+            this.state.source = source;
+            document.getElementById('btnSourceText').classList.toggle('active', source === 'text');
+            document.getElementById('btnSourceImage').classList.toggle('active', source === 'image');
+
+            const uploadArea = document.getElementById('uploadArea');
+            if (source === 'image') {
+                uploadArea.classList.remove('d-none');
+            } else {
+                uploadArea.classList.add('d-none');
+            }
+            this.updateModels();
+        },
+
+        handleFile(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const prev = document.getElementById('filePreview');
+                    prev.classList.remove('d-none');
+                    prev.querySelector('img').src = e.target.result;
+                    this.state.hasFile = true;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        },
+
+        clearFile() {
+            document.getElementById('fileInput').value = '';
+            document.getElementById('filePreview').classList.add('d-none');
+            this.state.hasFile = false;
+        },
+
+        updateModels() {
+            const container = document.getElementById('modelList');
+            container.innerHTML = '';
+
+            // Filter Models
+            const neededMode = this.state.source === 'text'
+                ? `text-to-${this.state.mode}`
+                : `image-to-${this.state.mode}`;
+
+            // If legacy data missing 'modes' field, fallback to basic logic
+            // Assuming legacy is text-to-image mostly.
+
+            const validModels = MODELS.filter(m => {
+                if (!m.modes || m.modes.length === 0) return this.state.mode === 'image' && this.state.source === 'text';
+                return m.modes.includes(neededMode);
+            });
+
+            if (validModels.length === 0) {
+                container.innerHTML = '<div class="text-muted small">No models available for this mode.</div>';
+                return;
+            }
+
+            validModels.forEach((m, idx) => {
+                const isSelected = (this.state.modelId === m.id) || (idx === 0 && !this.state.modelId);
+                if (isSelected) this.selectModel(m.id);
+
+                const el = document.createElement('div');
+                el.className = `card flex-shrink-0 cursor-pointer ${isSelected ? 'border-primary bg-primary bg-opacity-10' : 'border-secondary bg-dark'}`;
+                el.style.width = '160px';
+                el.onclick = () => this.selectModel(m.id);
+                el.innerHTML = `
+                    <div class="card-body p-2 text-center">
+                        <div class="ratio ratio-1x1 mb-2 rounded bg-black overflow-hidden">
+                             <img src="${m.cover || '/static/placeholder.png'}" class="object-fit-cover">
+                        </div>
+                        <h6 class="card-title text-white small mb-0 text-truncate">${m.name}</h6>
+                        <small class="text-muted" style="font-size: 0.7em;">${m.provider}</small>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+
+            // Re-render model list to highlight selection? Or just manipulating class above is enough for loop.
+            // Actually loop runs once. Better to enforce selection visual update separately? 
+            // For MVP, re-rendering is fast enough.
+        },
+
+        selectModel(id) {
+            this.state.modelId = id;
+            document.getElementById('selectedModelId').value = id;
+
+            // Highlight UI
+            const cards = document.getElementById('modelList').children;
+            Array.from(cards).forEach(c => {
+                c.classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
+                c.classList.add('border-secondary', 'bg-dark');
+                if (c.onclick.toString().includes(id)) { // Hacky check or just loop models
+                    c.classList.remove('border-secondary', 'bg-dark');
+                    c.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
+                }
+            });
+
+            this.renderParams();
+            this.calcCost();
+        },
+
+        renderParams() {
+            const m = MODELS.find(x => x.id === this.state.modelId);
+            const container = document.getElementById('paramsContainer');
+            container.innerHTML = '';
+
+            if (!m) return;
+
+            // Resolutions
+            if (m.resolutions && m.resolutions.length > 0) {
+                const col = document.createElement('div');
+                col.className = 'col-md-6';
+                col.innerHTML = `
+                    <label class="form-label text-white-50 small">Resolution</label>
+                    <select name="resolution" class="form-select form-select-sm bg-dark text-white border-secondary" onchange="app.calcCost()">
+                        ${m.resolutions.map(r => `<option value="${r}">${r}</option>`).join('')}
+                    </select>
+                `;
+                container.appendChild(col);
+            }
+
+            // Durations
+            if (this.state.mode === 'video' && m.durations && m.durations.length > 0) {
+                const col = document.createElement('div');
+                col.className = 'col-md-6';
+                col.innerHTML = `
+                    <label class="form-label text-white-50 small">Duration</label>
+                    <select name="duration" class="form-select form-select-sm bg-dark text-white border-secondary" onchange="app.calcCost()">
+                        ${m.durations.map(d => `<option value="${d}">${d}s</option>`).join('')}
+                    </select>
+                `;
+                container.appendChild(col);
+            }
+
+            this.calcCost();
+        },
+
+        calcCost() {
+            const m = MODELS.find(x => x.id === this.state.modelId);
+            if (!m) return;
+
+            let cost = 10;
+            // Costs logic from JSON
+            if (m.costs && m.costs.base) {
+                cost = m.costs.base;
+                // Add logic for multipliers (e.g. duration)
+            }
+
+            const btnCost = document.getElementById('costBadge');
+            btnCost.textContent = cost + ' CR';
+
+            // Summary text
+            const res = document.querySelector('select[name="resolution"]')?.value || 'Default';
+            const dur = document.querySelector('select[name="duration"]')?.value;
+            let text = `${this.state.mode.toUpperCase()} | ${res}`;
+            if (dur) text += ` | ${dur}s`;
+            document.getElementById('paramsSummary').textContent = text;
+        },
+
+        updateState() {
+            const prompt = document.getElementById('promptInput').value;
+            const btn = document.getElementById('mainGenerateBtn');
+            const msg = document.getElementById('emptyPromptMsg');
+
+            if (!prompt.trim()) {
+                btn.disabled = true;
+                // msg.classList.remove('d-none'); // Only show on hover/focus? 
+            } else {
+                btn.disabled = false;
+                msg.classList.add('d-none');
+            }
+        },
+
+        fantazise() {
+            const prompts = [
+                "A cyberpunk street food vendor in Tokyo, neon lights, rain, high detail",
+                "A majestic lion wearing a space suit, digital art, 8k",
+                "Abstract fluid colors, oil painting texture, vibrant",
+                "Portrait of a robot with human emotions, cinematic lighting"
+            ];
+            const p = prompts[Math.floor(Math.random() * prompts.length)];
+            const el = document.getElementById('promptInput');
+            el.value = p;
+            this.updateState();
+        }
+    };
+
+    // Global func for sidebar
+    window.showSection = (sec) => {
+        // Implement sidebar logic if needed to swap right pane content
+        // For now user requested main page structure
+        console.log("Nav to", sec);
+    };
+
+    document.addEventListener('DOMContentLoaded', () => app.init());
 </script>
 {% endblock %}
