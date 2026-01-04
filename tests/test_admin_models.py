@@ -26,7 +26,7 @@ async def test_admin_models_list_access(client: AsyncClient, db_session):
     
     # 2. Login
     login_data = {"email": "admin@test.com", "password": "password"}
-    response = await client.post("/auth/login", data=login_data)
+    response = await client.post("/login", data=login_data)
     assert response.status_code == 302
     
     # 3. Access Models Page
@@ -56,7 +56,7 @@ async def test_add_model_flow(client: AsyncClient, db_session, monkeypatch):
 
     # Login
     await create_admin_user(db_session)
-    await client.post("/auth/login", data={"email": "admin@test.com", "password": "password"})
+    await client.post("/login", data={"email": "admin@test.com", "password": "password"})
     
     # Add Model
     response = await client.post("/admin/models/add", data={"model_ref": "test/model"})
@@ -77,7 +77,7 @@ async def test_add_model_flow(client: AsyncClient, db_session, monkeypatch):
 async def test_legacy_route_redirect(client: AsyncClient, db_session):
     # Login
     await create_admin_user(db_session)
-    await client.post("/auth/login", data={"email": "admin@test.com", "password": "password"})
+    await client.post("/login", data={"email": "admin@test.com", "password": "password"})
 
     # Create dummy model
     import uuid
