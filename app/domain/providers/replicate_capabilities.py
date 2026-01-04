@@ -9,16 +9,52 @@ class ReplicateCapabilitiesService:
     def parse_capabilities(self, input_schema: Dict[str, Any]) -> Dict[str, Any]:
         """
         Main entry point.
-        Input: schema['components']['schemas']['Input']['properties'] (or similar)
-        Output: { 'modes': [], 'resolutions': [], 'durations': [] }
+        Input: schema['components']['schemas']['Input']['properties']
+        Output: { 'modes': [], 'resolutions': [], 'durations': [], 'defaults': {} }
         """
         props = input_schema
         
         return {
             "modes": self._detect_modes(props),
             "resolutions": self._detect_resolutions(props),
-            "durations": self._detect_durations(props)
+            "durations": self._detect_durations(props),
+            "defaults": self._extract_defaults(props)
         }
+
+    def _extract_defaults(self, props: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Extracts default values and constraints for common parameters.
+        Returns a dictionary suitable for ui_config.
+        """
+        defaults = {}
+        # List of keys we care about mapping to the UI
+        # (params hidden from standard UI can still be in JSON)
+        interesting_keys = [
+            "width", "height", "prompt", "negative_prompt",
+            "scheduler", "guidance_scale", "num_inference_steps",
+            "seed", "image", "mask", "refine", "apply_watermark",
+            "num_outputs", "prompt_strength"
+        ]
+        
+        for key, details in props.items():
+            # If it has a default, capture it
+            if "default" in details:
+                # Store simple primitives
+                val = details["default"]
+                if isinstance(val, (str, int, float, bool)) or val is None:
+                     defaults[key] = val
+            
+            # Also capture min/max for sliders if numeric
+            if details.get("type") in ["integer", "number"]:
+                if "minimum" in details:
+                    defaults[f"{key}_min"] = details["minimum"]
+                if "maximum" in details:
+                    defaults[f"{key}_max"] = details["maximum"]
+
+        # Rename common keys to standard ones if needed (normalization)
+        # e.g. 'steps' -> 'num_inference_steps' if steps is missing?
+        # For now, we keep raw keys to match model schema interaction.
+        return defaults
 
     def _detect_modes(self, props: Dict[str, Any]) -> List[str]:
         modes = set()
