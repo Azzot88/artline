@@ -67,15 +67,26 @@ async def client(db_session) -> AsyncGenerator[AsyncClient, None]:
 async def admin_user(db_session) -> "User":
     from app.models import User
     from app.core.security import get_password_hash
+    from app.domain.billing.models import LedgerEntry
     
     user = User(
         email="admin@test.com",
         hashed_password=get_password_hash("password"),
-        is_active=True,
-        is_admin=True,
-        balance=1000
+        is_admin=True
+        # removed is_active and balance as they are not in User model
     )
     db_session.add(user)
     await db_session.commit()
     await db_session.refresh(user)
+    
+    # Add initial balance
+    entry = LedgerEntry(
+        user_id=user.id,
+        amount=1000,
+        reason="initial_test_balance",
+        currency="credits"
+    )
+    db_session.add(entry)
+    await db_session.commit()
+    
     return user
