@@ -260,6 +260,10 @@
             const txtBtn = document.getElementById('tabText');
             const imgBtn = document.getElementById('tabImage');
 
+            const suffix = mode === 'image' ? 'Image' : 'Video';
+            txtBtn.textContent = `Text to ${suffix}`;
+            imgBtn.textContent = `Image to ${suffix}`;
+
             // Update Tab Styles (border-bottom white vs transparent)
             if (this.state.source === 'text') {
                 // handled in setSource
