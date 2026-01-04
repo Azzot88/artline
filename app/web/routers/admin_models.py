@@ -72,7 +72,7 @@ async def get_model_details(
     return {
         "id": str(model.id),
         "display_name": model.display_name,
-        "description": model.description,
+        "description": "", # Field removed from DB
         "model_ref": model.model_ref,
         "version_id": model.version_id,
         "provider": model.provider,
