@@ -41,7 +41,13 @@ class AIModel(Base):
     param_schema: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     default_params: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     
-    # New fields
+    # Capabilities (JSON fields)
+    modes: Mapped[list[str] | None] = mapped_column(JSON, nullable=True) # ["text-to-image", "image-to-video", etc]
+    resolutions: Mapped[list[str] | None] = mapped_column(JSON, nullable=True) # ["1024x1024", "16:9"]
+    durations: Mapped[list[int] | None] = mapped_column(JSON, nullable=True) # [5, 10] (seconds)
+    costs: Mapped[dict | None] = mapped_column(JSON, nullable=True) # {"base": 1, "duration_5": 2}
+
+    # UI Config
     ui_config: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     cover_image_url: Mapped[str | None] = mapped_column(String, nullable=True)
 
