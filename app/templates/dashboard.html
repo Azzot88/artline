@@ -228,39 +228,50 @@
             this.setMode('image');
             // Auto select first valid model
             this.updateModels();
-            this.updateState();
+            this.setRatio('1024x1024', '1:1'); // Default default
         },
 
         setMode(mode) {
             this.state.mode = mode;
 
             // Update UI Labels
-            const txtBtn = document.getElementById('lblSourceText');
-            const imgBtn = document.getElementById('lblSourceImage');
+            const txtBtn = document.getElementById('tabText');
+            const imgBtn = document.getElementById('tabImage');
 
-            if (mode === 'image') {
-                txtBtn.textContent = "Text to Image";
-                imgBtn.textContent = "Image to Image";
-            } else {
-                txtBtn.textContent = "Text to Video";
-                imgBtn.textContent = "Image to Video";
+            // Update Tab Styles (border-bottom white vs transparent)
+            if (this.state.source === 'text') {
+                // handled in setSource
             }
 
-            this.setSource('text'); // Reset source preference? Or keep? Reset is safer.
+            this.setSource('text');
             this.updateModels();
         },
 
         setSource(source) {
             this.state.source = source;
-            document.getElementById('btnSourceText').classList.toggle('active', source === 'text');
-            document.getElementById('btnSourceImage').classList.toggle('active', source === 'image');
 
+            const txtBtn = document.getElementById('tabText');
+            const imgBtn = document.getElementById('tabImage');
             const uploadArea = document.getElementById('uploadArea');
-            if (source === 'image') {
-                uploadArea.classList.remove('d-none');
-            } else {
+
+            if (source === 'text') {
+                txtBtn.classList.remove('border-transparent', 'text-white-50');
+                txtBtn.classList.add('border-white', 'text-white');
+
+                imgBtn.classList.add('border-transparent', 'text-white-50');
+                imgBtn.classList.remove('border-white', 'text-white');
+
                 uploadArea.classList.add('d-none');
+            } else {
+                imgBtn.classList.remove('border-transparent', 'text-white-50');
+                imgBtn.classList.add('border-white', 'text-white');
+
+                txtBtn.classList.add('border-transparent', 'text-white-50');
+                txtBtn.classList.remove('border-white', 'text-white');
+
+                uploadArea.classList.remove('d-none');
             }
+
             this.updateModels();
         },
 
@@ -268,9 +279,14 @@
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    const prev = document.getElementById('filePreview');
+                    const prev = document.getElementById('miniPreview');
+                    const img = document.getElementById('imgPreviewTag');
+                    const clearBtn = document.getElementById('clearFileBtn');
+
                     prev.classList.remove('d-none');
-                    prev.querySelector('img').src = e.target.result;
+                    img.src = e.target.result;
+                    clearBtn.classList.remove('d-none');
+
                     this.state.hasFile = true;
                 };
                 reader.readAsDataURL(input.files[0]);
@@ -279,21 +295,19 @@
 
         clearFile() {
             document.getElementById('fileInput').value = '';
-            document.getElementById('filePreview').classList.add('d-none');
+            document.getElementById('miniPreview').classList.add('d-none');
+            document.getElementById('clearFileBtn').classList.add('d-none');
             this.state.hasFile = false;
         },
 
         updateModels() {
-            const container = document.getElementById('modelList');
-            container.innerHTML = '';
+            const listContainer = document.getElementById('modelDropdown');
+            listContainer.innerHTML = '';
 
             // Filter Models
             const neededMode = this.state.source === 'text'
                 ? `text-to-${this.state.mode}`
                 : `image-to-${this.state.mode}`;
-
-            // If legacy data missing 'modes' field, fallback to basic logic
-            // Assuming legacy is text-to-image mostly.
 
             const validModels = MODELS.filter(m => {
                 if (!m.modes || m.modes.length === 0) return this.state.mode === 'image' && this.state.source === 'text';
@@ -301,87 +315,65 @@
             });
 
             if (validModels.length === 0) {
-                container.innerHTML = '<div class="text-muted small">No models available for this mode.</div>';
+                listContainer.innerHTML = '<li><span class="dropdown-item disabled">No models available</span></li>';
+                this.selectModel(null);
                 return;
             }
 
             validModels.forEach((m, idx) => {
-                const isSelected = (this.state.modelId === m.id) || (idx === 0 && !this.state.modelId);
-                if (isSelected) this.selectModel(m.id);
+                // Determine icon based on provider or explicit meta? 
+                const icon = m.provider === 'replicate' ? '⚡' : '🤖';
 
-                const el = document.createElement('div');
-                el.className = `card flex-shrink-0 cursor-pointer ${isSelected ? 'border-primary bg-primary bg-opacity-10' : 'border-secondary bg-dark'}`;
-                el.style.width = '160px';
-                el.onclick = () => this.selectModel(m.id);
-                el.innerHTML = `
-                    <div class="card-body p-2 text-center">
-                        <div class="ratio ratio-1x1 mb-2 rounded bg-black overflow-hidden">
-                             <img src="${m.cover || '/static/placeholder.png'}" class="object-fit-cover">
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <a class="dropdown-item d-flex align-items-center gap-2" href="#" onclick="app.selectModel('${m.id}')">
+                        <span class="fs-5">${icon}</span>
+                        <div>
+                            <div class="fw-bold small">${m.name}</div>
+                            <div class="text-muted" style="font-size: 0.7rem;">${m.provider}</div>
                         </div>
-                        <h6 class="card-title text-white small mb-0 text-truncate">${m.name}</h6>
-                        <small class="text-muted" style="font-size: 0.7em;">${m.provider}</small>
-                    </div>
+                    </a>
                 `;
-                container.appendChild(el);
+                listContainer.appendChild(li);
+
+                // Auto Select first
+                if (idx === 0 && !this.state.modelId) {
+                    this.selectModel(m.id);
+                }
             });
 
-            // Re-render model list to highlight selection? Or just manipulating class above is enough for loop.
-            // Actually loop runs once. Better to enforce selection visual update separately? 
-            // For MVP, re-rendering is fast enough.
+            // If current selection is invalid for new mode, reset
+            if (this.state.modelId && !validModels.find(x => x.id === this.state.modelId)) {
+                this.selectModel(validModels[0]?.id || null);
+            }
         },
 
         selectModel(id) {
             this.state.modelId = id;
-            document.getElementById('selectedModelId').value = id;
+            document.getElementById('selectedModelInput').value = id || '';
 
-            // Highlight UI
-            const cards = document.getElementById('modelList').children;
-            Array.from(cards).forEach(c => {
-                c.classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
-                c.classList.add('border-secondary', 'bg-dark');
-                if (c.onclick.toString().includes(id)) { // Hacky check or just loop models
-                    c.classList.remove('border-secondary', 'bg-dark');
-                    c.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
-                }
-            });
+            const m = MODELS.find(x => x.id === id);
 
-            this.renderParams();
+            const displayParams = document.getElementById('selectedModelName');
+            const displayIcon = document.getElementById('selectedModelIcon');
+
+            if (m) {
+                displayParams.textContent = m.name;
+                displayIcon.textContent = m.provider === 'replicate' ? '⚡' : '🤖';
+            } else {
+                displayParams.textContent = "Select Model";
+                displayIcon.textContent = "❓";
+            }
+
             this.calcCost();
         },
 
-        renderParams() {
-            const m = MODELS.find(x => x.id === this.state.modelId);
-            const container = document.getElementById('paramsContainer');
-            container.innerHTML = '';
+        setRatio(res, label) {
+            document.getElementById('selectedRatioInput').value = res;
+            document.getElementById('selectedRatio').textContent = label;
 
-            if (!m) return;
-
-            // Resolutions
-            if (m.resolutions && m.resolutions.length > 0) {
-                const col = document.createElement('div');
-                col.className = 'col-md-6';
-                col.innerHTML = `
-                    <label class="form-label text-white-50 small">Resolution</label>
-                    <select name="resolution" class="form-select form-select-sm bg-dark text-white border-secondary" onchange="app.calcCost()">
-                        ${m.resolutions.map(r => `<option value="${r}">${r}</option>`).join('')}
-                    </select>
-                `;
-                container.appendChild(col);
-            }
-
-            // Durations
-            if (this.state.mode === 'video' && m.durations && m.durations.length > 0) {
-                const col = document.createElement('div');
-                col.className = 'col-md-6';
-                col.innerHTML = `
-                    <label class="form-label text-white-50 small">Duration</label>
-                    <select name="duration" class="form-select form-select-sm bg-dark text-white border-secondary" onchange="app.calcCost()">
-                        ${m.durations.map(d => `<option value="${d}">${d}s</option>`).join('')}
-                    </select>
-                `;
-                container.appendChild(col);
-            }
-
+            // Also update icon based on label?
+            // For now simple text update
             this.calcCost();
         },
 
@@ -390,21 +382,21 @@
             if (!m) return;
 
             let cost = 10;
-            // Costs logic from JSON
             if (m.costs && m.costs.base) {
                 cost = m.costs.base;
-                // Add logic for multipliers (e.g. duration)
             }
 
-            const btnCost = document.getElementById('costBadge');
+            // Check video duration multiplier if relevant
+            if (this.state.mode === 'video') {
+                cost = 50; // Hardcode fallback or read from m.costs
+            }
+
+            const btnCost = document.getElementById('costDisplay');
             btnCost.textContent = cost + ' CR';
 
-            // Summary text
-            const res = document.querySelector('select[name="resolution"]')?.value || 'Default';
-            const dur = document.querySelector('select[name="duration"]')?.value;
-            let text = `${this.state.mode.toUpperCase()} | ${res}`;
-            if (dur) text += ` | ${dur}s`;
-            document.getElementById('paramsSummary').textContent = text;
+            // Check balance limit
+            // We don't have user balance in JS context easily unless embedded.
+            // But we can show warning if we did.
         },
 
         updateState() {
@@ -414,7 +406,7 @@
 
             if (!prompt.trim()) {
                 btn.disabled = true;
-                // msg.classList.remove('d-none'); // Only show on hover/focus? 
+                msg.classList.remove('d-none');
             } else {
                 btn.disabled = false;
                 msg.classList.add('d-none');
@@ -433,13 +425,6 @@
             el.value = p;
             this.updateState();
         }
-    };
-
-    // Global func for sidebar
-    window.showSection = (sec) => {
-        // Implement sidebar logic if needed to swap right pane content
-        // For now user requested main page structure
-        console.log("Nav to", sec);
     };
 
     document.addEventListener('DOMContentLoaded', () => app.init());
