@@ -152,7 +152,7 @@ async def test_webhook_refund_logic(client, db_session, admin_user):
     refund = ledger_res.scalar_one_or_none()
     assert refund is not None
     assert refund.amount == 15
-    assert refund.operation == "credit"  # Or just positive amount check depends on model
+    assert "refund" in refund.reason
 
 @pytest.mark.asyncio
 async def test_webhook_idempotency(client, db_session, admin_user):
