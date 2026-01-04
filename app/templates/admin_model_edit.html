@@ -32,6 +32,34 @@
                     </div>
                 </div>
 
+                <div class="card glass-panel mb-4">
+                    <div class="card-header">Capabilities (JSON/CSV)</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Modes (comma-sep)</label>
+                            <input type="text" name="modes" class="form-control"
+                                placeholder="text-to-image, image-to-image" value="{{ ', '.join(model.modes or []) }}">
+                            <div class="form-text">Supported: text-to-image, image-to-image, text-to-video,
+                                image-to-video</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Resolutions (comma-sep)</label>
+                            <input type="text" name="resolutions" class="form-control"
+                                placeholder="1024x1024, 16:9, 720p" value="{{ ', '.join(model.resolutions or []) }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Durations (comma-sep integers)</label>
+                            <input type="text" name="durations" class="form-control" placeholder="2, 5, 10"
+                                value="{{ ', '.join((model.durations or []) | map('string')) }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Costs Logic (JSON)</label>
+                            <textarea name="costs" class="form-control" rows="3">{{ model.costs | tojson }}</textarea>
+                            <div class="form-text">e.g. {"base": 1, "duration_5": 2}</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card glass-panel">
                     <div class="card-header">Input Parameters</div>
                     <div class="card-body p-0 table-responsive" style="max-height: 500px; overflow-y: auto;">
