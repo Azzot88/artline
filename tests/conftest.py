@@ -7,6 +7,9 @@ from typing import AsyncGenerator
 
 # Override settings for test
 import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 os.environ["POSTGRES_DB"] = "artline_test" 
 # Note: Ideally usage of testcontainer or separate DB. 
 # For now, assuming local DB or mocking. 
