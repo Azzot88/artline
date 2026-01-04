@@ -9,7 +9,7 @@
         <div class="alert alert-danger">{{ error }}</div>
         {% endif %}
 
-        <form method="post" action="/signup">
+        <form method="post" action="/register">
             <div class="mb-3">
                 <label for="email" class="form-label">{{ t.auth_email|default('Email address') }}</label>
                 <input type="email" class="form-control" name="email" id="email" required>

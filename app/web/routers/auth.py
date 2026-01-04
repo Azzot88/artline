@@ -63,7 +63,7 @@ async def login(
     )
     return response
 
-@router.get("/signup", response_class=HTMLResponse)
+@router.get("/register", response_class=HTMLResponse)
 async def signup_page(request: Request):
     return templates.TemplateResponse(
         request=request, 
@@ -71,7 +71,7 @@ async def signup_page(request: Request):
         context={"t": get_t(request), "lang": get_current_lang(request)}
     )
 
-@router.post("/signup")
+@router.post("/register")
 async def signup(
     request: Request,
     email: str = Form(...),
