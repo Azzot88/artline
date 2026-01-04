@@ -60,103 +60,151 @@
             <div class="container py-4" style="max-width: 900px;">
 
                 <!-- Main Form -->
-                <form id="generateForm" hx-post="/dashboard/jobs/new" hx-swap="none">
+                <!-- Main Form (Styled like Reference) -->
+                <form id="generateForm" hx-post="/dashboard/jobs/new" hx-swap="none" class="position-relative">
 
-                    <!-- 1. Mode Switcher -->
-                    <div class="d-flex justify-content-center mb-4">
-                        <div class="btn-group bg-dark rounded-pill p-1 border border-secondary" role="group">
-                            <input type="radio" class="btn-check" name="kind" id="modeImage" value="image" checked
-                                onchange="app.setMode('image')">
-                            <label class="btn btn-sm btn-dark rounded-pill px-4 text-uppercase fw-bold" for="modeImage">
-                                <i class="bi bi-image me-1"></i> Image
-                            </label>
+                    <!-- Main Card Container -->
+                    <div class="card border border-secondary shadow-lg overflow-hidden"
+                        style="background-color: #0f0f0f; border-color: #333 !important; border-radius: 12px;">
 
-                            <input type="radio" class="btn-check" name="kind" id="modeVideo" value="video"
-                                onchange="app.setMode('video')">
-                            <label class="btn btn-sm btn-dark rounded-pill px-4 text-uppercase fw-bold" for="modeVideo">
-                                <i class="bi bi-camera-reels me-1"></i> Video
-                            </label>
-                        </div>
-                    </div>
+                        <!-- Header: Toggles & Tabs -->
+                        <div class="card-header border-0 pb-0 pt-3 px-4 d-flex align-items-center mb-2"
+                            style="background: transparent;">
+                            <!-- Mode Switch (Image/Video as Icons) -->
+                            <div class="btn-group me-4 p-1 rounded bg-dark border border-secondary" role="group">
+                                <input type="radio" class="btn-check" name="kind" id="modeImage" value="image" checked
+                                    onchange="app.setMode('image')">
+                                <label class="btn btn-sm btn-link text-white text-decoration-none px-2 py-0 border-0"
+                                    for="modeImage" title="Image Mode">
+                                    <i class="bi bi-image fs-5"></i>
+                                </label>
 
-                    <!-- 2. Source Switcher -->
-                    <div class="d-flex justify-content-center gap-2 mb-4">
-                        <button type="button" class="btn btn-outline-secondary btn-sm active" id="btnSourceText"
-                            onclick="app.setSource('text')">
-                            <i class="bi bi-fonts"></i> <span id="lblSourceText">Text to Image</span>
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnSourceImage"
-                            onclick="app.setSource('image')">
-                            <i class="bi bi-card-image"></i> <span id="lblSourceImage">Image to Image</span>
-                        </button>
-                    </div>
-
-                    <!-- 3. Image Upload (Conditional) -->
-                    <div id="uploadArea" class="mb-4 d-none">
-                        <label class="form-label text-white-50 small">Input Image</label>
-                        <div class="border border-secondary border-dashed rounded p-4 text-center text-muted"
-                            onclick="document.getElementById('fileInput').click()" style="cursor: pointer;">
-                            <i class="bi bi-cloud-upload display-4"></i>
-                            <p class="mb-0 mt-2">Click to upload reference image</p>
-                            <input type="file" id="fileInput" name="init_image" class="d-none"
-                                onchange="app.handleFile(this)">
-                        </div>
-                        <div id="filePreview" class="mt-2 d-none">
-                            <img src="" class="rounded" style="height: 100px;">
-                            <button type="button" class="btn btn-sm btn-danger ms-2"
-                                onclick="app.clearFile()">x</button>
-                        </div>
-                    </div>
-
-                    <!-- 4. Prompt Area -->
-                    <div class="position-relative mb-4">
-                        <div class="d-flex justify-content-between mb-1">
-                            <label class="text-white-50 small text-uppercase fw-bold">Prompt</label>
-                            <button type="button" class="btn btn-link btn-sm p-0 text-primary text-decoration-none"
-                                onclick="app.fantazise()">
-                                <i class="bi bi-stars"></i> Fantazise
-                            </button>
-                        </div>
-                        <textarea name="prompt" id="promptInput"
-                            class="form-control bg-dark text-white border-secondary fs-5" rows="3"
-                            placeholder="Describe what you want to see..." required
-                            oninput="app.updateState()"></textarea>
-                    </div>
-
-                    <!-- 5. Model Selection -->
-                    <div class="mb-4">
-                        <label class="text-white-50 small text-uppercase fw-bold mb-2">Select Model</label>
-                        <div class="d-flex overflow-auto gap-3 pb-2" id="modelList">
-                            <!-- JS populates this -->
-                        </div>
-                        <input type="hidden" name="model" id="selectedModelId">
-                    </div>
-
-                    <!-- 6. Parameters (Dynamic) -->
-                    <div class="card glass-panel mb-4">
-                        <div class="card-body p-3">
-                            <div class="row g-3" id="paramsContainer">
-                                <!-- JS populates this -->
+                                <input type="radio" class="btn-check" name="kind" id="modeVideo" value="video"
+                                    onchange="app.setMode('video')">
+                                <label class="btn btn-sm btn-link text-white-50 text-decoration-none px-2 py-0 border-0"
+                                    for="modeVideo" title="Video Mode">
+                                    <i class="bi bi-camera-reels fs-5"></i>
+                                </label>
                             </div>
-                            <div class="mt-2 text-white-50 small font-monospace" id="paramsSummary">
-                                <!-- Summary -->
+
+                            <!-- Source Tabs -->
+                            <div class="d-flex gap-4">
+                                <div class="cursor-pointer pb-2 border-bottom border-2 border-transparent text-white-50 fw-bold header-tab"
+                                    id="tabText" onclick="app.setSource('text')">
+                                    Text to Image
+                                </div>
+                                <div class="cursor-pointer pb-2 border-bottom border-2 border-white text-white fw-bold header-tab"
+                                    id="tabImage" onclick="app.setSource('image')">
+                                    Image to Image
+                                </div>
+                            </div>
+
+                            <div class="ms-auto text-white-50 small">
+                                <i class="bi bi-info-circle"></i> Prompt tips
                             </div>
                         </div>
-                    </div>
 
-                    <!-- 7. Generate Button -->
-                    <div class="d-grid position-relative">
-                        <div id="emptyPromptMsg"
-                            class="position-absolute top-0 start-50 translate-middle-x bg-danger text-white px-2 rounded small d-none"
-                            style="margin-top: -25px;">
-                            Add prompt to generate
+                        <!-- Body: Upload & Prompt -->
+                        <div class="card-body px-4 py-2" style="min-height: 140px;">
+
+                            <!-- Image Input Trigger (Small Icon) -->
+                            <div id="uploadArea" class="mb-2 d-none">
+                                <div class="d-inline-block border border-secondary rounded p-2 text-center cursor-pointer hover-white position-relative"
+                                    style="width: 48px; height: 48px; border-style: dashed !important;"
+                                    onclick="document.getElementById('fileInput').click()">
+                                    <i class="bi bi-plus-lg text-white-50"></i>
+
+                                    <!-- Preview Overlay -->
+                                    <div id="miniPreview"
+                                        class="position-absolute top-0 start-0 w-100 h-100 d-none bg-dark rounded overflow-hidden">
+                                        <img src="" class="w-100 h-100 object-fit-cover" id="imgPreviewTag">
+                                    </div>
+                                </div>
+                                <input type="file" id="fileInput" name="init_image" class="d-none"
+                                    onchange="app.handleFile(this)">
+                                <button type="button" class="btn btn-link btn-sm text-danger p-0 ms-2 align-top d-none"
+                                    id="clearFileBtn" onclick="app.clearFile()">x</button>
+                            </div>
+
+                            <!-- Input Field -->
+                            <textarea name="prompt" id="promptInput"
+                                class="form-control bg-transparent border-0 text-white px-0 fs-5"
+                                style="resize: none; box-shadow: none;" rows="3"
+                                placeholder="Describe how to transform your image (e.g. 'swap the sky with a sunset') or blend 2-3 images..."
+                                required oninput="app.updateState()"></textarea>
                         </div>
-                        <button type="submit" id="mainGenerateBtn"
-                            class="btn btn-primary btn-lg py-3 fw-bold ls-1 shadow-lg" disabled>
-                            Generate <span class="badge bg-white text-primary ms-2" id="costBadge">10 CR</span>
-                        </button>
-                    </div>
 
+                        <!-- Footer: Controls -->
+                        <div class="card-footer bg-transparent border-0 px-4 pb-4 pt-2">
+
+                            <!-- Limits / Warning -->
+                            <div id="limitMsg" class="text-warning small mb-3 d-none">
+                                You've reached your free limit. <a href="/services/billing"
+                                    class="text-warning fw-bold">Subscribe now</a> to keep generating.
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+                                <!-- Left: Selectors -->
+                                <div class="d-flex gap-2">
+                                    <!-- Model Selector -->
+                                    <div class="dropdown">
+                                        <button
+                                            class="btn btn-dark border border-secondary rounded-3 text-start d-flex align-items-center gap-2 px-3"
+                                            type="button" data-bs-toggle="dropdown" style="background: #222;">
+                                            <span id="selectedModelIcon">🍌</span>
+                                            <span id="selectedModelName" class="text-white small fw-bold">Select
+                                                Model</span>
+                                            <i class="bi bi-chevron-down ms-2 text-white-50 small"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-dark shadow-lg p-0" id="modelDropdown"
+                                            style="max-height: 300px; overflow-y: auto;">
+                                            <!-- JS Populated -->
+                                        </ul>
+                                        <input type="hidden" name="model" id="selectedModelInput">
+                                    </div>
+
+                                    <!-- Aspect Ratio Selector -->
+                                    <div class="dropdown">
+                                        <button
+                                            class="btn btn-dark border border-secondary rounded-3 d-flex align-items-center gap-2 px-3"
+                                            type="button" data-bs-toggle="dropdown" style="background: #222;">
+                                            <i class="bi bi-square"></i>
+                                            <span id="selectedRatio" class="text-white small fw-bold">1:1</span>
+                                            <i class="bi bi-chevron-down text-white-50 small"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-dark shadow-lg" id="ratioDropdown">
+                                            <li><a class="dropdown-item" href="#"
+                                                    onclick="app.setRatio('1024x1024', '1:1')"><i
+                                                        class="bi bi-square me-2"></i> 1:1 (Square)</a></li>
+                                            <li><a class="dropdown-item" href="#"
+                                                    onclick="app.setRatio('896x1152', '3:4')"><i
+                                                        class="bi bi-phone me-2"></i> 3:4 (Portrait)</a></li>
+                                            <li><a class="dropdown-item" href="#"
+                                                    onclick="app.setRatio('1152x896', '4:3')"><i
+                                                        class="bi bi-aspect-ratio me-2"></i> 4:3 (Landscape)</a></li>
+                                            <li><a class="dropdown-item" href="#"
+                                                    onclick="app.setRatio('1344x768', '16:9')"><i
+                                                        class="bi bi-film me-2"></i> 16:9 (Wide)</a></li>
+                                        </ul>
+                                        <input type="hidden" name="resolution" id="selectedRatioInput">
+                                    </div>
+
+                                    <!-- Additional Params Container (Hidden by default, used for durations etc) -->
+                                    <div id="extraParams" class="d-none"></div>
+                                </div>
+
+                                <!-- Right: Generate Button -->
+                                <div>
+                                    <button type="submit" id="mainGenerateBtn"
+                                        class="btn btn-warning fw-bold px-4 py-2 d-flex align-items-center gap-2"
+                                        style="background-color: #ffd600; border: none; color: #000;">
+                                        Generate <span id="costDisplay">100</span> <i class="bi bi-stars"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </form>
 
             </div>
