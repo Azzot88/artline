@@ -12,7 +12,7 @@ from app.domain.users.guest_models import GuestProfile
 async def test_guest_flow():
     async with AsyncClient(app=app, base_url="http://test") as ac:
         # 1. Init Guest
-        response = await ac.post("/auth/guest/init")
+        response = await ac.post("/guest/init")
         assert response.status_code == 200
         data = response.json()
         assert "guest_id" in data
