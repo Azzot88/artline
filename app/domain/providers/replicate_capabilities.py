@@ -21,39 +21,52 @@ class ReplicateCapabilitiesService:
             "defaults": self._extract_defaults(props)
         }
 
-    def _extract_defaults(self, props: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_defaults(self, props: Dict[str, Any], prefix: str = "") -> Dict[str, Any]:
         """
-        Extracts default values and constraints for common parameters.
-        Returns a dictionary suitable for ui_config.
+        Recursively extracts defaults, enums, titles, and constraints.
+        Results are flattened into a UI-friendly dictionary.
         """
         defaults = {}
-        # List of keys we care about mapping to the UI
-        # (params hidden from standard UI can still be in JSON)
-        interesting_keys = [
-            "width", "height", "prompt", "negative_prompt",
-            "scheduler", "guidance_scale", "num_inference_steps",
-            "seed", "image", "mask", "refine", "apply_watermark",
-            "num_outputs", "prompt_strength"
-        ]
         
         for key, details in props.items():
-            # If it has a default, capture it
+            full_key = f"{prefix}{key}"
+            
+            # Handle nested objects
+            if details.get("type") == "object" and "properties" in details:
+                nested = self._extract_defaults(details["properties"], prefix=f"{full_key}.")
+                defaults.update(nested)
+                continue
+
+            # Capture Default
             if "default" in details:
-                # Store simple primitives
                 val = details["default"]
                 if isinstance(val, (str, int, float, bool)) or val is None:
-                     defaults[key] = val
+                     defaults[full_key] = val
+
+            # Capture UI Metadata
+            # Title/Label
+            if "title" in details:
+                defaults[f"{full_key}_label"] = details["title"]
             
-            # Also capture min/max for sliders if numeric
+            # Description
+            if "description" in details:
+                defaults[f"{full_key}_help"] = details["description"][:200] # Limit length
+
+            # Enums (Select options)
+            if "enum" in details:
+                defaults[f"{full_key}_options"] = details["enum"]
+
+            # Constraints
             if details.get("type") in ["integer", "number"]:
                 if "minimum" in details:
-                    defaults[f"{key}_min"] = details["minimum"]
+                    defaults[f"{full_key}_min"] = details["minimum"]
                 if "maximum" in details:
-                    defaults[f"{key}_max"] = details["maximum"]
+                    defaults[f"{full_key}_max"] = details["maximum"]
+            
+            # Always mark as visible if found, unless explicit hidden?
+            # We'll handle visibility logic in the UI or simple heuristic here.
+            # For now, just dumping the metadata allows the frontend to decide.
 
-        # Rename common keys to standard ones if needed (normalization)
-        # e.g. 'steps' -> 'num_inference_steps' if steps is missing?
-        # For now, we keep raw keys to match model schema interaction.
         return defaults
 
     def _detect_modes(self, props: Dict[str, Any]) -> List[str]:

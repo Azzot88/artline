@@ -474,17 +474,28 @@
                         } catch (e) { }
 
                         // Merge strategies:
-                        // For now, we overwrite defaults but keep visibility flags if they exist?
-                        // Actually, let's just create a valid config structure for the known keys.
+                        // Scan for primary keys (not ending in _label, _help, etc)
+                        const primaryKeys = Object.keys(caps.defaults).filter(k =>
+                            !k.endsWith('_label') && !k.endsWith('_help') &&
+                            !k.endsWith('_options') && !k.endsWith('_min') && !k.endsWith('_max')
+                        );
 
-                        for (const [key, val] of Object.entries(caps.defaults)) {
+                        primaryKeys.forEach(key => {
                             if (!currentConfig[key]) currentConfig[key] = {};
-                            currentConfig[key]["default"] = val;
-                            // Auto-set visible if it's a common parameter
-                            if (["prompt", "negative_prompt", "width", "height", "num_inference_steps"].includes(key)) {
-                                currentConfig[key]["visible"] = true;
-                            }
-                        }
+
+                            // Value
+                            currentConfig[key]["default"] = caps.defaults[key];
+
+                            // Metadata
+                            if (caps.defaults[`${key}_label`]) currentConfig[key]["label"] = caps.defaults[`${key}_label`];
+                            if (caps.defaults[`${key}_help`]) currentConfig[key]["help"] = caps.defaults[`${key}_help`];
+                            if (caps.defaults[`${key}_options`]) currentConfig[key]["options"] = caps.defaults[`${key}_options`];
+                            if (caps.defaults[`${key}_min`] !== undefined) currentConfig[key]["min"] = caps.defaults[`${key}_min`];
+                            if (caps.defaults[`${key}_max`] !== undefined) currentConfig[key]["max"] = caps.defaults[`${key}_max`];
+
+                            // Visibility: Default to true for detected fields
+                            currentConfig[key]["visible"] = true;
+                        });
 
                         document.getElementById('uiConfigRaw').value = JSON.stringify(currentConfig, null, 2);
 
@@ -493,7 +504,7 @@
                     }
                 }
 
-                alert(`Sync Complete! \nDetected: ${caps.modes.join(", ")} \nDefault Params extracted: ${Object.keys(caps.defaults || {}).length}`);
+                alert(`Sync Complete! \nDetected: ${caps.modes.join(", ")} \nParams extracted: ${Object.keys(caps.defaults || {}).length}`);
 
             } catch (e) {
                 alert("Error: " + e.message);
