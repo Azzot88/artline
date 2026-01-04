@@ -61,7 +61,7 @@ async def test_complete_generation_flow_happy_path(
         "prompt": "Cyberpunk cat",
         "model": "flux" 
     }
-    response = await client.post("/dashboard/jobs/new", data=create_payload)
+    response = await client.post("/jobs/new", data=create_payload)
     assert response.status_code == 200, "Job creation failed"
     
     # Get the created Job
