@@ -29,6 +29,22 @@ async def dashboard(
     models_result = await db.execute(select(AIModel).where(AIModel.is_active == True))
     ai_models = models_result.scalars().all()
     
+    # Serialize for Frontend Logic
+    models_data = []
+    for m in ai_models:
+        models_data.append({
+            "id": str(m.id),
+            "name": m.display_name,
+            "provider": m.provider,
+            "ref": m.model_ref,
+            "modes": m.modes or [],
+            "resolutions": m.resolutions or [],
+            "durations": m.durations or [],
+            "costs": m.costs or {},
+            "cover": m.cover_image_url,
+            "ui_config": m.ui_config or {}
+        })
+    
     msg = None
     if checkout == "success":
         msg = "Credits added successfully!"
@@ -43,7 +59,8 @@ async def dashboard(
             "balance": balance, 
             "jobs": jobs,
             "message": msg,
-            "ai_models": ai_models,
+            "ai_models": ai_models, # Keep for server-side if needed
+            "models_json": json.dumps(models_data),
             "t": get_t(request),
             "lang": get_current_lang(request)
         }
