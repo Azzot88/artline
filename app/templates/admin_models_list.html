@@ -1,0 +1,485 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row h-100 g-0">
+    <!-- Left Panel: Model List (35%) -->
+    <div class="col-md-4 col-lg-3 border-end bg-dark d-flex flex-column h-100" style="min-height: calc(100vh - 60px);">
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-white">AI Models</h5>
+            <button class="btn btn-sm btn-primary" onclick="showAddModal()">
+                <i class="bi bi-plus-lg"></i> New
+            </button>
+        </div>
+
+        <div class="list-group list-group-flush overflow-auto flex-grow-1" id="modelList">
+            {% for model in models %}
+            <button type="button"
+                class="list-group-item list-group-item-action bg-transparent text-white border-bottom border-secondary model-item"
+                data-id="{{ model.id }}" onclick="app.loadModel('{{ model.id }}')">
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Icon/Cover -->
+                    <div class="rounded-3 overflow-hidden bg-secondary d-flex align-items-center justify-content-center"
+                        style="width: 48px; height: 48px;">
+                        {% if model.cover_image_url %}
+                        <img src="{{ model.cover_image_url }}" class="w-100 h-100 object-fit-cover">
+                        {% else %}
+                        <i class="bi bi-box text-white-50"></i>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <strong class="text-truncate d-block">{{ model.display_name }}</strong>
+                            {% if model.is_active %}
+                            <span class="badge bg-success rounded-pill" style="font-size: 0.6em;">ON</span>
+                            {% else %}
+                            <span class="badge bg-secondary rounded-pill" style="font-size: 0.6em;">OFF</span>
+                            {% endif %}
+                        </div>
+                        <div class="small text-white-50 text-truncate" style="font-size: 0.75rem;">
+                            {{ model.model_ref }}
+                        </div>
+                    </div>
+                </div>
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Right Panel: Editor (65%) -->
+    <div class="col-md-8 col-lg-9 bg-dark text-white p-0 position-relative h-100 overflow-hidden">
+
+        <!-- Placeholder State -->
+        <div id="editorPlaceholder"
+            class="d-flex flex-column align-items-center justify-content-center h-100 text-white-50">
+            <i class="bi bi-grid-1x2 display-4 mb-3"></i>
+            <p>Select a model to configure</p>
+        </div>
+
+        <!-- Editor Form -->
+        <div id="editorPanel" class="d-none h-100 d-flex flex-column">
+            <!-- Toolbar -->
+            <div class="p-3 border-bottom border-secondary d-flex justify-content-between align-items-center bg-dark"
+                style="z-index: 10;">
+                <div>
+                    <h5 class="mb-0" id="editorTitle">Edit Model</h5>
+                    <small class="text-muted" id="editorSubtitle">ID: ...</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-info btn-sm" onclick="app.syncSchema()">
+                        <i class="bi bi-arrow-repeat"></i> Sync with Replicate
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="app.saveModel()" id="saveBtn">
+                        <i class="bi bi-save"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scrollable Form Area -->
+            <div class="flex-grow-1 overflow-auto p-4 custom-scrollbar">
+                <form id="modelForm">
+                    <input type="hidden" id="modelId">
+
+                    <!-- Section: Basic Info -->
+                    <div class="card bg-black border-secondary mb-4">
+                        <div
+                            class="card-header border-secondary bg-transparent fw-bold text-uppercase small text-white-50">
+                            Basic Information
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label text-white-50 small">Display Name</label>
+                                    <input type="text" class="form-control bg-dark text-white border-secondary"
+                                        id="displayName">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-white-50 small">Provider</label>
+                                    <input type="text" class="form-control bg-dark text-white border-secondary"
+                                        id="provider" readonly>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label text-white-50 small">Model Reference (owner/name)</label>
+                                    <input type="text" class="form-control bg-dark text-white border-secondary"
+                                        id="modelRef">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label text-white-50 small">Version ID (Hash)</label>
+                                    <input type="text"
+                                        class="form-control bg-dark text-white border-secondary font-monospace small"
+                                        id="versionId">
+                                    <div class="form-text text-white-50">Pin a specific version hash to ensure
+                                        consistent results.</div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label text-white-50 small">Description</label>
+                                    <textarea class="form-control bg-dark text-white border-secondary" rows="2"
+                                        id="description"></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-white-50 small">Cover Image (URL or
+                                        /static/...)</label>
+                                    <input type="text" class="form-control bg-dark text-white border-secondary"
+                                        id="coverImage">
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end">
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="isActive">
+                                        <label class="form-check-label text-white" for="isActive">Is Active visible in
+                                            Dashboard</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Capabilities -->
+                    <div class="card bg-black border-secondary mb-4">
+                        <div
+                            class="card-header border-secondary bg-transparent fw-bold text-uppercase small text-white-50 d-flex justify-content-between align-items-center">
+                            <span>Capabilities</span>
+                            <span class="badge bg-warning text-dark">Required for Dashboard Listing</span>
+                        </div>
+                        <div class="card-body">
+                            <!-- Modes -->
+                            <div class="mb-4 text-white">
+                                <label class="form-label text-white-50 small d-block mb-2">Supported Modes</label>
+                                <div class="btn-group" role="group">
+                                    <input type="checkbox" class="btn-check cap-mode" id="mode_text-to-image"
+                                        value="text-to-image">
+                                    <label class="btn btn-outline-secondary btn-sm" for="mode_text-to-image">Text to
+                                        Image</label>
+
+                                    <input type="checkbox" class="btn-check cap-mode" id="mode_image-to-image"
+                                        value="image-to-image">
+                                    <label class="btn btn-outline-secondary btn-sm" for="mode_image-to-image">Image to
+                                        Image</label>
+
+                                    <input type="checkbox" class="btn-check cap-mode" id="mode_text-to-video"
+                                        value="text-to-video">
+                                    <label class="btn btn-outline-secondary btn-sm" for="mode_text-to-video">Text to
+                                        Video</label>
+
+                                    <input type="checkbox" class="btn-check cap-mode" id="mode_image-to-video"
+                                        value="image-to-video">
+                                    <label class="btn btn-outline-secondary btn-sm" for="mode_image-to-video">Image to
+                                        Video</label>
+                                </div>
+                            </div>
+
+                            <!-- Resolutions -->
+                            <div class="mb-4">
+                                <label class="form-label text-white-50 small">Resolutions (Comma separated list, e.g.
+                                    1024x1024, 768x1024)</label>
+                                <input type="text" class="form-control bg-dark text-white border-secondary"
+                                    id="resolutions">
+                                <div class="d-flex gap-2 mt-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-xs"
+                                        onclick="app.appendRes('1024x1024')">1:1</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-xs"
+                                        onclick="app.appendRes('1344x768')">16:9</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-xs"
+                                        onclick="app.appendRes('768x1344')">9:16</button>
+                                </div>
+                            </div>
+
+                            <!-- Durations -->
+                            <div class="mb-2">
+                                <label class="form-label text-white-50 small">Video Durations (Seconds, comma
+                                    separated)</label>
+                                <input type="text" class="form-control bg-dark text-white border-secondary"
+                                    id="durations" placeholder="e.g. 5, 10">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Pricing -->
+                    <div class="card bg-black border-secondary mb-4">
+                        <div
+                            class="card-header border-secondary bg-transparent fw-bold text-uppercase small text-white-50">
+                            Pricing Configuration
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label text-white-50 small">Base Cost (Credits)</label>
+                                    <input type="number" class="form-control bg-dark text-white border-secondary"
+                                        id="costBase" value="0">
+                                </div>
+                                <div class="col-md-8">
+                                    <!-- Calculator Preview -->
+                                    <div class="p-3 rounded bg-dark border border-secondary">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="text-white-50 small">Calculator Preview</span>
+                                            <strong class="text-warning h5 mb-0" id="calcPreview">0 cr</strong>
+                                        </div>
+                                        <div class="small text-muted">
+                                            Moves <code>base_cost</code> + modifiers.
+                                            (Advanced multipliers coming soon)
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Advanced JSON (Hidden mostly) -->
+                    <div class="mb-5">
+                        <button class="btn btn-link text-white-50 text-decoration-none p-0" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#jsonDebug">
+                            <i class="bi bi-code-slash"></i> View Raw JSON Config
+                        </button>
+                        <div class="collapse mt-2" id="jsonDebug">
+                            <textarea class="form-control bg-black text-info border-secondary font-monospace small"
+                                rows="10" id="uiConfigRaw"></textarea>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add New -->
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">Add New AI Model</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/admin/models/add" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Model Reference</label>
+                        <input type="text" class="form-control bg-black text-white border-secondary" name="model_ref"
+                            placeholder="owner/name (e.g. black-forest-labs/flux-schnell)" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Model</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #111;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 4px;
+    }
+
+    .list-group-item.active {
+        background-color: #333 !important;
+        border-color: #444 !important;
+    }
+
+    .btn-xs {
+        padding: 0.1rem 0.4rem;
+        font-size: 0.75rem;
+    }
+</style>
+
+<script>
+    const app = {
+        currentId: null,
+
+        // Initial Load
+        init() {
+            // ...
+        },
+
+        async loadModel(id) {
+            this.currentId = id;
+
+            // UI
+            document.querySelectorAll('.list-group-item').forEach(el => el.classList.remove('active'));
+            document.querySelector(`button[data-id="${id}"]`)?.classList.add('active');
+
+            document.getElementById('editorPlaceholder').classList.add('d-none');
+            document.getElementById('editorPanel').classList.remove('d-none');
+
+            // Fetch
+            const res = await fetch(`/admin/models/${id}/details`);
+            if (!res.ok) return alert("Failed to load");
+            const data = await res.json();
+
+            this.renderForm(data);
+        },
+
+        renderForm(data) {
+            document.getElementById('modelId').value = data.id;
+            document.getElementById('editorTitle').innerText = data.display_name;
+            document.getElementById('editorSubtitle').innerText = data.id;
+
+            document.getElementById('displayName').value = data.display_name;
+            document.getElementById('provider').value = data.provider;
+            document.getElementById('modelRef').value = data.model_ref;
+            document.getElementById('versionId').value = data.version_id || "";
+            document.getElementById('description').value = data.description || "";
+            document.getElementById('coverImage').value = data.cover_image_url || "";
+            document.getElementById('isActive').checked = data.is_active;
+
+            // Capabilities
+            const caps = data.capabilities || {};
+            const modes = caps.modes || [];
+            document.querySelectorAll('.cap-mode').forEach(el => {
+                el.checked = modes.includes(el.value);
+            });
+
+            document.getElementById('resolutions').value = (caps.resolutions || []).join(", ");
+            document.getElementById('durations').value = (caps.durations || []).join(", ");
+
+            // Pricing
+            const costs = caps.costs || {};
+            document.getElementById('costBase').value = costs.base || 0;
+
+            // JSON
+            document.getElementById('uiConfigRaw').value = JSON.stringify(data.ui_config || {}, null, 2);
+        },
+
+        async saveModel() {
+            const id = this.currentId;
+            if (!id) return;
+
+            const btn = document.getElementById('saveBtn');
+            const oldHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+
+            // Gather Data
+            const modes = [];
+            document.querySelectorAll('.cap-mode:checked').forEach(el => modes.push(el.value));
+
+            const resolutions = document.getElementById('resolutions').value.split(',').map(s => s.trim()).filter(Boolean);
+            const durations = document.getElementById('durations').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+
+            let costs = {};
+            try {
+                // Basic logic for now
+                costs = { base: parseInt(document.getElementById('costBase').value) || 0 };
+            } catch (e) { }
+
+            let uiConfig = {};
+            try {
+                uiConfig = JSON.parse(document.getElementById('uiConfigRaw').value);
+            } catch (e) {
+                console.warn("Invalid UI Config JSON");
+            }
+
+            const payload = {
+                display_name: document.getElementById('displayName').value,
+                description: document.getElementById('description').value,
+                cover_image_url: document.getElementById('coverImage').value,
+                model_ref: document.getElementById('modelRef').value,
+                version_id: document.getElementById('versionId').value,
+                is_active: document.getElementById('isActive').checked,
+                provider: document.getElementById('provider').value,
+                capabilities: {
+                    modes: modes,
+                    resolutions: resolutions,
+                    durations: durations,
+                    costs: costs
+                },
+                ui_config: uiConfig
+            };
+
+            const res = await fetch(`/admin/models/${id}/save`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                location.reload(); // Refresh list to update names/status
+            } else {
+                alert("Error saving");
+                btn.innerHTML = oldHtml;
+            }
+        },
+
+        async syncSchema() {
+            const ref = document.getElementById('modelRef').value;
+            if (!ref) return alert("Enter Model Reference first");
+
+            const btn = document.querySelector('button[onclick="app.syncSchema()"]');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Syncing...';
+
+            try {
+                const res = await fetch('/admin/models/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model_ref: ref })
+                });
+
+                if (!res.ok) throw new Error("Sync failed");
+                const info = await res.json();
+
+                // 1. Update Version
+                if (info.version_id) {
+                    document.getElementById('versionId').value = info.version_id;
+                }
+
+                // 2. Auto-detect Modes
+                const props = info.schema?.components?.schemas?.Input?.properties || {};
+
+                // Reset
+                document.querySelectorAll('.cap-mode').forEach(el => el.checked = false);
+
+                // Logic:
+                // prompt -> Text Input
+                // image -> Image Input
+                // if prompt & image -> likely supports separate or mixed
+
+                if (props.prompt) {
+                    document.getElementById('mode_text-to-image').checked = true;
+                }
+                if (props.image) {
+                    document.getElementById('mode_image-to-image').checked = true;
+                }
+                if (props.prompt && props.image) {
+                    // Could be styling or variation.
+                    // Ideally check description or tags via Replicate api (not exposed in schema directly often)
+                }
+
+                // 3. Resolutions
+                // If model has aspect_ratio enum (common in Flux), maybe hint?
+                if (props.aspect_ratio?.enum) {
+                    // Just log for now, hard to map to exact pixels automatically without heuristics
+                    console.log("Detected Aspect Ratios:", props.aspect_ratio.enum);
+                }
+
+                alert("Synced! Version ID and Modes updated based on Schema.");
+
+            } catch (e) {
+                alert(e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        },
+
+        appendRes(val) {
+            const input = document.getElementById('resolutions');
+            let parts = input.value.split(',').map(s => s.trim()).filter(Boolean);
+        }
+    };
+
+    function showAddModal() {
+        new bootstrap.Modal(document.getElementById('addModal')).show();
+    }
+</script>
+{% endblock %}

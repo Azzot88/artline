@@ -1,14 +1,16 @@
-from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Form
+from typing import Annotated, List, Dict, Any, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Form, Body
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from pydantic import BaseModel
 from app.core.db import get_db
 from app.core.deps import get_current_user
 from app.models import User, AIModel
 from app.domain.providers.replicate_service import get_replicate_client
 import uuid
+import json
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -30,7 +32,7 @@ async def list_models(
     models = result.scalars().all()
     return templates.TemplateResponse(
         request=request,
-        name="admin_models.html",
+        name="admin_models_list.html",
         context={
             "user": user, 
             "models": models,
@@ -38,6 +40,71 @@ async def list_models(
             "lang": get_current_lang(request)
         }
     )
+
+class ModelCapabilities(BaseModel):
+    modes: List[str] = []
+    resolutions: List[str] = []
+    durations: List[int] = []
+    costs: Dict[str, Any] = {}
+
+class ModelUpdateSchema(BaseModel):
+    display_name: str
+    description: Optional[str] = None
+    cover_image_url: Optional[str] = None
+    model_ref: str
+    version_id: Optional[str] = None
+    is_active: bool = False
+    provider: str = "replicate"
+    capabilities: ModelCapabilities
+    ui_config: Dict[str, Any] = {}
+
+@router.get("/{model_id}/details")
+async def get_model_details(
+    model_id: str,
+    user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(AIModel).where(AIModel.id == uuid.UUID(model_id)))
+    model = result.scalar_one_or_none()
+    if not model:
+        raise HTTPException(404, "Model not found")
+        
+    return {
+        "id": str(model.id),
+        "display_name": model.display_name,
+        "description": model.description,
+        "model_ref": model.model_ref,
+        "version_id": model.version_id,
+        "provider": model.provider,
+        "cover_image_url": model.cover_image_url,
+        "is_active": model.is_active,
+        "ui_config": model.ui_config or {},
+        "capabilities": {
+            "modes": model.modes or [],
+            "resolutions": model.resolutions or [],
+            "durations": model.durations or [],
+            "costs": model.costs or {}
+        },
+        "param_schema": model.param_schema
+    }
+
+@router.post("/sync")
+async def sync_schema(
+    request: Request,
+    body: Dict[str, str] = Body(...),
+    user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db)
+):
+    model_ref = body.get("model_ref")
+    if not model_ref:
+        raise HTTPException(400, "model_ref required")
+        
+    try:
+        client = await get_replicate_client(db)
+        info = await client.fetch_model_schema(model_ref)
+        return info # {version_id, schema}
+    except Exception as e:
+        raise HTTPException(400, str(e))
 
 @router.post("/add")
 async def add_model(
@@ -136,108 +203,36 @@ async def edit_model(
 @router.post("/{model_id}/save")
 async def save_model_config(
     model_id: str,
-    request: Request,
-    display_name: str = Form(...),
-    cover_image_url: str = Form(None),
-    is_active: bool = Form(False), # Checkbox not sent if unchecked implies default false in Form? actually FastAPI handles bool conversion from "on"/missing nicely usually? No, careful.
-    # Handling dynamic form fields is tricky with Pydantic. We use Request.form()
+    update_data: ModelUpdateSchema,
     user: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
-    form_data = await request.form()
-    
-    # Reload model
     result = await db.execute(select(AIModel).where(AIModel.id == uuid.UUID(model_id)))
     model = result.scalar_one_or_none()
     if not model:
-        raise HTTPException(404)
+        raise HTTPException(404, "Model not found")
         
-    # Update Basic
-    model.display_name = display_name
-    model.cover_image_url = cover_image_url
-    model.is_active = is_active # "on" if checked, else need to handle missing
-    # Correction: form checkboxes: if not checked, key is missing.
-    # So we should check membership
-    model.is_active = "is_active" in form_data
-    
-    # Build UI Config
-    # We look for keys starting with "show_", "label_", "default_"
-    # We iterate the known schema properties or the form keys?
-    # Better to iterate form keys to find overrides.
-    
-    ui_config = {}
-    
-    # Extract keys from schema to know what exists? 
-    # Or just parse form.
-    # Let's parse form data efficiently.
-    for key in form_data:
-        if key.startswith("label_"):
-            field_name = key[6:]
-            if field_name not in ui_config: ui_config[field_name] = {}
-            ui_config[field_name]["label"] = form_data[key]
-        elif key.startswith("default_"):
-            field_name = key[8:]
-            if field_name not in ui_config: ui_config[field_name] = {}
-            ui_config[field_name]["default"] = form_data[key]
-        elif key.startswith("show_"):
-            field_name = key[5:]
-            if field_name not in ui_config: ui_config[field_name] = {}
-            ui_config[field_name]["visible"] = True
-    
-    # Important: Unchecked "show_" means we want it hidden?
-    # Our logic in DB: we store what we want. 
-    # In the UI loop, we defaulted to "visible=True" in 'checkbox checked'.
-    # If key is missing in form, it means user unchecked it (Hidden).
-    # BUT we only captured keys present.
-    # So we need to mark explicit "visible=False" for items NOT in ui_config?
-    # OR simpler: The UI template uses `conf.get('visible', True)`.
-    # So if it's missing in `ui_config`, it defaults to True.
-    # To hide it, we must store "visible": False.
-    # So we need to know ALL possible fields from `model.param_schema` and check if they were in form.
-    
-    if model.param_schema:
-        try:
-            props = model.param_schema["components"]["schemas"]["Input"]["properties"]
-            for prop_name in props:
-                if f"show_{prop_name}" not in form_data:
-                    # User unchecked it
-                    if prop_name not in ui_config: ui_config[prop_name] = {}
-                    ui_config[prop_name]["visible"] = False
-                else:
-                    # User checked it
-                    if prop_name not in ui_config: ui_config[prop_name] = {}
-                    ui_config[prop_name]["visible"] = True
-        except:
-            pass
-
+    # Update Basic Info
+    model.display_name = update_data.display_name
+    model.description = update_data.description
+    model.cover_image_url = update_data.cover_image_url
+    model.model_ref = update_data.model_ref
+    model.version_id = update_data.version_id
+    model.is_active = update_data.is_active
+    model.provider = update_data.provider
     
     # Update Capabilities
-    # Modes (CSV)
-    modes_str = form_data.get("modes", "")
-    model.modes = [x.strip().lower() for x in modes_str.split(",") if x.strip()]
+    caps = update_data.capabilities
+    model.modes = caps.modes
+    model.resolutions = caps.resolutions
+    model.durations = caps.durations
+    model.costs = caps.costs
     
-    # Resolutions (CSV)
-    res_str = form_data.get("resolutions", "")
-    model.resolutions = [x.strip() for x in res_str.split(",") if x.strip()]
+    # Update UI Config
+    model.ui_config = update_data.ui_config
     
-    # Durations (CSV Integers)
-    dur_str = form_data.get("durations", "")
-    model.durations = [int(x.strip()) for x in dur_str.split(",") if x.strip().isdigit()]
-    
-    # Costs (JSON String)
-    costs_str = form_data.get("costs", "{}")
-    import json
-    try:
-        model.costs = json.loads(costs_str)
-    except json.JSONDecodeError:
-        # Fallback to empty or don't update? 
-        # Safer to default to empty dict if partial/invalid
-        model.costs = {}
-
-    model.ui_config = ui_config
     await db.commit()
-    
-    return RedirectResponse(f"/admin/models/{model_id}", status_code=302)
+    return {"status": "ok", "model_id": str(model.id)}
 
 @router.post("/{model_id}/preview")
 async def model_preview(
