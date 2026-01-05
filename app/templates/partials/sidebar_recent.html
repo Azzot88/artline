@@ -1,0 +1,21 @@
+{% for job in jobs[:6] %}
+<div class="ratio ratio-1x1 bg-dark rounded border border-secondary overflow-hidden position-relative"
+    title="{{ job.prompt }}">
+    {% if job.kind == 'video' %}
+    <!-- Check if result_url exists -->
+    {% if job.result_url %}
+    <video src="{{ job.result_url }}" class="w-100 h-100 object-fit-cover"></video>
+    {% else %}
+    <div class="d-flex align-items-center justify-content-center h-100 text-white-50">
+        <i class="bi bi-hourglass-split"></i>
+    </div>
+    {% endif %}
+    <i class="bi bi-camera-reels position-absolute top-0 end-0 m-1 text-white small shadow"></i>
+    {% else %}
+    <img src="{{ job.icon_url or job.result_url or '/static/placeholder.png' }}" class="w-100 h-100 object-fit-cover">
+    {% endif %}
+
+    <!-- Link overlay -->
+    <a href="#" onclick="showSection('history'); return false;" class="stretched-link"></a>
+</div>
+{% endfor %}

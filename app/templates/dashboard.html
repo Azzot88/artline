@@ -63,19 +63,9 @@
             <!-- Mini Gallery / Recent -->
             <div class="p-3 mt-auto">
                 <h6 class="text-white-50 text-uppercase small ls-1 mb-3">Recent Generations</h6>
-                <div id="mini-gallery" class="d-grid gap-2" style="grid-template-columns: repeat(3, 1fr);">
-                    <!-- Partial load of recent jobs -->
-                    {% for job in jobs[:6] %}
-                    <div
-                        class="ratio ratio-1x1 bg-dark rounded border border-secondary overflow-hidden position-relative">
-                        {% if job.kind == 'video' %}
-                        <video src="{{ job.result_url }}" class="w-100 h-100 object-fit-cover"></video>
-                        <i class="bi bi-camera-reels position-absolute top-0 end-0 m-1 text-white small shadow"></i>
-                        {% else %}
-                        <img src="{{ job.icon_url or job.result_url }}" class="w-100 h-100 object-fit-cover">
-                        {% endif %}
-                    </div>
-                    {% endfor %}
+                <div id="mini-gallery" class="d-grid gap-2" style="grid-template-columns: repeat(3, 1fr);"
+                    hx-get="/jobs/partial?view=sidebar" hx-trigger="load, jobsChanged from:body">
+                    {% include "partials/sidebar_recent.html" %}
                 </div>
             </div>
         </div>

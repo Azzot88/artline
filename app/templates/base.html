@@ -51,7 +51,7 @@
             <a class="nav-link" href="/dashboard">{{ t.nav_dashboard|default('Dashboard') }}</a>
           </li>
           <li class="nav-item">
-            <span class="nav-link" hx-get="/dashboard/balance/partial" hx-trigger="load, balanceChanged from:body"
+            <span class="nav-link" hx-get="/balance/partial" hx-trigger="load, balanceChanged from:body"
               hx-swap="outerHTML">
               <!-- Initial load -->
               Loading...

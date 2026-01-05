@@ -145,14 +145,20 @@ async def new_job(
 @router.get("/jobs/partial", response_class=HTMLResponse)
 async def jobs_partial(
     request: Request,
+    view: str = "list",
     user: User | object | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db)
 ):
     if not user: return HTMLResponse("")
     jobs = await get_user_jobs(db, user)
+    
+    template = "partials/job_list.html"
+    if view == "sidebar":
+        template = "partials/sidebar_recent.html"
+        
     return templates.TemplateResponse(
         request=request, 
-        name="partials/job_list.html",
+        name=template,
         context={
             "jobs": jobs,
             "t": get_t(request),
