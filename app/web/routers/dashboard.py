@@ -103,6 +103,7 @@ async def new_job(
              return response
 
     form_data = await request.form()
+    print(f"DEBUG DASHBOARD RECEIVED: {dict(form_data)}") # DEBUG LOG
     
     kind = form_data.get("kind", "image")
     prompt = form_data.get("prompt", "")
