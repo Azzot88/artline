@@ -400,12 +400,18 @@
         },
 
         renderAspectRatios(model) {
+            console.log("Rendering ratios for:", model.name, model.resolutions);
             const container = document.getElementById('aspectRatioContainer');
             container.innerHTML = '';
 
             // Default ratios if none provided
             const defaults = ['1:1', '16:9', '9:16'];
-            let ratios = model.resolutions && model.resolutions.length > 0 ? model.resolutions : defaults;
+            // Ensure ratios is an array
+            let ratios = model.resolutions;
+            if (!ratios || !Array.isArray(ratios) || ratios.length === 0) {
+                console.log("Using defaults for ratios");
+                ratios = defaults;
+            }
 
             // Simple map for labels vs values
             // If value is "1024x1024", label is "1:1", value sent is "1024x1024" (or "1:1" if mapped)
