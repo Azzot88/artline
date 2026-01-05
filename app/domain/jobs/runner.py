@@ -122,9 +122,34 @@ def process_job(self, job_id: str):
                   replicate_model_ref = "black-forest-labs/flux-1.1-pro"
 
         # 4. Input Data Construction
+        # Sanitize and cast params to correct types for Replicate API
+        sanitized_params = params.copy()
+        
+        # integer fields
+        for int_field in ["width", "height", "seed", "num_inference_steps", "num_frames", "num_outputs"]:
+            if int_field in sanitized_params and sanitized_params[int_field] is not None:
+                try:
+                    sanitized_params[int_field] = int(sanitized_params[int_field])
+                except (ValueError, TypeError):
+                    pass # Leave as is if casting fails
+
+        # float fields 
+        for float_field in ["guidance_scale", "prompt_strength", "lora_scale"]:
+            if float_field in sanitized_params and sanitized_params[float_field] is not None:
+                try:
+                    sanitized_params[float_field] = float(sanitized_params[float_field])
+                except (ValueError, TypeError):
+                    pass
+
+        # array fields (sometimes single url passed as string)
+        if "input_images" in sanitized_params:
+             val = sanitized_params["input_images"]
+             if isinstance(val, str) and val.strip():
+                  sanitized_params["input_images"] = [val]
+
         input_data = {
             "prompt": prompt_text,
-            **params
+            **sanitized_params
         }
         
         # 5. Submit
