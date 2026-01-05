@@ -16,4 +16,9 @@ celery_app.conf.update(
 )
 
 # Auto-discover tasks in the tasks module
-celery_app.autodiscover_tasks(["app.tasks.job_runner"])
+# Auto-discover tasks in the tasks module
+celery_app.autodiscover_tasks(["app.tasks.job_runner", "app.domain.jobs.runner"])
+
+# Explicit import of runner module to ensure register
+# (Sometimes autodiscover needs exact package path or module needs to be importable)
+import app.domain.jobs.runner
