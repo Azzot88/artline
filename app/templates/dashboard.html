@@ -453,6 +453,7 @@
                 btn.type = 'button';
                 btn.className = `btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 ${this.state.aspectRatio === val ? 'active text-white border-white' : 'text-white-50'}`;
                 btn.style.minWidth = "60px";
+                btn.dataset.val = val;
                 btn.innerHTML = `<span class="small fw-bold">${label}</span>`;
                 btn.onclick = () => this.setRatio(val, btn);
                 container.appendChild(btn);
@@ -463,42 +464,32 @@
             if (!ratios.find(x => mapRatio(x).val === this.state.aspectRatio)) {
                 const first = mapRatio(ratios[0]).val;
                 this.setRatio(first);
-            } else {
-                this.setRatio(this.state.aspectRatio); // re-trigger visual update
             }
+            // Else: NO recursion.
         },
 
         setRatio(val, btnEl = null) {
             this.state.aspectRatio = val;
             document.getElementById('aspectRatioInput').value = val;
 
-            // Update visual active state
             const container = document.getElementById('aspectRatioContainer');
-            Array.from(container.children).forEach(btn => {
-                // If we passed the element, use it, otherwise match text/val
-                // Simplest is to just re-render or toggle classes based on val matching
-                // Re-render is expensive? Just toggle.
-                // But wait, the label might differ from val. 
-                // Let's rely on re-render in `selectModel` or just manual toggle here
-                // Manual toggle is cleaner
+
+            // If btnEl is null, try to find it via data-val
+            if (!btnEl) {
+                // Must escape val if it contains special chars, but for ratios it's fine usually
+                btnEl = container.querySelector(`button[data-val="${val}"]`);
+            }
+
+            // Reset all
+            container.querySelectorAll('button').forEach(b => {
+                b.classList.remove('active', 'text-white', 'border-white');
+                b.classList.add('text-white-50');
             });
 
-            // Re-render to ensure correct active state
-            const m = MODELS.find(x => x.id === this.state.modelId);
-            if (m) {
-                const btns = container.querySelectorAll('button');
-                btns.forEach(b => {
-                    // Check if mapped value matches
-                    // This is tricky if we don't store value on button. 
-                    // Let's just reset innerHTML logic:
-                    b.classList.remove('active', 'text-white', 'border-white');
-                    b.classList.add('text-white-50');
-
-                    // Check text content? Or store value data-attr
-                    // Ideally we should have stored data-val
-                });
-                // Actually easier to just rebuild since list is small
-                this.renderAspectRatios(m);
+            // Activate target
+            if (btnEl) {
+                btnEl.classList.remove('text-white-50');
+                btnEl.classList.add('active', 'text-white', 'border-white');
             }
         },
 
