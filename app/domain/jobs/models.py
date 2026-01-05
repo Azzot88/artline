@@ -37,4 +37,4 @@ class Job(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
 
-    user: Mapped["User"] = relationship("User", back_populates="jobs")
+    user: Mapped["User"] = relationship("app.domain.users.models.User", back_populates="jobs")

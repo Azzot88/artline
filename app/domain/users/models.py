@@ -22,8 +22,8 @@ class User(Base):
     
     # Relationships
     # Use strings to avoid circular imports at runtime
-    ledger_entries: Mapped[list["LedgerEntry"]] = relationship("LedgerEntry", back_populates="user", cascade="all, delete-orphan")
-    jobs: Mapped[list["Job"]] = relationship("Job", back_populates="user", cascade="all, delete-orphan")
+    ledger_entries: Mapped[list["LedgerEntry"]] = relationship("app.domain.billing.models.LedgerEntry", back_populates="user", cascade="all, delete-orphan")
+    jobs: Mapped[list["Job"]] = relationship("app.domain.jobs.models.Job", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User {self.email}>"
