@@ -84,6 +84,23 @@ def process_job(self, job_id: str):
                 logger.warning(f"Failed to parse prompt format: {e}")
                 prompt_text = raw_prompt
         
+        logger.info(f"Parsed Prompt: '{prompt_text}', Params: {params.keys()}")
+
+        # 3. Resolve Model
+        # ... (lines 88-123 omitted for brevity, keeping existing logic via context if needed)
+        # But wait, I need to keep the Resolve Model block if I am replacing a large chunk.
+        # It's better to stay focused. I will Assume the Resolve Model block is mostly fine.
+        # I am editing lines 66-195? No that's too much.
+        # I will break this into smaller chunks or ensure I include the resolve logic?
+        # The Resolve logic is lines 87-123.
+        # The Sanitization logic is 124-189.
+        # I will replace sanitization logic primarily.
+        
+        # Let's target the sanitization block (124-190) separately?
+        # No, I want to fix prompt parsing logging too (lines 66-86).
+        # I'll do prompt parsing logging first.
+
+        
         # 3. Resolve Model
         replicate_version = None 
         replicate_model_ref = "black-forest-labs/flux-schnell" # Default to confirmed working model
@@ -125,6 +142,37 @@ def process_job(self, job_id: str):
         # Sanitize and cast params to correct types for Replicate API
         sanitized_params = params.copy()
         
+        # Generic JSON String Parsing (e.g. "[]", "['url']")
+        for k, v in list(sanitized_params.items()):
+            if isinstance(v, str) and v.strip().startswith("[") and v.strip().endswith("]"):
+                try:
+                    sanitized_params[k] = json.loads(v)
+                except Exception:
+                    pass # Keep as string if parse fails
+
+        # Aspect Ratio Validation/Mapping
+        if "aspect_ratio" in sanitized_params:
+            ar_val = str(sanitized_params["aspect_ratio"])
+            # If it's WxH (e.g. 1152x896), try to map it to Ratio Enum Strings
+            # Because some models (Kling, Nano Banana) fail on WxH strings.
+            if "x" in ar_val and ar_val.replace("x", "").isdigit():
+                try:
+                    w, h = map(int, ar_val.split("x"))
+                    ratio = w / h
+                    # Map to common ratios
+                    if abs(ratio - 1.0) < 0.05: sanitized_params["aspect_ratio"] = "1:1"
+                    elif abs(ratio - 16/9) < 0.05: sanitized_params["aspect_ratio"] = "16:9"
+                    elif abs(ratio - 9/16) < 0.05: sanitized_params["aspect_ratio"] = "9:16"
+                    elif abs(ratio - 4/3) < 0.05: sanitized_params["aspect_ratio"] = "4:3"
+                    elif abs(ratio - 3/4) < 0.05: sanitized_params["aspect_ratio"] = "3:4"
+                    elif abs(ratio - 3/2) < 0.05: sanitized_params["aspect_ratio"] = "3:2"
+                    elif abs(ratio - 2/3) < 0.05: sanitized_params["aspect_ratio"] = "2:3"
+                    elif abs(ratio - 21/9) < 0.05: sanitized_params["aspect_ratio"] = "21:9"
+                    elif abs(ratio - 9/21) < 0.05: sanitized_params["aspect_ratio"] = "9:21"
+                    # Else keep original (maybe model supports custom?)
+                except:
+                    pass
+
         # integer fields
         for int_field in ["width", "height", "seed", "num_inference_steps", "num_frames", "num_outputs"]:
             if int_field in sanitized_params:
@@ -136,8 +184,6 @@ def process_job(self, job_id: str):
                     try:
                         sanitized_params[int_field] = int(val)
                     except (ValueError, TypeError):
-                        # If cast fails (and not empty string handled above), remove it to be safe?
-                        # Or leave it and let API complain? Better to remove invalid types.
                         logger.warning(f"Removing invalid int param {int_field}: {val}")
                         del sanitized_params[int_field]
 
@@ -155,37 +201,20 @@ def process_job(self, job_id: str):
                          logger.warning(f"Removing invalid float param {float_field}: {val}")
                          del sanitized_params[float_field]
 
-        # array fields (sometimes single url passed as string)
-        if "input_images" in sanitized_params:
-             val = sanitized_params["input_images"]
-             
-             # Handle JSON string like "[]" from DB defaults
-             if isinstance(val, str):
-                 val = val.strip()
-                 if val.startswith("[") and val.endswith("]"):
-                     try:
-                         val = json.loads(val)
-                     except Exception:
-                         pass # Treat as normal string (url)
-             
-             if isinstance(val, str):
-                  if val.strip():
-                       sanitized_params["input_images"] = [val.strip()]
-                  else:
-                       del sanitized_params["input_images"] # Remove empty string
-             elif isinstance(val, list):
-                  # Filter out empty strings
-                  sanitized_params["input_images"] = [v for v in val if isinstance(v, str) and v.strip()]
-                  if not sanitized_params["input_images"]:
-                       del sanitized_params["input_images"]
+        # Remove 'input_images' if it's still string like "[]" (already handled by generic json above, but double check empty lists)
+        # Some models fail if empty list is passed?
+        if "input_images" in sanitized_params and isinstance(sanitized_params["input_images"], list):
+             if not sanitized_params["input_images"]:
+                 del sanitized_params["input_images"]
+        if "image_input" in sanitized_params and isinstance(sanitized_params["image_input"], list):
+             if not sanitized_params["image_input"]:
+                 del sanitized_params["image_input"]
 
-        # resolution enum: ensure it's valid or remove it
-        if "resolution" in sanitized_params:
-             if sanitized_params["resolution"] not in ["match_input_image", "0.5 MP", "1 MP", "2 MP", "4 MP"]:
-                  # If invalid (e.g. random string "1024"), maybe try to map or remove?
-                  # For now, remove to let model default kick in if invalid
-                  logger.warning(f"Removing invalid resolution param: {sanitized_params['resolution']}")
-                  del sanitized_params["resolution"]
+        # resolution: ensure valid
+        if "resolution" in sanitized_params and isinstance(sanitized_params["resolution"], str):
+             if "MP" not in sanitized_params["resolution"] and sanitized_params["resolution"] != "match_input_image":
+                  # Try to be lenient or remove if obviously wrong?
+                  pass
 
         input_data = {
             "prompt": prompt_text,
