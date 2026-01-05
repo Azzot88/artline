@@ -82,6 +82,9 @@ async def get_model_details(
         "cover_image_url": model.cover_image_url,
         "is_active": model.is_active,
         "ui_config": model.ui_config or {},
+        "replicate_owner": model.replicate_owner,
+        "replicate_name": model.replicate_name,
+        "normalized_caps_json": model.normalized_caps_json,
         "capabilities": {
             "modes": model.modes or [],
             "resolutions": model.resolutions or [],
@@ -106,39 +109,38 @@ async def sync_model_capabilities(
     if not model.model_ref:
          raise HTTPException(400, "Model reference (owner/name) is missing")
 
-    # 2. Fetch Schema from Replicate
+    # 2. Fetch Capabilities
     try:
-        from app.domain.providers.replicate_service import ReplicateService
-        # Temporary instance or access via provider config
-        # Assuming get_replicate_client handles auth
+        from app.domain.providers.replicate_service import get_replicate_client
         client = await get_replicate_client(db)
-        info = await client.fetch_model_schema(model.model_ref)
-    except Exception as e:
-        raise HTTPException(400, f"Replicate Sync Failed: {str(e)}")
-
-    # 3. Parse Capabilities
-    try:
-        from app.domain.providers.replicate_capabilities import ReplicateCapabilitiesService
-        service = ReplicateCapabilitiesService()
         
-        # Extract input properties
-        try:
-            input_props = info["schema"]["components"]["schemas"]["Input"]["properties"]
-        except KeyError:
-            input_props = {}
-            
-        capabilities = service.parse_capabilities(input_props)
+        info = client.fetch_model_capabilities(model.model_ref)
+        # returns { "raw_response": ..., "normalized_caps": ... }
+        
+        # 3. Save to DB
+        model.raw_schema_json = info["raw_response"]
+        model.normalized_caps_json = info["normalized_caps"]
+        
+        # Extract owner/name from info?
+        model.replicate_owner = info["normalized_caps"].get("owner")
+        model.replicate_name = info["normalized_caps"].get("title")
+        
+        # Also map to param_schema if needed (legacy compatibility)
+        if "latest_version" in info["raw_response"]:
+             model.version_id = info["raw_response"]["latest_version"]["id"]
+             model.param_schema = info["raw_response"]["latest_version"].get("openapi_schema")
+             
+        await db.commit()
         
         return {
             "status": "ok",
             "synced_at": datetime.datetime.now().isoformat(),
-            "version_id": info["version_id"],
-            "capabilities": capabilities,
-            "raw_schema": info["schema"]
+            "capabilities": info["normalized_caps"]
         }
+        
     except Exception as e:
-        # Catch parsing errors or import errors
-        raise HTTPException(400, f"Sync/Parse Error: {str(e)}")
+        await db.rollback()
+        raise HTTPException(400, f"Sync Failed: {str(e)}")
 
 @router.delete("/{model_id}")
 async def delete_model(
@@ -167,24 +169,35 @@ async def add_model(
     db: AsyncSession = Depends(get_db)
 ):
     try:
-        # Fetch schema
+        # Fetch schema/capabilities
         client = await get_replicate_client(db)
-        info = await client.fetch_model_schema(model_ref)
+        # info = { "raw_response": ..., "normalized_caps": ... }
+        info = client.fetch_model_capabilities(model_ref)
+        
+        raw_resp = info["raw_response"]
+        caps = info["normalized_caps"]
         
         # Parse basic info
-        # model_ref = "owner/name"
-        name_parts = model_ref.split("/")
-        display_name = name_parts[1] if len(name_parts) > 1 else model_ref
+        display_name = caps.get("title") or model_ref.split("/")[-1]
         
         # Create DB record
         new_model = AIModel(
             model_ref=model_ref,
             provider="replicate",
-            display_name=display_name.title().replace("-", " "),
-            version_id=info["version_id"],
-            param_schema=info["schema"],
-            ui_config={}, # Empty initially
-            is_active=False # Config first, then activate
+            display_name=display_name,
+            version_id=raw_resp.get("latest_version", {}).get("id"),
+            
+            # Persisted Capabilities
+            replicate_owner=caps.get("owner"),
+            replicate_name=caps.get("title"),
+            raw_schema_json=raw_resp,
+            normalized_caps_json=caps,
+            
+            # Legacy fields (optional but good for backward compat)
+            param_schema=raw_resp.get("latest_version", {}).get("openapi_schema"),
+            
+            ui_config={}, 
+            is_active=False 
         )
         db.add(new_model)
         await db.commit()
