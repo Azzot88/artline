@@ -263,7 +263,16 @@ class ReplicateService:
             # "owner/name" -> use latest
             model = client.models.get(model_ref)
             latest = model.versions.list()[0] # basic assumption
-            pred = client.predictions.create(version=latest, input=input_data, webhook=webhook_url, webhook_events_filter=["completed"])
+            
+            kwargs = {
+                "version": latest,
+                "input": input_data,
+                "webhook_events_filter": ["completed"]
+            }
+            if webhook_url:
+                kwargs["webhook"] = webhook_url
+                
+            pred = client.predictions.create(**kwargs)
             return pred.id
 
     def get_prediction(self, provider_job_id: str):

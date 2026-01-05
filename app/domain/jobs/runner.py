@@ -88,7 +88,15 @@ def process_job(self, job_id: str):
              payload = service.sanitize_input(raw_params)
 
         # 5. Execute
-        webhook_url = f"{settings.WEBHOOK_HOST or 'http://54.234.247.24'}/webhooks/replicate"
+        # Replicate REQUIRES HTTPS for webhooks. If we are on HTTP, we cannot use webhooks.
+        webhook_host = settings.WEBHOOK_HOST or 'https://api.artline.dev'
+        if not webhook_host.startswith("https://") and not "api.artline.dev" in webhook_host:
+             # If using raw IP (http), Replicate will reject (422).
+             # We disable webhook in this case and rely on polling/manual sync.
+             webhook_url = None
+        else:
+             webhook_url = f"{webhook_host}/webhooks/replicate"
+
         
         try:
             provider_job_id = service.submit_prediction(
