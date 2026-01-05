@@ -155,3 +155,25 @@ class ReplicateService:
         if t == "array": return "list"
         return "string"
 
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from app.domain.providers.models import ProviderConfig
+from app.domain.providers.service import decrypt_key
+
+async def get_replicate_client(db: AsyncSession) -> ReplicateService:
+    # Fetch API Key from ProviderConfig
+    q = await db.execute(
+        select(ProviderConfig)
+        .where(ProviderConfig.provider_id == 'replicate')
+        .order_by(ProviderConfig.created_at.desc())
+        .limit(1)
+    )
+    config = q.scalar_one_or_none()
+    
+    if not config or not config.encrypted_api_key:
+        raise ValueError("Replicate provider not configured")
+        
+    plain_key = decrypt_key(config.encrypted_api_key)
+    return ReplicateService(api_key=plain_key)
+
+
