@@ -25,4 +25,12 @@ import app.domain.jobs.runner
 
 # Import ALL models to ensure SQLAlchemy registry is populated
 # This prevents "InvalidRequestError" when relationships are resolved
-import app.models
+# We use the worker_process_init signal to ensure this happens in every child process
+from celery.signals import worker_process_init
+
+@worker_process_init.connect
+def init_worker_process(**kwargs):
+    import app.models
+    print("Celery Worker Process Initialized: Models Loaded")
+
+import app.models # Also import in parent for good measure
