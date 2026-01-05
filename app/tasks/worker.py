@@ -22,3 +22,7 @@ celery_app.autodiscover_tasks(["app.tasks.job_runner", "app.domain.jobs.runner"]
 # Explicit import of runner module to ensure register
 # (Sometimes autodiscover needs exact package path or module needs to be importable)
 import app.domain.jobs.runner
+
+# Import ALL models to ensure SQLAlchemy registry is populated
+# This prevents "InvalidRequestError" when relationships are resolved
+import app.models
