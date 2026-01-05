@@ -304,6 +304,39 @@ class ReplicateService:
             
         return payload
 
+    def parse_input_string(self, raw_text: str) -> tuple[str, Dict[str, Any], str]:
+        """
+        Parses internal app format: [model_id] {json_params} | prompt_text
+        Returns: (model_identifier, params, prompt)
+        """
+        model_identifier = "flux" # Default
+        params = {}
+        prompt_text = raw_text
+        
+        if not raw_text:
+            return model_identifier, params, prompt_text
+            
+        if raw_text.startswith("["):
+            try:
+                end_sq = raw_text.find("]")
+                if end_sq != -1:
+                    model_identifier = raw_text[1:end_sq].strip()
+                    rest = raw_text[end_sq+1:].strip()
+                    
+                    if "|" in rest:
+                        parts = rest.split("|", 1)
+                        json_str = parts[0].strip()
+                        prompt_text = parts[1].strip()
+                        if json_str.startswith("{"):
+                             try: params = json.loads(json_str)
+                             except: pass
+                    else:
+                        prompt_text = rest
+            except Exception:
+                pass # parsing failed, fallback to defaults
+                
+        return model_identifier, params, prompt_text
+
 async def get_replicate_client(db: AsyncSession) -> ReplicateService:
     q = await db.execute(
         select(ProviderConfig)
