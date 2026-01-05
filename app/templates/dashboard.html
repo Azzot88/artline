@@ -475,6 +475,29 @@
             }
         },
 
+        async syncJob(jobId) {
+            const btn = document.getElementById(`sync-btn-${jobId}`);
+            if (btn) {
+                btn.classList.add("spin");
+            }
+
+            try {
+                const res = await fetch(`/jobs/${jobId}/sync`, { method: "POST" });
+                const data = await res.json();
+
+                if (data.status === "succeeded" || data.status === "failed") {
+                    // Trigger update
+                    htmx.trigger('body', 'jobsChanged');
+                } else {
+                    // Poll
+                    setTimeout(() => app.syncJob(jobId), 3000);
+                }
+
+            } catch (e) {
+                console.error("Sync error", e);
+            }
+        },
+
         // ... (handleFile, clearFile, fantazise, updateState remained similar) ...
         handleFile(input) { /* ... */ },
         clearFile() { /* ... */ },
