@@ -84,8 +84,8 @@ def process_job(self, job_id: str):
                 prompt_text = raw_prompt
         
         # 3. Resolve Model
-        replicate_version = "bf25d41f77d346618e11e037136f33d74914c62e5421a12e2f60228747f4d546" # Default Flux
-        replicate_model_ref = None # "owner/name"
+        replicate_version = None 
+        replicate_model_ref = "black-forest-labs/flux-schnell" # Default to confirmed working model
         
         # Check if UUID (Dynamic Model)
         from app.domain.providers.models import AIModel
