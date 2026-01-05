@@ -144,13 +144,31 @@ def process_job(self, job_id: str):
         # array fields (sometimes single url passed as string)
         if "input_images" in sanitized_params:
              val = sanitized_params["input_images"]
-             if isinstance(val, str) and val.strip():
-                  sanitized_params["input_images"] = [val]
+             if isinstance(val, str):
+                  if val.strip():
+                       sanitized_params["input_images"] = [val.strip()]
+                  else:
+                       del sanitized_params["input_images"] # Remove empty string
+             elif isinstance(val, list):
+                  # Filter out empty strings
+                  sanitized_params["input_images"] = [v for v in val if isinstance(v, str) and v.strip()]
+                  if not sanitized_params["input_images"]:
+                       del sanitized_params["input_images"]
+
+        # resolution enum: ensure it's valid or remove it
+        if "resolution" in sanitized_params:
+             if sanitized_params["resolution"] not in ["match_input_image", "0.5 MP", "1 MP", "2 MP", "4 MP"]:
+                  # If invalid (e.g. random string "1024"), maybe try to map or remove?
+                  # For now, remove to let model default kick in if invalid
+                  logger.warning(f"Removing invalid resolution param: {sanitized_params['resolution']}")
+                  del sanitized_params["resolution"]
 
         input_data = {
             "prompt": prompt_text,
             **sanitized_params
         }
+        
+        logger.info(f"Submitting to Replicate: {json.dumps(input_data, default=str)}")
         
         # 5. Submit
         # Ensure WEBHOOK_HOST is configured, otherwise fallback to example (or raise error in strict mode)
