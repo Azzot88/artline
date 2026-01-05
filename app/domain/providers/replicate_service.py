@@ -239,6 +239,71 @@ class ReplicateService:
             data = resp.json()
             return data["status"], data.get("output")
 
+    def build_payload(self, input_data: Dict[str, Any], allowed_inputs: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Constructs a strict payload based on allowed inputs whitelist.
+        :param input_data: Raw user input dictionary
+        :param allowed_inputs: List of input definitions (from normalized_caps['inputs'])
+        :return: Cleaned dictionary ready for API
+        """
+        payload = {}
+        allowed_keys = {item['name']: item for item in allowed_inputs}
+        dropped_keys = []
+        
+        # 0. Always Allow Prompt? Usually yes, but let's check schema.
+        # Actually schema usually has 'prompt'.
+        
+        # Pre-process: sanitize basic types first (casts) using existing logic, 
+        # but then filter strictly.
+        sanitized = self.sanitize_input(input_data)
+        
+        for key, value in sanitized.items():
+            if key in allowed_keys:
+                field_def = allowed_keys[key]
+                expected_type = field_def.get('type')
+                
+                # Validation Logic
+                if expected_type == 'integer':
+                    if not isinstance(value, int):
+                         logger.warning(f"Validation Warn: {key} expected int, got {type(value)}")
+                         # Sanitize already tried to cast, so if it failed or is float, maybe drop?
+                         # sanitize_input returns int for int-like strings.
+                         # check simple type match
+                         if isinstance(value, float): value = int(value)
+                         elif not isinstance(value, int): 
+                             dropped_keys.append(f"{key}(type)")
+                             continue
+                             
+                elif expected_type == 'float' or expected_type == 'number':
+                     if not isinstance(value, (float, int)):
+                         dropped_keys.append(f"{key}(type)")
+                         continue
+                         
+                elif expected_type == 'boolean':
+                     if not isinstance(value, bool):
+                          # map strings "true"/"false" if sanitize didn't?
+                          if str(value).lower() == 'true': value = True
+                          elif str(value).lower() == 'false': value = False
+                          else:
+                              dropped_keys.append(f"{key}(type)")
+                              continue
+
+                elif expected_type == 'select':
+                     options = field_def.get('options', [])
+                     if options and value not in options:
+                          logger.warning(f"Validation Warn: {key} value '{value}' not in options {options}")
+                          dropped_keys.append(f"{key}(enum)")
+                          continue
+                          
+                payload[key] = value
+            else:
+                dropped_keys.append(key)
+                
+        if dropped_keys:
+            logger.info(f"Dropped params for strict payload: {dropped_keys}")
+            
+        return payload
+
 async def get_replicate_client(db: AsyncSession) -> ReplicateService:
     q = await db.execute(
         select(ProviderConfig)

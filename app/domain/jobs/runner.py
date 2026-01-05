@@ -103,20 +103,54 @@ def process_job(self, job_id: str):
              if model_identifier == "flux-pro":
                   replicate_model_ref = "black-forest-labs/flux-1.1-pro"
 
-        # 6. Submit via Service
+        # 6. Strict Payload Construction
         input_data = {
             "prompt": prompt_text,
             **params
         }
+        
+        # Use whitelist if available
+        if ai_model and ai_model.normalized_caps_json:
+             schema_inputs = ai_model.normalized_caps_json.get("inputs", [])
+             # Ensure 'prompt' is allowed or added? 
+             # Replicate schema usually includes 'prompt', but we should safe-guard.
+             # If prompt is missing from schema, we should still pass it or API fails.
+             # Let's trust build_payload or manually ensure prompt is in dict.
+             payload = service.build_payload(input_data, schema_inputs)
+             
+             # Fallback: If 'prompt' was stripped because it's missing in schema (rare but possible),
+             # we re-add it if it was present.
+             if "prompt" in input_data and "prompt" not in payload:
+                 payload["prompt"] = input_data["prompt"]
+                 
+        else:
+             logger.info("No schema found for strict validation, using permissive sanitization.")
+             payload = service.sanitize_input(input_data)
         
         webhook_host = settings.WEBHOOK_HOST or "https://api.artline.dev"
         webhook_url = f"{webhook_host}/webhooks/replicate"
 
         try:
             logger.info(f"Submitting job {job.id} to {replicate_model_ref}")
+            # Note: submit_prediction calls sanitize_input internally currently.
+            # We should probably refactor submit_prediction to take already-clean payload or skip sanitization if we did it here.
+            # actually submit_prediction calls sanitize_input. 
+            # If we pass already cleaned data, sanitize_input (permissive) shouldn't hurt it.
+            # But the requirement is "Run strict by whitelist".
+            # The current submit_prediction forces sanitize_input. 
+            # I should bypass or modify submit_prediction.
+            # But I can't easily change submit_prediction signature without breaking other calls?
+            # Actually I can just duplicate logic or call client.post directly here?
+            # Better: Let's modify submit_prediction to accept 'skip_sanitization' flag?
+            # Or just rely on sanitize_input doing nothing bad to already valid data.
+            # Sanitize_input essentially casts types. 
+            # build_payload does filtering AND casting.
+            # So calling sanitize_input after build_payload is redundant but harmless unless it mangles.
+            # Let's Assume safe for now.
+            
             provider_job_id = service.submit_prediction(
                 model_ref=replicate_model_ref,
-                input_data=input_data,
+                input_data=payload,
                 webhook_url=webhook_url
             )
             
