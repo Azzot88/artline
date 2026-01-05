@@ -5,6 +5,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 from app.domain.jobs.models import Job
+from app.models import User # Fix: Ensure User mapper is loaded for Job relationship
 from app.domain.providers.models import ProviderConfig
 from app.domain.providers.adapters.replicate import submit_replicate_job, ReplicateError
 # Assume ai_providers exists as it is imported in admin_providers.py
