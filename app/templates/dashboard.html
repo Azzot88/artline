@@ -200,33 +200,13 @@
                                         <input type="hidden" name="model" id="selectedModelInput">
                                     </div>
 
-                                    <!-- Aspect Ratio Selector -->
-                                    <div class="dropdown">
-                                        <button
-                                            class="btn btn-dark border border-secondary rounded-3 d-flex align-items-center gap-2 px-3"
-                                            type="button" data-bs-toggle="dropdown" style="background: #222;">
-                                            <i class="bi bi-square"></i>
-                                            <span id="selectedRatio" class="text-white small fw-bold">1:1</span>
-                                            <i class="bi bi-chevron-down text-white-50 small"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-dark shadow-lg" id="ratioDropdown">
-                                            <li><a class="dropdown-item" href="#"
-                                                    onclick="app.setRatio('1024x1024', '1:1')"><i
-                                                        class="bi bi-square me-2"></i> 1:1 (Square)</a></li>
-                                            <li><a class="dropdown-item" href="#"
-                                                    onclick="app.setRatio('896x1152', '3:4')"><i
-                                                        class="bi bi-phone me-2"></i> 3:4 (Portrait)</a></li>
-                                            <li><a class="dropdown-item" href="#"
-                                                    onclick="app.setRatio('1152x896', '4:3')"><i
-                                                        class="bi bi-aspect-ratio me-2"></i> 4:3 (Landscape)</a></li>
-                                            <li><a class="dropdown-item" href="#"
-                                                    onclick="app.setRatio('1344x768', '16:9')"><i
-                                                        class="bi bi-film me-2"></i> 16:9 (Wide)</a></li>
-                                        </ul>
-                                        <input type="hidden" name="resolution" id="selectedRatioInput">
+                                    <!-- Aspect Ratio Keys -->
+                                    <div id="aspectRatioContainer" class="d-flex gap-2">
+                                        <!-- JS Populated -->
                                     </div>
+                                    <input type="hidden" name="aspect_ratio" id="aspectRatioInput" value="1:1">
 
-                                    <!-- Additional Params Container (Hidden by default, used for durations etc) -->
+                                    <!-- Additional Params Container -->
                                     <div id="extraParams" class="d-none"></div>
                                 </div>
 
@@ -259,7 +239,6 @@
                         <div class="text-center text-muted py-5">Loading gallery...</div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -277,14 +256,14 @@
             mode: 'image', // image | video
             source: 'text', // text | image
             modelId: null,
-            hasFile: false
+            hasFile: false,
+            aspectRatio: '1:1'
         },
 
         init() {
             this.setMode('image');
             // Auto select first valid model
             this.updateModels();
-            this.setRatio('1024x1024', '1:1'); // Default default
         },
 
         setMode(mode) {
@@ -297,11 +276,6 @@
             const suffix = mode === 'image' ? 'Image' : 'Video';
             txtBtn.textContent = `Text to ${suffix}`;
             imgBtn.textContent = `Image to ${suffix}`;
-
-            // Update Tab Styles (border-bottom white vs transparent)
-            if (this.state.source === 'text') {
-                // handled in setSource
-            }
 
             this.setSource('text');
             this.updateModels();
@@ -381,9 +355,7 @@
             }
 
             validModels.forEach((m, idx) => {
-                // Determine icon based on provider or explicit meta? 
                 const icon = m.provider === 'replicate' ? '⚡' : '🤖';
-
                 const li = document.createElement('li');
                 li.innerHTML = `
                     <a class="dropdown-item d-flex align-items-center gap-2" href="#" onclick="app.selectModel('${m.id}')">
@@ -396,13 +368,11 @@
                 `;
                 listContainer.appendChild(li);
 
-                // Auto Select first
                 if (idx === 0 && !this.state.modelId) {
                     this.selectModel(m.id);
                 }
             });
 
-            // If current selection is invalid for new mode, reset
             if (this.state.modelId && !validModels.find(x => x.id === this.state.modelId)) {
                 this.selectModel(validModels[0]?.id || null);
             }
@@ -413,28 +383,117 @@
             document.getElementById('selectedModelInput').value = id || '';
 
             const m = MODELS.find(x => x.id === id);
-
             const displayParams = document.getElementById('selectedModelName');
             const displayIcon = document.getElementById('selectedModelIcon');
 
             if (m) {
                 displayParams.textContent = m.name;
                 displayIcon.textContent = m.provider === 'replicate' ? '⚡' : '🤖';
+                this.renderAspectRatios(m);
             } else {
                 displayParams.textContent = "Select Model";
                 displayIcon.textContent = "❓";
+                document.getElementById('aspectRatioContainer').innerHTML = '';
             }
 
             this.calcCost();
         },
 
-        setRatio(res, label) {
-            document.getElementById('selectedRatioInput').value = res;
-            document.getElementById('selectedRatio').textContent = label;
+        renderAspectRatios(model) {
+            const container = document.getElementById('aspectRatioContainer');
+            container.innerHTML = '';
 
-            // Also update icon based on label?
-            // For now simple text update
-            this.calcCost();
+            // Default ratios if none provided
+            const defaults = ['1:1', '16:9', '9:16'];
+            let ratios = model.resolutions && model.resolutions.length > 0 ? model.resolutions : defaults;
+
+            // Simple map for labels vs values
+            // If value is "1024x1024", label is "1:1", value sent is "1024x1024" (or "1:1" if mapped)
+            // But wait, Flux uses "1:1" string. Old SDXL uses "1024x1024".
+            // We should trust the DB value as the *submission value* unless we know better.
+            // Actually, for Flux the DB config says "1:1" (from user's previous `ui_config` print).
+            // But `resolutions` list might be ['1024x1024']. 
+            // Let's make it robust:
+
+            const mapRatio = (val) => {
+                // If it looks like a resolution "WxH"
+                if (val.match(/^\d+x\d+$/)) {
+                    const [w, h] = val.split('x').map(Number);
+                    const ratio = w / h;
+                    let label = val;
+
+                    // Approximate labels
+                    if (Math.abs(ratio - 1) < 0.05) label = "1:1";
+                    else if (Math.abs(ratio - 4 / 3) < 0.05) label = "4:3";
+                    else if (Math.abs(ratio - 3 / 4) < 0.05) label = "3:4";
+                    else if (Math.abs(ratio - 16 / 9) < 0.05) label = "16:9";
+                    else if (Math.abs(ratio - 9 / 16) < 0.05) label = "9:16";
+
+                    return { label: label, val: val }; // Send original WxH to API
+                }
+
+                // If it matches "W:H" format
+                if (val.includes(':')) {
+                    return { label: val, val: val };
+                }
+
+                // Fallback
+                return { label: val, val: val };
+            };
+
+            ratios.forEach(r => {
+                const { label, val } = mapRatio(r);
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 ${this.state.aspectRatio === val ? 'active text-white border-white' : 'text-white-50'}`;
+                btn.style.minWidth = "60px";
+                btn.innerHTML = `<span class="small fw-bold">${label}</span>`;
+                btn.onclick = () => this.setRatio(val, btn);
+                container.appendChild(btn);
+            });
+
+            // Auto select first if current invalid?
+            // For now keep state or default to first
+            if (!ratios.find(x => mapRatio(x).val === this.state.aspectRatio)) {
+                const first = mapRatio(ratios[0]).val;
+                this.setRatio(first);
+            } else {
+                this.setRatio(this.state.aspectRatio); // re-trigger visual update
+            }
+        },
+
+        setRatio(val, btnEl = null) {
+            this.state.aspectRatio = val;
+            document.getElementById('aspectRatioInput').value = val;
+
+            // Update visual active state
+            const container = document.getElementById('aspectRatioContainer');
+            Array.from(container.children).forEach(btn => {
+                // If we passed the element, use it, otherwise match text/val
+                // Simplest is to just re-render or toggle classes based on val matching
+                // Re-render is expensive? Just toggle.
+                // But wait, the label might differ from val. 
+                // Let's rely on re-render in `selectModel` or just manual toggle here
+                // Manual toggle is cleaner
+            });
+
+            // Re-render to ensure correct active state
+            const m = MODELS.find(x => x.id === this.state.modelId);
+            if (m) {
+                const btns = container.querySelectorAll('button');
+                btns.forEach(b => {
+                    // Check if mapped value matches
+                    // This is tricky if we don't store value on button. 
+                    // Let's just reset innerHTML logic:
+                    b.classList.remove('active', 'text-white', 'border-white');
+                    b.classList.add('text-white-50');
+
+                    // Check text content? Or store value data-attr
+                    // Ideally we should have stored data-val
+                });
+                // Actually easier to just rebuild since list is small
+                this.renderAspectRatios(m);
+            }
         },
 
         calcCost() {
@@ -446,30 +505,23 @@
                 cost = m.costs.base;
             }
 
-            // Check video duration multiplier if relevant
             if (this.state.mode === 'video') {
-                cost = 50; // Hardcode fallback or read from m.costs
+                cost = 50;
             }
 
             const btnCost = document.getElementById('costDisplay');
-            btnCost.textContent = cost + ' CR';
-
-            // Check balance limit
-            // We don't have user balance in JS context easily unless embedded.
-            // But we can show warning if we did.
+            if (btnCost) btnCost.textContent = cost + ' CR';
         },
 
         updateState() {
             const prompt = document.getElementById('promptInput').value;
             const btn = document.getElementById('mainGenerateBtn');
-            const msg = document.getElementById('emptyPromptMsg');
+            const msg = document.getElementById('emptyPromptMsg'); // Doesn't exist in markup?
 
             if (!prompt.trim()) {
                 btn.disabled = true;
-                msg.classList.remove('d-none');
             } else {
                 btn.disabled = false;
-                msg.classList.add('d-none');
             }
         },
 
