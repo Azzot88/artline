@@ -158,6 +158,16 @@ def process_job(self, job_id: str):
         # array fields (sometimes single url passed as string)
         if "input_images" in sanitized_params:
              val = sanitized_params["input_images"]
+             
+             # Handle JSON string like "[]" from DB defaults
+             if isinstance(val, str):
+                 val = val.strip()
+                 if val.startswith("[") and val.endswith("]"):
+                     try:
+                         val = json.loads(val)
+                     except Exception:
+                         pass # Treat as normal string (url)
+             
              if isinstance(val, str):
                   if val.strip():
                        sanitized_params["input_images"] = [val.strip()]
