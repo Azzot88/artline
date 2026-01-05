@@ -246,13 +246,13 @@
                                     <button type="submit" id="mainGenerateBtn"
                                         class="btn btn-warning fw-bold px-4 py-2 d-flex align-items-center gap-2"
                                         style="background-color: #ffd600; border: none; color: #000;">
-                                        Generate <span id="costDisplay">100</span> <i class="bi bi-stars"></i>
+                                        Сгенерировать <span id="costDisplay">100</span> <i class="bi bi-stars"></i>
                                     </button>
                                     {% else %}
                                     <button type="submit" id="mainGenerateBtn"
                                         class="btn btn-warning fw-bold px-4 py-2 d-flex align-items-center gap-2"
                                         style="background-color: #ffd600; border: none; color: #000;">
-                                        Generate (Guest) <i class="bi bi-stars"></i>
+                                        Сгенерировать <i class="bi bi-stars"></i>
                                     </button>
                                     {% endif %}
 
@@ -275,9 +275,12 @@
     </div>
 </div>
 
+<script id="models-data" type="application/json">
+    {{ models_json| safe }}
+</script>
 <script>
     // Embed Models Data
-    const MODELS = {{ models_json| safe }};
+    const MODELS = JSON.parse(document.getElementById('models-data').textContent);
 
     const app = {
         state: {

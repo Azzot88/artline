@@ -29,14 +29,12 @@ async def get_current_user_optional(
     # 2. Check Guest
     guest_id_cookie = request.cookies.get("guest_id")
     if guest_id_cookie:
-        from app.domain.users.guest_service import get_guest
+        from app.domain.users.guest_service import get_or_create_guest
         try:
             import uuid
             gid = uuid.UUID(guest_id_cookie)
-            # Use get_or_create to ensure record exists if cookie exists (or simple get?)
-            # If cookie is stale (guest deleted), we should probably recreate or return None?
-            # get_guest returns profile.
-            guest = await get_guest(db, gid)
+            # Ensure DB record exists if cookie is valid UUID
+            guest = await get_or_create_guest(db, gid)
             if guest:
                 return guest
         except ValueError:

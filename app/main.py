@@ -9,6 +9,9 @@ app = FastAPI(title="ArtLine")
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+from app.web.middleware.guest import GuestMiddleware
+app.add_middleware(GuestMiddleware)
+
 # app.include_router(public.router) # Removed: Dashboard is now main entry
 app.include_router(auth.router, prefix="", tags=["auth"])
 app.include_router(dashboard.router, prefix="", tags=["dashboard"])
