@@ -134,10 +134,11 @@ async def new_job(
     # 1. Fetch Model
     try:
         model_uuid = uuid.UUID(req.model_id)
-        res = await db.execute(select(AIModel).where(AIModel.id == model_uuid))
-        model = res.scalar_one_or_none()
-    except:
-        model = None
+    except ValueError:
+        return JSONResponse({"error": "Invalid model ID format"}, status_code=400)
+
+    res = await db.execute(select(AIModel).where(AIModel.id == model_uuid))
+    model = res.scalar_one_or_none()
         
     if not model:
         return JSONResponse({"error": "Model not found"}, status_code=404)
