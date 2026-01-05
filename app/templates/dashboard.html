@@ -80,14 +80,13 @@
             </div>
         </div>
 
-        <!-- RIGHT COLUMN: Workspace (75%) -->
+        <!-- RIGHT COLUMN: Workspace (Remaining width) -->
         <div class="col-lg-9 col-md-8 bg-black">
-            <div class="container py-4" style="max-width: 900px;">
+            <!-- Fluid Container for Full Width -->
+            <div class="container-fluid py-4">
 
-                <!-- Main Form -->
-                <!-- Main Form (Styled like Reference) -->
-                <form id="generateForm" hx-post="/dashboard/jobs/new" hx-swap="none" class="position-relative">
-
+                <!-- Main Form (Full Width) -->
+                <form id="generateForm" hx-post="/jobs/new" hx-swap="none" class="position-relative mb-5">
                     <!-- Main Card Container -->
                     <div class="card border border-secondary shadow-lg overflow-hidden"
                         style="background-color: #0f0f0f; border-color: #333 !important; border-radius: 12px;">
@@ -250,13 +249,10 @@
                                         Generate <span id="costDisplay">100</span> <i class="bi bi-stars"></i>
                                     </button>
                                     {% else %}
-                                    <!-- Guest: No cost display? OR display cost but not balance. -->
-                                    <!-- User said "Guest must generate", but Balance is hidden. Cost display is local JS. -->
-                                    <!-- Let's keep cost display on button as it shows price of ACTION. -->
                                     <button type="submit" id="mainGenerateBtn"
                                         class="btn btn-warning fw-bold px-4 py-2 d-flex align-items-center gap-2"
                                         style="background-color: #ffd600; border: none; color: #000;">
-                                        Generate <span id="costDisplay">100</span> <i class="bi bi-stars"></i>
+                                        Generate (Guest) <i class="bi bi-stars"></i>
                                     </button>
                                     {% endif %}
 
@@ -265,6 +261,14 @@
                         </div>
                     </div>
                 </form>
+
+                <!-- 2. Community Gallery (Masonry) -->
+                <div>
+                    <h5 class="text-white-50 mb-3 text-uppercase ls-1 px-1">Community Creations</h5>
+                    <div id="gallery-container" hx-get="/gallery/page/1" hx-trigger="load" class="masonry-grid">
+                        <div class="text-center text-muted py-5">Loading gallery...</div>
+                    </div>
+                </div>
 
             </div>
         </div>
