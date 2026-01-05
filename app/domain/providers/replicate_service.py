@@ -2,6 +2,10 @@ import httpx
 import logging
 from typing import Any, Dict, List, Optional, Union
 import json
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from app.domain.providers.models import ProviderConfig
+from app.domain.providers.service import decrypt_key
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -24,24 +28,12 @@ class ReplicateService:
     def fetch_model_capabilities(self, model_ref: str) -> Dict[str, Any]:
         """
         Fetches full model details from Replicate and normalizes them.
-        
-        Args:
-            model_ref (str): "owner/name" e.g. "black-forest-labs/flux-schnell"
-            
-        Returns:
-            dict: {
-                "raw_response": dict, # The full JSON response from Replicate
-                "normalized_caps": dict # properly structured UI capabilities
-            }
         """
         # 1. Validation
         if "/" not in model_ref:
             raise ValueError(f"Invalid model_ref '{model_ref}'. Expected format 'owner/name'")
             
         owner, name = model_ref.split("/", 1)
-        # Handle version if present? API uses models/{owner}/{name} usually.
-        # If user passes owner/name:version, we strip version for the model info endpoint?
-        # Actually, let's strictly use owner/name.
         if ":" in name:
             name = name.split(":")[0]
 
@@ -57,8 +49,6 @@ class ReplicateService:
                     raise IOError(f"Replicate API error: {response.status_code} {response.text}")
                     
                 data = response.json()
-                
-                # Extract Schema from latest version if available
                 normalized = self._normalize_capabilities(data)
                 
                 return {
@@ -72,7 +62,7 @@ class ReplicateService:
 
     def _normalize_capabilities(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Normalizes raw Replicate model data into a standard UI capability format.
+        Normalizes raw Replicate model data.
         """
         caps = {
             "title": data.get("name", ""),
@@ -82,25 +72,17 @@ class ReplicateService:
             "defaults": {}
         }
         
-        # Get Latest Version Schema
         latest_version = data.get("latest_version")
         if not latest_version:
-            # Maybe it's a private model without public versions listing?
-            # Or simplified structure. Return empty caps logic.
             return caps
 
         schema = latest_version.get("openapi_schema", {})
-        
-        # Flatten Input Props
-        # Replicate Schema: components -> schemas -> Input -> properties
         input_schema = {}
         if "components" in schema and "schemas" in schema["components"]:
              input_schema = schema["components"]["schemas"].get("Input", {}).get("properties", {})
         elif "properties" in schema:
-             # Direct properties (sometimes happens)
              input_schema = schema["properties"]
              
-        # Normalize Fields
         normalized_inputs = []
         
         for key, prop in input_schema.items():
@@ -108,34 +90,22 @@ class ReplicateService:
                 "name": key,
                 "label": prop.get("title", key.replace("_", " ").title()),
                 "type": self._map_type(prop),
-                "required": False, # Todo: check 'required' list in schema root? 
+                "required": False, 
                 "default": prop.get("default"),
                 "help": prop.get("description", ""),
                 "hidden": False
             }
             
-            # Constraints
             if "minimum" in prop: field["min"] = prop["minimum"]
             if "maximum" in prop: field["max"] = prop["maximum"]
-            
-            # Enum handling
             if "enum" in prop:
                 field["type"] = "select"
                 field["options"] = prop["enum"]
                 
-            # Special Handling for known keys
-            if key == "aspect_ratio":
-                field["type"] = "select"
-                # If enum missing, provide defaults? 
-                # Some models have aspect_ratio as string but no enum in schema (rare).
-                # Usually they provide enum.
-                
-            if key == "image" or key == "input_image":
-                field["type"] = "image"
+            if key == "aspect_ratio": field["type"] = "select"
+            if key == "image" or key == "input_image": field["type"] = "image"
                 
             normalized_inputs.append(field)
-            
-            # Extract Defaults for quick access
             if "default" in prop:
                 caps["defaults"][key] = prop["default"]
 
@@ -145,7 +115,6 @@ class ReplicateService:
     def _map_type(self, prop: Dict) -> str:
         t = prop.get("type", "string")
         fmt = prop.get("format", "")
-        
         if t == "integer": return "integer"
         if t == "number": return "float"
         if t == "boolean": return "boolean"
@@ -155,13 +124,90 @@ class ReplicateService:
         if t == "array": return "list"
         return "string"
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from app.domain.providers.models import ProviderConfig
-from app.domain.providers.service import decrypt_key
+    def submit_prediction(self, model_ref: str, input_data: Dict[str, Any], webhook_url: Optional[str] = None) -> str:
+        """
+        Submits a prediction job to Replicate.
+        """
+        sanitized_input = self.sanitize_input(input_data)
+        
+        payload = {"input": sanitized_input}
+        if webhook_url:
+            payload["webhook"] = webhook_url
+            payload["webhook_events_filter"] = ["completed"]
+
+        if ":" in model_ref:
+             owner_name, version = model_ref.split(":", 1)
+             owner, name = owner_name.split("/", 1)
+             url = f"{self.BASE_URL}/models/{owner}/{name}/versions/{version}/predictions"
+        else:
+             if "/" not in model_ref: raise ValueError(f"Invalid model_ref {model_ref}")
+             owner, name = model_ref.split("/", 1)
+             url = f"{self.BASE_URL}/models/{owner}/{name}/predictions"
+
+        try:
+            with httpx.Client(timeout=30.0) as client:
+                resp = client.post(url, json=payload, headers=self.headers)
+                
+                if resp.status_code not in [200, 201]:
+                    # Log error body for debug
+                    logger.error(f"Replicate API Error: {resp.text}")
+                    raise IOError(f"Replicate API returned {resp.status_code}: {resp.text}")
+                    
+                return resp.json()["id"]
+                
+        except httpx.RequestError as e:
+            logger.error(f"Replicate Submission Failed: {e}")
+            raise e
+
+    def sanitize_input(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Cleans and casts input parameters.
+        """
+        clean = input_data.copy()
+        
+        # 1. Parse JSON Strings
+        for k, v in list(clean.items()):
+            if isinstance(v, str) and v.strip().startswith("[") and v.strip().endswith("]"):
+                try: clean[k] = json.loads(v)
+                except: pass
+                    
+        # 2. Aspect Ratio Mapping
+        if "aspect_ratio" in clean:
+            val = str(clean["aspect_ratio"])
+            if "x" in val and val.replace("x","").isdigit():
+                 try:
+                     w,h = map(int, val.split("x"))
+                     r = w/h
+                     if abs(r - 1) < 0.1: clean["aspect_ratio"] = "1:1"
+                     elif abs(r - 16/9) < 0.1: clean["aspect_ratio"] = "16:9"
+                     elif abs(r - 9/16) < 0.1: clean["aspect_ratio"] = "9:16"
+                     elif abs(r - 4/3) < 0.1: clean["aspect_ratio"] = "4:3"
+                     elif abs(r - 3/4) < 0.1: clean["aspect_ratio"] = "3:4"
+                 except: pass
+
+        # 3. Type Casting
+        INT_KEYS = {"width", "height", "seed", "num_inference_steps", "num_frames"}
+        FLOAT_KEYS = {"guidance_scale", "prompt_strength", "lora_scale"}
+        
+        for k, v in list(clean.items()):
+            if v == "" or v is None:
+                del clean[k]
+                continue
+            if k in INT_KEYS:
+                try: clean[k] = int(v)
+                except: del clean[k]
+            elif k in FLOAT_KEYS:
+                try: clean[k] = float(v)
+                except: del clean[k]
+                
+        # 4. Filter Empty Lists
+        for k, v in list(clean.items()):
+            if isinstance(v, list) and not v:
+                del clean[k]
+                
+        return clean
 
 async def get_replicate_client(db: AsyncSession) -> ReplicateService:
-    # Fetch API Key from ProviderConfig
     q = await db.execute(
         select(ProviderConfig)
         .where(ProviderConfig.provider_id == 'replicate')
@@ -175,5 +221,3 @@ async def get_replicate_client(db: AsyncSession) -> ReplicateService:
         
     plain_key = decrypt_key(config.encrypted_api_key)
     return ReplicateService(api_key=plain_key)
-
-
