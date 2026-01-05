@@ -127,19 +127,33 @@ def process_job(self, job_id: str):
         
         # integer fields
         for int_field in ["width", "height", "seed", "num_inference_steps", "num_frames", "num_outputs"]:
-            if int_field in sanitized_params and sanitized_params[int_field] is not None:
-                try:
-                    sanitized_params[int_field] = int(sanitized_params[int_field])
-                except (ValueError, TypeError):
-                    pass # Leave as is if casting fails
+            if int_field in sanitized_params:
+                val = sanitized_params[int_field]
+                if val == "": 
+                    del sanitized_params[int_field]
+                    continue
+                if val is not None:
+                    try:
+                        sanitized_params[int_field] = int(val)
+                    except (ValueError, TypeError):
+                        # If cast fails (and not empty string handled above), remove it to be safe?
+                        # Or leave it and let API complain? Better to remove invalid types.
+                        logger.warning(f"Removing invalid int param {int_field}: {val}")
+                        del sanitized_params[int_field]
 
         # float fields 
         for float_field in ["guidance_scale", "prompt_strength", "lora_scale"]:
-            if float_field in sanitized_params and sanitized_params[float_field] is not None:
-                try:
-                    sanitized_params[float_field] = float(sanitized_params[float_field])
-                except (ValueError, TypeError):
-                    pass
+            if float_field in sanitized_params:
+                val = sanitized_params[float_field]
+                if val == "":
+                    del sanitized_params[float_field]
+                    continue
+                if val is not None:
+                    try:
+                        sanitized_params[float_field] = float(val)
+                    except (ValueError, TypeError):
+                         logger.warning(f"Removing invalid float param {float_field}: {val}")
+                         del sanitized_params[float_field]
 
         # array fields (sometimes single url passed as string)
         if "input_images" in sanitized_params:
