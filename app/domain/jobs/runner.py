@@ -88,7 +88,7 @@ def process_job(self, job_id: str):
              payload = service.sanitize_input(raw_params)
 
         # 5. Execute
-        webhook_url = f"{settings.WEBHOOK_HOST or 'https://api.artline.dev'}/webhooks/replicate"
+        webhook_url = f"{settings.WEBHOOK_HOST or 'http://54.234.247.24'}/webhooks/replicate"
         
         try:
             provider_job_id = service.submit_prediction(

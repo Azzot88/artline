@@ -296,6 +296,68 @@ async def get_gallery_jobs(db: AsyncSession, page: int = 1):
     next_page = page + 1 if len(jobs) == PAGE_SIZE else None
     return jobs, next_page
 
+@router.post("/jobs/{job_id}/sync")
+async def sync_job_status(
+    job_id: str,
+    request: Request,
+    user: User | object | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db)
+):
+    if not user:
+        return status.HTTP_401_UNAUTHORIZED
+        
+    stmt = select(Job).where(Job.id == job_id)
+    if isinstance(user, User):
+        stmt = stmt.where(Job.user_id == user.id)
+    else:
+        stmt = stmt.where(Job.guest_id == user.id)
+        
+    result = await db.execute(stmt)
+    job = result.scalar_one_or_none()
+    
+    if not job:
+        return JSONResponse({"error": "Job not found"}, 404)
+        
+    if not job.provider_job_id or job.provider != "replicate":
+        return JSONResponse({"status": job.status, "synced": False})
+        
+    # Sync Logic
+    from app.models import ProviderConfig
+    from app.core.security import decrypt_key
+    from app.domain.providers.replicate_service import ReplicateService
+    
+    # Needs API Key
+    provider_cfg = await db.execute(select(ProviderConfig).where(ProviderConfig.provider_id == 'replicate'))
+    cfg = provider_cfg.scalars().first()
+    if not cfg:
+        return JSONResponse({"error": "Provider not configured"}, 500)
+        
+    api_key = decrypt_key(cfg.encrypted_api_key)
+    service = ReplicateService(api_key)
+    
+    try:
+        data = service.get_prediction(job.provider_job_id)
+        # Update Job
+        new_status = data["status"]
+        job.status = new_status
+        
+        output = data.get("output")
+        if new_status == "succeeded":
+             if isinstance(output, list) and output:
+                  job.result_url = output[0]
+             elif isinstance(output, str):
+                  job.result_url = output
+                  
+        elif new_status == "failed":
+             job.error_message = str(data.get("error"))
+             
+        await db.commit()
+        
+        return JSONResponse({"status": new_status, "synced": True, "result_url": job.result_url})
+        
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, 500)
+
 @router.get("/gallery/page/{page}", response_class=HTMLResponse)
 async def gallery_fragment(
     page: int,
