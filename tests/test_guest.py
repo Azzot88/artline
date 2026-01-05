@@ -54,7 +54,7 @@ async def test_guest_migration_signup(client, db_session):
     client.cookies.set("guest_id", guest_cookie)
     
     signup_resp = await client.post(
-        "/signup", 
+        "/register", 
         data={"email": email, "password": password},
         follow_redirects=False # Expect redirect to dashboard
     )
