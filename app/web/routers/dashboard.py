@@ -11,6 +11,7 @@ from app.domain.billing.service import get_user_balance
 from app.domain.jobs.runner import process_job
 from app.core.i18n import get_t, get_current_lang
 import json
+import uuid
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
