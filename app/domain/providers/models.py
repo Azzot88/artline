@@ -51,8 +51,15 @@ class AIModel(Base):
     ui_config: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     cover_image_url: Mapped[str | None] = mapped_column(String, nullable=True)
 
+    # Replicate Specific (Persisted Logic)
+    replicate_owner: Mapped[str | None] = mapped_column(String, nullable=True)
+    replicate_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    raw_schema_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    normalized_caps_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+
 
 
 
