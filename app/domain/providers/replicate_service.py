@@ -207,6 +207,38 @@ class ReplicateService:
                 
         return clean
 
+    async def generate_preview(self, model_ref: str, input_data: Dict[str, Any]) -> str:
+        """
+        Runs a prediction and returns the output URL (simple sync wrapper or async wait).
+        For admin preview, we want the result URL.
+        """
+        # Note: This method was expected by admin_models.py but missing.
+        # It needs to wait for completion.
+        
+        provider_id = self.submit_prediction(model_ref, input_data)
+        
+        # Poll for result (Simple polling for MVP)
+        import asyncio
+        for _ in range(60): # 60 seconds timeout
+            await asyncio.sleep(1)
+            status, output = self.check_prediction(provider_id)
+            if status == "succeeded":
+                # Output might be list or string
+                if isinstance(output, list) and output: return output[0]
+                return str(output)
+            if status == "failed":
+                raise IOError("Prediction failed during preview.")
+                
+        raise TimeoutError("Preview timed out")
+
+    def check_prediction(self, prediction_id: str):
+        url = f"{self.BASE_URL}/predictions/{prediction_id}"
+        with httpx.Client(timeout=10.0) as client:
+            resp = client.get(url, headers=self.headers)
+            if resp.status_code != 200: return "unknown", None
+            data = resp.json()
+            return data["status"], data.get("output")
+
 async def get_replicate_client(db: AsyncSession) -> ReplicateService:
     q = await db.execute(
         select(ProviderConfig)
