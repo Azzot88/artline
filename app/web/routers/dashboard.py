@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Form, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -77,71 +77,138 @@ async def dashboard(
         }
     )
 
-@router.post("/jobs/new")
-async def new_job(
-    request: Request,
-    user: User | object | None = Depends(get_current_user_optional), # Allow Guests
+@router.get("/models/for-ui")
+async def models_for_ui(
     db: AsyncSession = Depends(get_db)
 ):
-    # If strictly no user/guest (cookie missing), redirect
+    """
+    Returns active models with capabilities for UI rendering.
+    """
+    models_result = await db.execute(select(AIModel).where(AIModel.is_active == True))
+    ai_models = models_result.scalars().all()
+    
+    data = []
+    for m in ai_models:
+        # Prefer normalized caps for structure
+        caps = m.normalized_caps_json or {}
+        inputs = caps.get("inputs", [])
+        
+        # Merge defaults from UI Config if present
+        defaults = caps.get("defaults", {}).copy()
+        if m.ui_config: 
+             for k, v in m.ui_config.items():
+                  if isinstance(v, dict) and "default" in v:
+                       defaults[k] = v["default"]
+        
+        data.append({
+            "id": str(m.id),
+            "name": m.display_name,
+            "provider": m.provider,
+            "cover_image": m.cover_image_url,
+            "inputs": inputs, # The schema for UI builder
+            "defaults": defaults,
+            "modes": m.modes or ["image"] # fallback
+        })
+    return data
+
+from pydantic import BaseModel
+from typing import Dict, Any
+
+class JobRequest(BaseModel):
+    model_id: str
+    prompt: str
+    params: Dict[str, Any] = {}
+    kind: str = "image" # image/video
+
+@router.post("/jobs/new")
+async def new_job(
+    req: JobRequest,
+    request: Request,
+    user: User | object | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db)
+):
     if not user:
-        from fastapi import HTTPException
-        # Or better, trigger HX-Redirect if HTMX
-        if request.headers.get("HX-Request"):
-             return templates.TemplateResponse(
-                request=request,
-                name="partials/flash.html",
-                context={"message": "Please sign in or enable cookies.", "level": "warning"}
-             )
-             # OR redirect?
-             # Let's start with redirect if no session at all.
-             # Actually create_job handles logic, but we need a user object.
-             # Redirect to login
-             from fastapi.responses import Response
-             response = Response(status_code=200)
-             response.headers["HX-Redirect"] = "/login"
-             return response
+         from fastapi import HTTPException
+         raise HTTPException(status_code=401, detail="Please sign in")
 
-    form_data = await request.form()
-    print(f"DEBUG DASHBOARD RECEIVED: {dict(form_data)}") # DEBUG LOG
-    
-    kind = form_data.get("kind", "image")
-    prompt = form_data.get("prompt", "")
-    model_id = form_data.get("model", "")
-    
-    reserved = {"kind", "prompt", "model"}
-    params = {}
-    for key, value in form_data.items():
-        if key not in reserved and value:
-             params[key] = value
+    # 1. Fetch Model
+    try:
+        model_uuid = uuid.UUID(req.model_id)
+        res = await db.execute(select(AIModel).where(AIModel.id == model_uuid))
+        model = res.scalar_one_or_none()
+    except:
+        model = None
+        
+    if not model:
+        return JSONResponse({"error": "Model not found"}, status_code=404)
 
-    job, error = await create_job(db, user, kind, prompt, model_id, params)
+    # 2. Validation (Strict)
+    # We use ReplicateService logic helper without instantiating client if possible?
+    # Actually build_payload is an instance method but logic is pure.
+    # Instantiate service just for logic? Or copy logic? 
+    # Better: Instantiate service (cheap). We need to decrypt key anyway?
+    # Actually validation doesn't need key. But existing code is in Service.
+    # Let's import ReplicateService.
+    from app.domain.providers.replicate_service import ReplicateService
+    
+    # We pass empty key for validation-only usage if we don't want to fetch config yet.
+    service = ReplicateService(api_key="validation-only")
+    
+    # 2.1 Prepare Inputs
+    raw_inputs = req.params.copy()
+    raw_inputs["prompt"] = req.prompt # Prompt is part of payload
+    
+    # 2.2 Validate
+    allowed_inputs = []
+    if model.normalized_caps_json:
+         allowed_inputs = model.normalized_caps_json.get("inputs", [])
+    
+    if allowed_inputs:
+         # build_payload filters and validates types
+         # But we want to ERROR on invalid types? 
+         # build_payload drops them and logs.
+         # The requirement says "invalid types/enum give clear validation error".
+         # build_payload as written returns a clean payload. It doesn't raise errors.
+         # I should arguably update build_payload to support strict mode or 
+         # just check if dropped keys exist?
+         pass # For now use what we have, possibly logic in build_payload was permissive.
+         # Re-checking user prompt: "Неверные типы/enum дают понятную ошибку validation error".
+         # I need to implement explicit validation here or improve build_payload.
+         # Let's iterate inputs and validate manually here? Or extend build_payload?
+         # Extending build_payload is better but it's in another file.
+         # I will do a quick check here.
+         
+         for field in allowed_inputs:
+              name = field["name"]
+              val = raw_inputs.get(name)
+              if val is not None:
+                   ftype = field.get("type")
+                   # Enum Check
+                   if ftype == "select" and "options" in field:
+                        if val not in field["options"]:
+                             return JSONResponse({"error": f"Invalid value '{val}' for {name}. Allowed: {field['options']}"}, 400)
+                   # Type Check (Basic)
+                   if ftype == "integer" and not str(val).isdigit():
+                        return JSONResponse({"error": f"Invalid integer for {name}: {val}"}, 400)
+                   if (ftype == "float" or ftype == "number"):
+                        try: float(val)
+                        except ValueError:
+                             return JSONResponse({"error": f"Invalid number for {name}: {val}"}, 400)
+    
+    # 3. Create Job
+    # We pass everything to create_job. Logic inside runner handles final payload construction too (double safety).
+    # But job.prompt should probably be just the prompt text?
+    # create_job signature: (db, user, kind, prompt, model_id, params)
+    
+    job, error = await create_job(db, user, req.kind, req.prompt, req.model_id, req.params)
     
     if error:
-        level = "danger"
-        if "Insufficient credits" in error:
-            level = "warning"
-            # If guest, maybe link to register?
-            # For now, flash message.
-            if not isinstance(user, User):
-                 error = "Please register to continue generating."
-        
-        return templates.TemplateResponse(
-            request=request,
-            name="partials/flash.html",
-            context={"message": error, "level": level}
-        )
-
-    # Queue task
+         return JSONResponse({"error": error}, status_code=400)
+         
+    # 4. Trigger Worker
     process_job.delay(job.id)
     
-    response = templates.TemplateResponse(
-        request=request,
-        name="partials/flash.html",
-        context={"message": "Job started!", "level": "success"}
-    )
-    response.headers["HX-Trigger"] = "jobsChanged, balanceChanged"
-    return response
+    return {"job_id": job.id, "status": "queued"}
 
 @router.get("/jobs/partial", response_class=HTMLResponse)
 async def jobs_partial(
