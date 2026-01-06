@@ -492,11 +492,11 @@
 
                 // 3. Auto-Populate Resolutions & Durations
                 if (caps.resolutions && caps.resolutions.length > 0) {
-                    document.getElementById('resolutions').value = caps.resolutions.join(", ");
+                    document.getElementById('resolutions').value = (caps.resolutions || []).join(", ");
                 }
 
                 if (caps.durations && caps.durations.length > 0) {
-                    document.getElementById('durations').value = caps.durations.join(", ");
+                    document.getElementById('durations').value = (caps.durations || []).join(", ");
                 }
 
                 // 4. Auto-Populate Defaults (UI Config)
@@ -538,7 +538,7 @@
                     }
                 }
 
-                alert(`Sync Complete! \nDetected: ${caps.modes.join(", ")} \nParams extracted: ${Object.keys(caps.defaults || {}).length}`);
+                alert(`Sync Complete! \nDetected: ${(caps.modes || []).join(", ")} \nParams extracted: ${Object.keys(caps.defaults || {}).length}`);
 
             } catch (e) {
                 alert("Error: " + e.message);
