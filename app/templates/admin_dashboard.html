@@ -2,31 +2,31 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h1 class="mb-4">{{ t.adm_dash_title|default('Admin Dashboard') }}</h1>
+    <h1 class="mb-4">{{ t.adm_dash_title }}</h1>
 
     <div class="row mb-4">
         <!-- Stats Cards -->
         <div class="col-md-3">
             <div class="card glass-panel text-center p-3 mb-3">
-                <h5>{{ t.adm_stat_users|default('Total Users') }}</h5>
+                <h5>{{ t.adm_stat_users }}</h5>
                 <div class="display-6">{{ stats.total_users }}</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card glass-panel text-center p-3 mb-3">
-                <h5>{{ t.adm_stat_jobs|default('Total Jobs') }}</h5>
+                <h5>{{ t.adm_stat_jobs }}</h5>
                 <div class="display-6">{{ stats.total_jobs }}</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card glass-panel text-center p-3 mb-3">
-                <h5>{{ t.adm_stat_active|default('Active Jobs') }}</h5>
+                <h5>{{ t.adm_stat_active }}</h5>
                 <div class="display-6">{{ stats.active_jobs }}</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card glass-panel text-center p-3 mb-3">
-                <h5>{{ t.adm_stat_credits|default('Total Credits') }}</h5>
+                <h5>{{ t.adm_stat_credits }}</h5>
                 <div class="display-6 text-success">{{ stats.total_credits }}</div>
             </div>
         </div>
@@ -36,9 +36,8 @@
         <div class="col-md-6">
             <div class="card glass-panel mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>{{ t.adm_prov_title|default('AI Providers') }}</span>
-                    <a href="/admin/providers" class="btn btn-sm btn-primary">{{ t.adm_btn_manage|default('Manage
-                        Providers') }}</a>
+                    <span>{{ t.adm_prov_title }}</span>
+                    <a href="/admin/providers" class="btn btn-sm btn-primary">{{ t.adm_btn_manage }}</a>
                 </div>
                 <div class="card-body p-0">
                     <ul class="list-group list-group-flush rounded-bottom bg-transparent">
@@ -50,11 +49,12 @@
                                 <small class="text-muted d-block">{{ p.provider }}</small>
                             </div>
                             <span class="badge {% if p.is_enabled %}bg-success{% else %}bg-secondary{% endif %}">
-                                {% if p.is_enabled %}Active{% else %}Disabled{% endif %}
+                                {% if p.is_enabled %}{{ t.adm_status_active }}{% else %}{{ t.adm_status_disabled }}{%
+                                endif %}
                             </span>
                         </li>
                         {% else %}
-                        <li class="list-group-item bg-transparent text-muted text-center py-3">No providers configured
+                        <li class="list-group-item bg-transparent text-muted text-center py-3">{{ t.adm_no_provs }}
                         </li>
                         {% endfor %}
                     </ul>
@@ -66,11 +66,11 @@
         <div class="col-md-6">
             <div class="card glass-panel mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>AI Models</span>
-                    <a href="/admin/models" class="btn btn-sm btn-info">Manage Models</a>
+                    <span>{{ t.adm_models_title }}</span>
+                    <a href="/admin/models" class="btn btn-sm btn-info">{{ t.adm_btn_manage_models }}</a>
                 </div>
                 <div class="card-body">
-                    <p class="small text-muted mb-0">Add and configure dynamic Replicate models.</p>
+                    <p class="small text-muted mb-0">{{ t.adm_models_desc }}</p>
                 </div>
             </div>
         </div>
@@ -81,9 +81,9 @@
     <div class="col-md-6">
         <div class="card glass-panel mb-4">
             <div class="card-header">
-                <span>{{ t.adm_recent_users|default('Recent Users') }}</span>
+                <span>{{ t.adm_recent_users }}</span>
                 <a href="/admin/users" class="btn btn-sm btn-outline-secondary float-end">{{
-                    t.adm_btn_view_all|default('View All') }}</a>
+                    t.adm_btn_view_all }}</a>
             </div>
             <div class="card-body p-0">
                 <ul class="list-group list-group-flush rounded-bottom bg-transparent">
@@ -96,7 +96,7 @@
                         <small class="text-muted">{{ u.created_at.strftime('%Y-%m-%d') }}</small>
                     </li>
                     {% else %}
-                    <li class="list-group-item bg-transparent text-muted text-center py-3">No users found</li>
+                    <li class="list-group-item bg-transparent text-muted text-center py-3">{{ t.adm_no_users }}</li>
                     {% endfor %}
                 </ul>
             </div>

@@ -15,14 +15,19 @@
     <div class="d-flex flex-column align-items-center justify-content-center bg-dark text-danger p-4"
         style="min-height: 200px;">
         <i class="bi bi-exclamation-circle fs-1 mb-2"></i>
-        <span class="small text-center">{{ job.error_message or 'Generation failed' }}</span>
+        <span class="small text-center">{{ job.error_message or t.wb_gen_failed }}</span>
     </div>
     {% else %}
     <!-- Running/Queued -->
     <div class="d-flex flex-column align-items-center justify-content-center bg-dark text-white-50 p-4"
         style="min-height: 200px;" hx-post="/jobs/{{ job.id }}/sync" hx-trigger="load delay:3s" hx-swap="outerHTML">
         <div class="spinner-border text-warning mb-3" role="status"></div>
-        <span class="small">{{ job.status|capitalize }}...</span>
+        <span class="small">
+            {% if job.status == 'queued' %}{{ t.status_queued }}
+            {% elif job.status == 'running' %}{{ t.status_running }} {{ job.progress }}%
+            {% else %}{{ job.status|capitalize }}...
+            {% endif %}
+        </span>
     </div>
     {% endif %}
 

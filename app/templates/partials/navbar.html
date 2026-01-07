@@ -1,32 +1,90 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-transparent border-bottom border-secondary mb-4 p-3">
+<nav class="navbar fixed-top navbar-expand-lg"
+    style="background: var(--glass-bg); backdrop-filter: blur(12px); border-bottom: 1px solid var(--glass-border); height: 64px;">
     <div class="container-fluid">
-        <!-- Breadcrumbs / Dynamic Title -->
-        <div class="d-flex align-items-center">
-            {% if nav_links %}
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0">
-                    {% for link in nav_links %}
-                    {% if loop.last %}
-                    <li class="breadcrumb-item active text-white" aria-current="page">{{ link.label }}</li>
-                    {% else %}
-                    <li class="breadcrumb-item"><a href="{{ link.url }}" class="text-decoration-none text-white-50">{{
-                            link.label }}</a></li>
-                    {% endif %}
-                    {% endfor %}
-                </ol>
-            </nav>
-            {% else %}
-            <span class="navbar-brand mb-0 h1">{{ title | default('ArtLine') }}</span>
-            {% endif %}
-        </div>
+        <!-- Brand -->
+        <a href="/" class="navbar-brand fw-bold text-gradient d-flex align-items-center gap-2">
+            <span class="fs-4">ArtLine</span>
+        </a>
 
-        <div class="d-flex align-items-center">
-            <!-- Language Switcher could go here if moving from bottom -->
-            <!-- Balance Check (already in Sidebar for billing, but maybe useful here too?) -->
-            <!-- Spec says Navbar is textual navigation, balance is in Sidebar for Account context. 
-                 For Home, balance is hidden or small. 
-                 Let's keep it minimal as per spec. 
-            -->
+        <!-- Mobile Toggle -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar Content -->
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <!-- Breadcrumbs / Dynamic Title (Center or Left-aligned next to brand if preferred, keeping as is for now but adapting) -->
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 px-3 border-start border-secondary ms-3"
+                style="min-height: 24px;">
+                {% if nav_links %}
+                <li class="nav-item d-flex align-items-center">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            {% for link in nav_links %}
+                            {% if loop.last %}
+                            <li class="breadcrumb-item active text-white" aria-current="page">{{ link.label }}</li>
+                            {% else %}
+                            <li class="breadcrumb-item"><a href="{{ link.url }}"
+                                    class="text-decoration-none text-white-50">{{
+                                    link.label }}</a></li>
+                            {% endif %}
+                            {% endfor %}
+                        </ol>
+                    </nav>
+                </li>
+                {% else %}
+                <li class="nav-item d-flex align-items-center">
+                    <span class="navbar-text text-white-50">{{ title | default('') }}</span>
+                </li>
+                {% endif %}
+            </ul>
+
+            <!-- Right Side: Utils -->
+            <div class="d-flex align-items-center gap-3">
+                <!-- Language Switcher -->
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2"
+                        type="button" id="langDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                        style="border: 1px solid var(--glass-border);">
+                        <i class="bi bi-translate"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow" aria-labelledby="langDropdown"
+                        style="background: rgba(30, 30, 36, 0.95); backdrop-filter: blur(10px); border: 1px solid var(--glass-border);">
+                        <li><a class="dropdown-item" href="/lang/ru">Русский</a></li>
+                        <li><a class="dropdown-item" href="/lang/kk">Қазақша</a></li>
+                        <li><a class="dropdown-item" href="/lang/ky">Кыргызча</a></li>
+                        {% if user and user.is_admin %}
+                        <li>
+                            <hr class="dropdown-divider bg-secondary">
+                        </li>
+                        <li><a class="dropdown-item" href="/lang/en">English (Admin)</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <!-- User Menu -->
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle"
+                        id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle fs-4 me-2"></i>
+                        <span class="d-none d-sm-inline"><strong>{{ user.email if user and user.email else 'Guest'
+                                }}</strong></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end text-small shadow"
+                        aria-labelledby="dropdownUser1">
+                        {% if user and user.email %}
+                        <li><a class="dropdown-item" href="/account">{{ t.nav_settings }}</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="/logout">{{ t.nav_signout }}</a></li>
+                        {% else %}
+                        <li><a class="dropdown-item" href="/login">{{ t.nav_login }}</a></li>
+                        <li><a class="dropdown-item" href="/signup">{{ t.nav_signup }}</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 </nav>

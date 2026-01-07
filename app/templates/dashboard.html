@@ -8,10 +8,10 @@
 
     <!-- 2. Community Gallery (Masonry) -->
     <div id="gallery-anchor">
-        <h5 class="text-white-50 mb-3 text-uppercase ls-1 px-1">Community Creations</h5>
+        <h5 class="text-white-50 mb-3 text-uppercase ls-1 px-1">{{ t.wb_comm_gallery }}</h5>
         <div id="gallery-container" hx-get="/gallery/page/1" hx-trigger="load, jobsChanged from:body"
             class="masonry-grid">
-            <div class="text-center text-muted py-5">Loading gallery...</div>
+            <div class="text-center text-muted py-5">{{ t.wb_loading_gal }}</div>
         </div>
     </div>
 </div>

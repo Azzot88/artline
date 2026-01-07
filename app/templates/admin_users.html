@@ -3,8 +3,8 @@
 {% block content %}
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>{{ t.adm_users_title|default('User Management') }}</h1>
-        <a href="/admin" class="btn btn-outline-secondary">{{ t.adm_back_dash|default('Back to Dashboard') }}</a>
+        <h1>{{ t.adm_users_title }}</h1>
+        <a href="/admin" class="btn btn-outline-secondary">{{ t.adm_back_dash }}</a>
     </div>
 
     <div class="card glass-panel" style="resize: vertical; overflow: auto; min-height: 400px; max-height: 80vh;">
@@ -13,12 +13,12 @@
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr>
-                            <th>{{ t.modal_id|default('ID') }}</th>
-                            <th>{{ t.auth_email|default('Email') }}</th>
-                            <th>{{ t.balance_title|default('Balance') }}</th>
-                            <th>{{ t.adm_th_role|default('Role') }}</th>
-                            <th>{{ t.adm_th_joined|default('Date Joined') }}</th>
-                            <th>{{ t.adm_th_actions|default('Actions') }}</th>
+                            <th>{{ t.modal_id }}</th>
+                            <th>{{ t.auth_email }}</th>
+                            <th>{{ t.balance_title }}</th>
+                            <th>{{ t.adm_th_role }}</th>
+                            <th>{{ t.adm_th_joined }}</th>
+                            <th>{{ t.adm_th_actions }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -29,16 +29,16 @@
                             <td class="text-success fw-bold">{{ balance }}</td>
                             <td>
                                 {% if u.is_admin %}
-                                <span class="badge bg-primary">Admin</span>
+                                <span class="badge bg-primary">{{ t.adm_role_admin }}</span>
                                 {% else %}
-                                <span class="badge bg-secondary">User</span>
+                                <span class="badge bg-secondary">{{ t.adm_role_user }}</span>
                                 {% endif %}
                             </td>
                             <td>{{ u.created_at.strftime('%Y-%m-%d') }}</td>
                             <td>
                                 <button class="btn btn-sm btn-outline-success"
                                     onclick="openCreditsModal('{{ u.id }}', '{{ u.email }}')">
-                                    {{ t.adm_btn_credits|default('+ Credits') }}
+                                    {{ t.adm_btn_credits }}
                                 </button>
                             </td>
                         </tr>
@@ -58,22 +58,23 @@
             <div class="modal-content"
                 style="background-color: #1e1e24; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
                 <div class="modal-header border-bottom-0">
-                    <h5 class="modal-title text-white">{{ t.adm_mod_add_credits|default('Add Credits') }}</h5>
+                    <h5 class="modal-title text-white">{{ t.adm_mod_add_credits }}</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted mb-3">Add credits for user: <strong class="text-white"
+                    <p class="text-muted mb-3">{{ t.adm_txt_add_cred_for }} <strong class="text-white"
                             id="modalUserEmail"></strong></p>
                     <input type="hidden" name="user_id" id="modalUserId">
                     <div class="mb-3">
-                        <label class="form-label text-white">{{ t.balance_title|default('Amount') }}</label>
+                        <label class="form-label text-white">{{ t.balance_title }}</label>
                         <input type="number" name="amount" class="form-control form-control-lg" placeholder="500"
                             required>
                     </div>
                 </div>
                 <div class="modal-footer border-top-0">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success px-4">Add to balance</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ t.adm_btn_cancel
+                        }}</button>
+                    <button type="submit" class="btn btn-success px-4">{{ t.adm_btn_add_bal }}</button>
                 </div>
             </div>
         </form>

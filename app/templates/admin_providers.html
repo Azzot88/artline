@@ -3,12 +3,12 @@
 {% block content %}
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>{{ t.adm_prov_title|default('AI Providers') }}</h1>
+        <h1>{{ t.adm_prov_title }}</h1>
         <div class="btn-group">
             <form action="/admin/providers/seed" method="post" class="d-inline">
-                <button class="btn btn-outline-warning me-2">{{ t.adm_btn_seed|default('Seed Demo Data') }}</button>
+                <button class="btn btn-outline-warning me-2">{{ t.adm_btn_seed }}</button>
             </form>
-            <a href="/admin" class="btn btn-outline-secondary">{{ t.adm_back_dash|default('Back to Dashboard') }}</a>
+            <a href="/admin" class="btn btn-outline-secondary">{{ t.adm_back_dash }}</a>
         </div>
     </div>
 
@@ -16,17 +16,17 @@
         <!-- List -->
         <div class="col-md-8">
             <div class="card glass-panel mb-4">
-                <div class="card-header">Configured Providers</div>
+                <div class="card-header">{{ t.adm_prov_configured }}</div>
                 <div class="card-body p-0">
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>{{ t.adm_th_provider|default('Provider') }}</th>
-                                <th>{{ t.adm_th_name|default('Name') }}</th>
-                                <th>{{ t.adm_th_key|default('Key (Last 4)') }}</th>
-                                <th>{{ t.adm_th_status|default('Status') }}</th>
-                                <th>Updated</th>
-                                <th>{{ t.adm_th_actions|default('Actions') }}</th>
+                                <th>{{ t.adm_th_provider }}</th>
+                                <th>{{ t.adm_th_name }}</th>
+                                <th>{{ t.adm_th_key }}</th>
+                                <th>{{ t.adm_th_status }}</th>
+                                <th>{{ t.adm_th_updated }}</th>
+                                <th>{{ t.adm_th_actions }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -37,11 +37,11 @@
                                 <td>{{ c.masked_key }}</td>
                                 <td>
                                     {% if c.status == 'valid' %}
-                                    <span class="badge bg-success">Valid</span>
+                                    <span class="badge bg-success">{{ t.adm_status_valid }}</span>
                                     {% elif c.status == 'invalid' %}
-                                    <span class="badge bg-danger">Invalid</span>
+                                    <span class="badge bg-danger">{{ t.adm_status_invalid }}</span>
                                     {% else %}
-                                    <span class="badge bg-secondary">Not Tested</span>
+                                    <span class="badge bg-secondary">{{ t.adm_status_nottested }}</span>
                                     {% endif %}
                                 </td>
                                 <td>{{ c.last_tested.strftime('%Y-%m-%d') if c.last_tested else '-' }}</td>
@@ -52,13 +52,13 @@
                                     <form action="/admin/providers/delete" method="post" class="d-inline"
                                         onsubmit="return confirm('Delete?');">
                                         <input type="hidden" name="id" value="{{ c.id }}">
-                                        <button class="btn btn-sm btn-outline-danger">Del</button>
+                                        <button class="btn btn-sm btn-outline-danger">{{ t.adm_btn_del }}</button>
                                     </form>
                                 </td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="6" class="text-center text-muted">No providers configured</td>
+                                <td colspan="6" class="text-center text-muted">{{ t.adm_no_provs }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -70,13 +70,16 @@
         <!-- Add Form -->
         <div class="col-md-4">
             <div class="card glass-panel">
-                <div class="card-header">{{ t.adm_btn_add|default('Add New Provider') }}</div>
+                <div class="card-header">{{ t.adm_btn_add }}</div>
                 <div class="card-body">
                     <form id="addProviderForm" action="/admin/providers/save" method="post">
                         <div class="mb-3">
-                            <label class="form-label">{{ t.adm_th_provider|default('Provider') }}</label>
-                            <select name="provider_id" id="providerSelect" class="form-select" required>
-                                <option value="" disabled selected>Select Provider...</option>
+                            <label class="form-label">{{ t.adm_th_provider }}</label>
+                            <select name="provider_id" id="providerSelect" class="form-select" required
+                                data-msg-spaces="{{ t.adm_js_spaces }}" data-msg-inv="{{ t.adm_js_invalid_fmt }}"
+                                data-msg-pass="{{ t.adm_js_test_passed }}" data-msg-err="{{ t.adm_js_error }}"
+                                data-msg-testing="{{ t.adm_js_testing }}">
+                                <option value="" disabled selected>{{ t.adm_sel_placeholder }}</option>
                                 {% for p in providers_list %}
                                 <option value="{{ p.id }}">{{ p.label }}</option>
                                 {% endfor %}
@@ -84,12 +87,12 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">{{ t.adm_lbl_name_alias|default('Name / Alias') }}</label>
+                            <label class="form-label">{{ t.adm_lbl_name_alias }}</label>
                             <input type="text" name="name" class="form-control" placeholder="e.g. OpenAI Main">
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">{{ t.adm_lbl_apikey|default('API Key') }}</label>
+                            <label class="form-label">{{ t.adm_lbl_apikey }}</label>
                             <div class="input-group">
                                 <input type="password" name="api_key" id="apiKeyInput" class="form-control" required>
                                 <button class="btn btn-outline-secondary" type="button"
@@ -100,9 +103,9 @@
 
                         <div class="d-grid gap-2">
                             <button type="button" id="testBtn" class="btn btn-outline-info" disabled>{{
-                                t.adm_btn_test|default('Test Connection') }}</button>
+                                t.adm_btn_test }}</button>
                             <button type="submit" id="saveBtn" class="btn btn-primary" disabled>{{
-                                t.adm_btn_save|default('Save Config') }}</button>
+                                t.adm_btn_save }}</button>
                         </div>
                         <div id="testResult" class="mt-2 text-center"></div>
                     </form>
@@ -145,9 +148,8 @@
             return;
         }
 
-        // Check whitespace
         if (/\s/.test(key)) {
-            validationMsg.textContent = "Key cannot be spaces";
+            validationMsg.textContent = providerSelect.dataset.msgSpaces;
             saveBtn.disabled = true;
             testBtn.disabled = true;
             return;
@@ -155,7 +157,7 @@
 
         const reg = regexMap[pid] || /.{5,}/;
         if (!reg.test(key)) {
-            validationMsg.textContent = "Invalid format for " + pid;
+            validationMsg.textContent = providerSelect.dataset.msgInv + " " + pid;
             saveBtn.disabled = true;
             testBtn.disabled = true;
         } else {
@@ -171,7 +173,7 @@
 
         testBtn.addEventListener('click', async () => {
             testBtn.disabled = true;
-            testResult.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Testing...';
+            testResult.innerHTML = '<span class="spinner-border spinner-border-sm"></span> ' + providerSelect.dataset.msgTesting;
 
             const formData = new FormData();
             formData.append('provider_id', providerSelect.value);
@@ -184,12 +186,12 @@
                 });
                 const data = await res.json();
                 if (data.ok) {
-                    testResult.innerHTML = '<span class="text-success">✅ Test Passed!</span>';
+                    testResult.innerHTML = '<span class="text-success">✅ ' + providerSelect.dataset.msgPass + '</span>';
                 } else {
                     testResult.innerHTML = '<span class="text-danger">❌ ' + data.message + '</span>';
                 }
             } catch (e) {
-                testResult.innerHTML = '<span class="text-danger">Error: ' + e.message + '</span>';
+                testResult.innerHTML = '<span class="text-danger">' + providerSelect.dataset.msgErr + ': ' + e.message + '</span>';
             } finally {
                 testBtn.disabled = false;
             }
@@ -214,7 +216,7 @@
                 const dateCell = row.querySelector('td:nth-child(5)'); // 5th column is date
 
                 if (data.ok) {
-                    badgeCell.innerHTML = '<span class="badge bg-success">Valid</span>';
+                    badgeCell.innerHTML = '<span class="badge bg-success">' + '{{ t.adm_status_valid }}' + '</span>';
                     btn.classList.remove('btn-outline-info', 'btn-outline-danger');
                     btn.classList.add('btn-outline-success');
                     setTimeout(() => {
@@ -222,7 +224,7 @@
                         btn.classList.add('btn-outline-info');
                     }, 2000);
                 } else {
-                    badgeCell.innerHTML = '<span class="badge bg-danger">Invalid</span> <small class="d-block text-muted" style="font-size:0.7em">' + data.message + '</small>';
+                    badgeCell.innerHTML = '<span class="badge bg-danger">' + '{{ t.adm_status_invalid }}' + '</span> <small class="d-block text-muted" style="font-size:0.7em">' + data.message + '</small>';
                     btn.classList.remove('btn-outline-info');
                     btn.classList.add('btn-outline-danger');
                 }

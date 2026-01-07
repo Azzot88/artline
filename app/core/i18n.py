@@ -9,6 +9,17 @@ TRANSLATIONS = {
         "nav_back": "Back",
         "nav_login": "Login",
         "nav_signup": "Sign Up",
+        "nav_settings": "Settings",
+        "nav_signout": "Sign out",
+        "nav_profile": "Profile",
+        "nav_billing": "Billing",
+        "nav_topup": "Top Up",
+        "nav_generations": "Generations",
+        "nav_workshop": "Workshop",
+        "nav_models": "Models",
+        "nav_providers": "Providers",
+        "nav_users": "Users",
+        "nav_curr_balance": "Current Balance",
         
         # Landing
         "land_hero_title": "Generate Art with AI",
@@ -55,6 +66,22 @@ TRANSLATIONS = {
         "generate_btn": "Generate",
         "fmt_image": "Image",
         "fmt_video": "Video",
+        "wb_mode_image": "Image Mode",
+        "wb_mode_video": "Video Mode",
+        "wb_tab_txt2img": "Text to Image",
+        "wb_tab_img2img": "Image to Image",
+        "wb_prompt_tips": "Prompt tips",
+        "wb_select_model": "Select Model",
+        "wb_limit_msg": "You've reached your free limit.",
+        "wb_subscribe": "Subscribe now",
+        "wb_generating": "Generating...",
+        "wb_started": "Started",
+        "wb_comm_gallery": "Community Creations",
+        "wb_loading_gal": "Loading gallery...",
+        "wb_no_models": "No models available",
+        "wb_gen_failed": "Generation failed",
+        "btn_view": "View",
+
         
         # Dashboard / Gallery
         "gallery_title": "Your Gallery",
@@ -107,6 +134,45 @@ TRANSLATIONS = {
         "adm_th_joined": "Date Joined",
         "adm_btn_credits": "+ Credits",
         "adm_mod_add_credits": "Add Credits",
+        "adm_models_title": "AI Models",
+        "adm_btn_manage_models": "Manage Models",
+        "adm_models_desc": "Add and configure dynamic Replicate models.",
+        "adm_no_provs": "No providers configured",
+        "adm_no_users": "No users found",
+        "adm_status_active": "Active",
+        "adm_status_active": "Active",
+        "adm_status_disabled": "Disabled",
+        "adm_btn_add_model": "Add Replicate Model",
+        "adm_th_ref": "Reference (ID)",
+        "adm_th_type": "Type",
+        "adm_th_example": "Example",
+        "adm_btn_conf": "Configure",
+        "adm_mod_add_new": "Add New Model",
+        "adm_lbl_ref": "Replicate Model ID",
+        "adm_ph_ref": "owner/name (e.g. stability-ai/sdxl)",
+        "adm_help_fetch": "We will fetch the latest version and schema automatically.",
+        "adm_btn_fetch": "Fetch & Add",
+        "adm_no_models": "No models added yet.",
+        "adm_role_admin": "Admin",
+        "adm_role_user": "User",
+        "adm_btn_cancel": "Cancel",
+        "adm_btn_add_bal": "Add to balance",
+        "adm_txt_add_cred_for": "Add credits for user:",
+
+        "adm_prov_configured": "Configured Providers",
+        "adm_th_updated": "Updated",
+        "adm_status_valid": "Valid",
+        "adm_status_invalid": "Invalid",
+        "adm_status_nottested": "Not Tested",
+        "adm_btn_del": "Del",
+        "adm_sel_placeholder": "Select Provider...",
+        "adm_js_spaces": "Key cannot be spaces",
+        "adm_js_invalid_fmt": "Invalid format for",
+        "adm_js_test_passed": "Test Passed!",
+        "adm_js_error": "Error",
+        "adm_js_testing": "Testing...",
+
+
     },
     "ru": {
         "nav_dashboard": "Дашборд",
@@ -115,6 +181,17 @@ TRANSLATIONS = {
         "nav_back": "Назад",
         "nav_login": "Вход",
         "nav_signup": "Регистрация",
+        "nav_settings": "Настройки",
+        "nav_signout": "Выйти",
+        "nav_profile": "Профиль",
+        "nav_billing": "Биллинг",
+        "nav_topup": "Пополнить",
+        "nav_generations": "Генерации",
+        "nav_workshop": "Мастерская",
+        "nav_models": "Модели",
+        "nav_providers": "Провайдеры",
+        "nav_users": "Пользователи",
+        "nav_curr_balance": "Текущий баланс",
         
         "land_hero_title": "Генерируйте Арт с ИИ",
         "land_hero_desc": "Создавайте потрясающие изображения и видео за секунды с ArtLine API. Простая система кредитов, без подписок.",
@@ -158,6 +235,22 @@ TRANSLATIONS = {
         "generate_btn": "Создать",
         "fmt_image": "Изображение",
         "fmt_video": "Видео",
+        "wb_mode_image": "Режим Изображения",
+        "wb_mode_video": "Режим Видео",
+        "wb_tab_txt2img": "Текст в Картинку",
+        "wb_tab_img2img": "Картинка в Картинку",
+        "wb_prompt_tips": "Подсказки",
+        "wb_select_model": "Выбрать Модель",
+        "wb_limit_msg": "Лимит исчерпан.",
+        "wb_subscribe": "Подписаться",
+        "wb_generating": "Генерация...",
+        "wb_started": "Начато",
+        "wb_comm_gallery": "Работы Сообщества",
+        "wb_loading_gal": "Загрузка галереи...",
+        "wb_no_models": "Нет моделей",
+        "wb_gen_failed": "Генерация не удалась",
+        "btn_view": "Просмотр",
+
         
         "gallery_title": "Галерея",
         "no_jobs_title": "Нет работ",
@@ -205,6 +298,45 @@ TRANSLATIONS = {
         "adm_th_joined": "Дата регистрации",
         "adm_btn_credits": "+ Кредиты",
         "adm_mod_add_credits": "Добавить кредиты",
+        "adm_models_title": "AI Модели",
+        "adm_btn_manage_models": "Управление моделями",
+        "adm_models_desc": "Добавление и настройка моделей Replicate.",
+        "adm_no_provs": "Нет настроенных провайдеров",
+        "adm_no_users": "Пользователи не найдены",
+        "adm_status_active": "Активен",
+        "adm_status_active": "Активен",
+        "adm_status_disabled": "Отключен",
+        "adm_btn_add_model": "Добавить модель Replicate",
+        "adm_th_ref": "ID Модели",
+        "adm_th_type": "Тип",
+        "adm_th_example": "Пример",
+        "adm_btn_conf": "Настроить",
+        "adm_mod_add_new": "Добавить новую модель",
+        "adm_lbl_ref": "Replicate ID",
+        "adm_ph_ref": "owner/name (напр. stability-ai/sdxl)",
+        "adm_help_fetch": "Мы автоматически загрузим последнюю версию.",
+        "adm_btn_fetch": "Добавить",
+        "adm_no_models": "Моделей пока нет.",
+        "adm_role_admin": "Админ",
+        "adm_role_user": "Пользователь",
+        "adm_btn_cancel": "Отмена",
+        "adm_btn_add_bal": "Пополнить",
+        "adm_txt_add_cred_for": "Кредиты для:",
+
+        "adm_prov_configured": "Настроенные провайдеры",
+        "adm_th_updated": "Обновлено",
+        "adm_status_valid": "Валиден",
+        "adm_status_invalid": "Невалиден",
+        "adm_status_nottested": "Не проверен",
+        "adm_btn_del": "Удал",
+        "adm_sel_placeholder": "Выберите провайдера...",
+        "adm_js_spaces": "Ключ не может содержать пробелы",
+        "adm_js_invalid_fmt": "Неверный формат для",
+        "adm_js_test_passed": "Тест пройден!",
+        "adm_js_error": "Ошибка",
+        "adm_js_testing": "Тестирование...",
+
+
     },
     "kk": {
         "nav_dashboard": "Басқару панелі",
@@ -213,6 +345,17 @@ TRANSLATIONS = {
         "nav_back": "Артқа",
         "nav_login": "Кіру",
         "nav_signup": "Тіркелу",
+        "nav_settings": "Баптаулар",
+        "nav_signout": "Шығу",
+        "nav_profile": "Профиль",
+        "nav_billing": "Биллинг",
+        "nav_topup": "Толықтыру",
+        "nav_generations": "Генерациялар",
+        "nav_workshop": "Шеберхана",
+        "nav_models": "Модельдер",
+        "nav_providers": "Провайдерлер",
+        "nav_users": "Қолданушылар",
+        "nav_curr_balance": "Ағымдағы баланс",
         
         "land_hero_title": "ИИ көмегімен өнер жасаңыз",
         "land_hero_desc": "ArtLine API арқылы керемет суреттер мен бейнелерді секундтарда жасаңыз. Қарапайым кредит жүйесі.",
@@ -256,6 +399,22 @@ TRANSLATIONS = {
         "generate_btn": "Генерациялау",
         "fmt_image": "Сурет",
         "fmt_video": "Видео",
+        "wb_mode_image": "Сурет режимі",
+        "wb_mode_video": "Видео режимі",
+        "wb_tab_txt2img": "Мәтіннен сурет",
+        "wb_tab_img2img": "Суреттен сурет",
+        "wb_prompt_tips": "Кеңестер",
+        "wb_select_model": "Модель таңдау",
+        "wb_limit_msg": "Лимит таусылды.",
+        "wb_subscribe": "Жазылу",
+        "wb_generating": "Генерация...",
+        "wb_started": "Басталды",
+        "wb_comm_gallery": "Қоғамдастық жұмыстары",
+        "wb_loading_gal": "Галерея жүктелуде...",
+        "wb_no_models": "Модельдер жоқ",
+        "wb_gen_failed": "Генерация сәтсіз",
+        "btn_view": "Көру",
+
         
         "gallery_title": "Галерея",
         "no_jobs_title": "Жұмыстар жоқ",
@@ -303,6 +462,45 @@ TRANSLATIONS = {
         "adm_th_joined": "Тіркелген күні",
         "adm_btn_credits": "+ Кредит",
         "adm_mod_add_credits": "Кредит қосу",
+        "adm_models_title": "AI Модельдері",
+        "adm_btn_manage_models": "Модельдерді басқару",
+        "adm_models_desc": "Replicate модельдерін қосу және баптау.",
+        "adm_no_provs": "Провайдерлер жоқ",
+        "adm_no_users": "Қолданушылар табылмады",
+        "adm_status_active": "Белсенді",
+        "adm_status_active": "Белсенді",
+        "adm_status_disabled": "Өшірулі",
+        "adm_btn_add_model": "Replicate моделін қосу",
+        "adm_th_ref": "ID Моделі",
+        "adm_th_type": "Түрі",
+        "adm_th_example": "Мысал",
+        "adm_btn_conf": "Баптау",
+        "adm_mod_add_new": "Жаңа модель қосу",
+        "adm_lbl_ref": "Replicate ID",
+        "adm_ph_ref": "owner/name (мыс. stability-ai/sdxl)",
+        "adm_help_fetch": "Соңғы нұсқа автоматты түрде жүктеледі.",
+        "adm_btn_fetch": "Қосу",
+        "adm_no_models": "Модельдер жоқ.",
+        "adm_role_admin": "Админ",
+        "adm_role_user": "Қолданушы",
+        "adm_btn_cancel": "Болдырмау",
+        "adm_btn_add_bal": "Толықтыру",
+        "adm_txt_add_cred_for": "Кредиттер кімге:",
+
+        "adm_prov_configured": "Бапталған провайдерлер",
+        "adm_th_updated": "Жаңартылған",
+        "adm_status_valid": "Жарамды",
+        "adm_status_invalid": "Жарамсыз",
+        "adm_status_nottested": "Тексерілмеген",
+        "adm_btn_del": "Жою",
+        "adm_sel_placeholder": "Провайдерді таңдаңыз...",
+        "adm_js_spaces": "Кілтте бос орын болмауы тиіс",
+        "adm_js_invalid_fmt": "Форматы қате:",
+        "adm_js_test_passed": "Сәтті өтті!",
+        "adm_js_error": "Қате",
+        "adm_js_testing": "Тексеруде...",
+
+
     },
     "ky": {
         "nav_dashboard": "Башкаруу панели",
@@ -311,6 +509,17 @@ TRANSLATIONS = {
         "nav_back": "Артка",
         "nav_login": "Кирүү",
         "nav_signup": "Катталуу",
+        "nav_settings": "Жөндөөлөр",
+        "nav_signout": "Чыгуу",
+        "nav_profile": "Профиль",
+        "nav_billing": "Биллинг",
+        "nav_topup": "Толуктоо",
+        "nav_generations": "Генерациялар",
+        "nav_workshop": "Устакана",
+        "nav_models": "Моделдер",
+        "nav_providers": "Провайдерлер",
+        "nav_users": "Колдонуучулар",
+        "nav_curr_balance": "Учурдагы баланс",
         
         "land_hero_title": "ИИ менен искусство жаратыңыз",
         "land_hero_desc": "ArtLine API аркылуу укмуштуудай сүрөттөрдү жана видеолорду секунддарда жаратыңыз. Жөнөкөй кредит системасы.",
@@ -354,6 +563,22 @@ TRANSLATIONS = {
         "generate_btn": "Жаратуу",
         "fmt_image": "Сүрөт",
         "fmt_video": "Видео",
+        "wb_mode_image": "Сүрөт режими",
+        "wb_mode_video": "Видео режими",
+        "wb_tab_txt2img": "Тексттен сүрөт",
+        "wb_tab_img2img": "Сүрөттөн сүрөт",
+        "wb_prompt_tips": "Кеңештер",
+        "wb_select_model": "Модель тандоо",
+        "wb_limit_msg": "Лимит бүттү.",
+        "wb_subscribe": "Жазылуу",
+        "wb_generating": "Генерация...",
+        "wb_started": "Башталды",
+        "wb_comm_gallery": "Коомчулук иштери",
+        "wb_loading_gal": "Галерея жүктөлүүдө...",
+        "wb_no_models": "Моделдер жок",
+        "wb_gen_failed": "Генерация оңунан чыкпады",
+        "btn_view": "Көрүү",
+
         
         "gallery_title": "Галерея",
         "no_jobs_title": "Жумуштар жок",
@@ -401,17 +626,78 @@ TRANSLATIONS = {
         "adm_th_joined": "Катталган күнү",
         "adm_btn_credits": "+ Кредит",
         "adm_mod_add_credits": "Кредит кошуу",
+        "adm_models_title": "AI Моделдери",
+        "adm_btn_manage_models": "Моделдерди башкаруу",
+        "adm_models_desc": "Replicate моделдерин кошуу жана жөндөө.",
+        "adm_no_provs": "Провайдерлер жок",
+        "adm_no_users": "Колдонуучулар табылган жок",
+        "adm_status_active": "Активдүү",
+        "adm_status_active": "Активдүү",
+        "adm_status_disabled": "Өчүрүлгөн",
+        "adm_btn_add_model": "Replicate моделин кошуу",
+        "adm_th_ref": "ID Модели",
+        "adm_th_type": "Түрү",
+        "adm_th_example": "Мисал",
+        "adm_btn_conf": "Жөндөө",
+        "adm_mod_add_new": "Жаңы модель кошуу",
+        "adm_lbl_ref": "Replicate ID",
+        "adm_ph_ref": "owner/name (мис. stability-ai/sdxl)",
+        "adm_help_fetch": "Акыркы версия автоматтык түрдө жүктөлөт.",
+        "adm_btn_fetch": "Кошуу",
+        "adm_no_models": "Модельдер жок.",
+        "adm_role_admin": "Админ",
+        "adm_role_user": "Колдонуучу",
+        "adm_btn_cancel": "Жокко чыгаруу",
+        "adm_btn_add_bal": "Толуктоо",
+        "adm_txt_add_cred_for": "Кредиттер кимге:",
+
+        "adm_prov_configured": "Жөндөлгөн провайдерлер",
+        "adm_th_updated": "Жаңартылган",
+        "adm_status_valid": "Жарамдуу",
+        "adm_status_invalid": "Жарамсыз",
+        "adm_status_nottested": "Текшерилбеген",
+        "adm_btn_del": "Өчүрүү",
+        "adm_sel_placeholder": "Провайдерди тандаңыз...",
+        "adm_js_spaces": "Ачкычта бош орун болбошу керек",
+        "adm_js_invalid_fmt": "Форматы туура эмес:",
+        "adm_js_test_passed": "Ийгиликтүү өттү!",
+        "adm_js_error": "Ката",
+        "adm_js_testing": "Текшерүүдө...",
+
+
     }
 }
 
 SUPPORTED_LANGUAGES = ["en", "ru", "kk", "ky"]
 
+class FallbackDict(dict):
+    """
+    Dictionary that falls back to a default language (ru) if key is missing.
+    Usage: t = FallbackDict(target_lang_dict, fallback_lang_dict)
+    """
+    def __init__(self, target: dict, fallback: dict):
+        super().__init__(target)
+        self.fallback = fallback
+
+    def __getitem__(self, key):
+        if key in self:
+            return super().__getitem__(key)
+        return self.fallback.get(key, f"[{key}]")
+
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            return f"[{key}]"
+
 def get_t(request: Request) -> dict:
-    """Get translation dictionary for the current language."""
+    """Get translation dictionary for the current language with fallback to RU."""
     lang = request.cookies.get("artline_lang", "ru")
     if lang not in TRANSLATIONS:
         lang = "ru"
-    return TRANSLATIONS[lang]
+    
+    # Always fallback to RU
+    return FallbackDict(TRANSLATIONS.get(lang, {}), TRANSLATIONS["ru"])
 
 def get_current_lang(request: Request) -> str:
     """Get current language code."""

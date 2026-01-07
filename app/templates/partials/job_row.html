@@ -4,18 +4,18 @@
     <td class="text-truncate" style="max-width: 200px;">{{ job.prompt }}</td>
     <td>
         {% if job.status == 'queued' %}
-        <span class="badge bg-warning text-dark">Queued</span>
+        <span class="badge bg-warning text-dark">{{ t.status_queued }}</span>
         {% elif job.status == 'running' %}
-        <span class="badge bg-info text-dark">Running ({{ job.progress }}%)</span>
+        <span class="badge bg-info text-dark">{{ t.status_running }} ({{ job.progress }}%)</span>
         {% elif job.status == 'succeeded' %}
-        <span class="badge bg-success">Success</span>
+        <span class="badge bg-success">{{ t.status_succeeded }}</span>
         {% else %}
-        <span class="badge bg-danger">Failed</span>
+        <span class="badge bg-danger">{{ t.status_failed }}</span>
         {% endif %}
     </td>
     <td>
         {% if job.status == 'succeeded' and job.result_url %}
-        <a href="{{ job.result_url }}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
+        <a href="{{ job.result_url }}" target="_blank" class="btn btn-sm btn-outline-primary">{{ t.btn_view }}</a>
         {% elif job.status == 'failed' %}
         <span class="text-danger small">{{ job.error_message }}</span>
         {% else %}

@@ -11,13 +11,13 @@
             <div class="d-flex gap-3 me-4 align-items-center">
                 <input type="radio" class="btn-check" name="kind" id="modeImage" value="image" checked
                     onchange="app.setMode('image')">
-                <label class="cursor-pointer mode-icon-label" for="modeImage" title="Image Mode">
+                <label class="cursor-pointer mode-icon-label" for="modeImage" title="{{ t.wb_mode_image }}">
                     <img src="/static/icons/mode_image.png" class="mode-icon rounded-3" width="42" height="42">
                 </label>
 
                 <input type="radio" class="btn-check" name="kind" id="modeVideo" value="video"
                     onchange="app.setMode('video')">
-                <label class="cursor-pointer mode-icon-label" for="modeVideo" title="Video Mode">
+                <label class="cursor-pointer mode-icon-label" for="modeVideo" title="{{ t.wb_mode_video }}">
                     <img src="/static/icons/mode_video.png" class="mode-icon rounded-3" width="42" height="42">
                 </label>
             </div>
@@ -48,16 +48,16 @@
             <div class="d-flex gap-4">
                 <div class="cursor-pointer pb-2 border-bottom border-2 border-transparent text-white-50 fw-bold header-tab"
                     id="tabText" onclick="app.setSource('text')">
-                    Text to Image
+                    {{ t.wb_tab_txt2img }}
                 </div>
                 <div class="cursor-pointer pb-2 border-bottom border-2 border-white text-white fw-bold header-tab"
                     id="tabImage" onclick="app.setSource('image')">
-                    Image to Image
+                    {{ t.wb_tab_img2img }}
                 </div>
             </div>
 
             <div class="ms-auto text-white-50 small">
-                <i class="bi bi-info-circle"></i> Prompt tips
+                <i class="bi bi-info-circle"></i> {{ t.wb_prompt_tips }}
             </div>
         </div>
 
@@ -84,18 +84,17 @@
 
             <!-- Input Field -->
             <textarea name="prompt" id="promptInput" class="form-control bg-transparent border-0 text-white px-0 fs-5"
-                style="resize: none; box-shadow: none;" rows="3"
-                placeholder="Describe how to transform your image (e.g. 'swap the sky with a sunset') or blend 2-3 images..."
-                required oninput="app.updateState()">ducks in bikini in spaceship</textarea>
+                style="resize: none; box-shadow: none;" rows="3" placeholder="{{ t.prompt_placeholder }}" required
+                oninput="app.updateState()">ducks in bikini in spaceship</textarea>
         </div>
 
         <!-- Footer: Controls -->
         <div class="card-footer bg-transparent border-0 px-4 pb-4 pt-2">
 
             <!-- Limits / Warning -->
+            <!-- Limits / Warning -->
             <div id="limitMsg" class="text-warning small mb-3 d-none">
-                You've reached your free limit. <a href="/services/billing" class="text-warning fw-bold">Subscribe
-                    now</a> to keep generating.
+                {{ t.wb_limit_msg }} <a href="/services/billing" class="text-warning fw-bold">{{ t.wb_subscribe }}</a>
             </div>
 
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -108,8 +107,7 @@
                             class="btn btn-dark border border-secondary rounded-3 text-start d-flex align-items-center gap-2 px-3"
                             type="button" data-bs-toggle="dropdown" style="background: #222;">
                             <span id="selectedModelIcon">🍌</span>
-                            <span id="selectedModelName" class="text-white small fw-bold">Select
-                                Model</span>
+                            <span id="selectedModelName" class="text-white small fw-bold">{{ t.wb_select_model }}</span>
                             <i class="bi bi-chevron-down ms-2 text-white-50 small"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-dark shadow-lg p-0" id="modelDropdown"
@@ -135,13 +133,13 @@
                     <button type="submit" id="mainGenerateBtn"
                         class="btn btn-warning fw-bold px-4 py-2 d-flex align-items-center gap-2"
                         style="background-color: #ffd600; border: none; color: #000;">
-                        Сгенерировать <span id="costDisplay">100</span> <i class="bi bi-stars"></i>
+                        {{ t.generate_btn }} <span id="costDisplay">100</span> <i class="bi bi-stars"></i>
                     </button>
                     {% else %}
                     <button type="submit" id="mainGenerateBtn"
                         class="btn btn-warning fw-bold px-4 py-2 d-flex align-items-center gap-2"
                         style="background-color: #ffd600; border: none; color: #000;">
-                        Сгенерировать <i class="bi bi-stars"></i>
+                        {{ t.generate_btn }} <i class="bi bi-stars"></i>
                     </button>
                     {% endif %}
 

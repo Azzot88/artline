@@ -3,12 +3,12 @@
 {% block content %}
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>AI Models</h1>
+        <h1>{{ t.adm_models_title }}</h1>
         <div class="btn-group">
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModelModal">
-                <i class="bi bi-plus-lg"></i> Add Replicate Model
+                <i class="bi bi-plus-lg"></i> {{ t.adm_btn_add_model }}
             </button>
-            <a href="/admin" class="btn btn-outline-secondary">Back to Dashboard</a>
+            <a href="/admin" class="btn btn-outline-secondary">{{ t.adm_back_dash }}</a>
         </div>
     </div>
 
@@ -24,12 +24,12 @@
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Reference (ID)</th>
-                        <th>Type</th>
-                        <th>Status</th>
-                        <th>Example</th>
-                        <th>Actions</th>
+                        <th>{{ t.adm_th_name }}</th>
+                        <th>{{ t.adm_th_ref }}</th>
+                        <th>{{ t.adm_th_type }}</th>
+                        <th>{{ t.adm_th_status }}</th>
+                        <th>{{ t.adm_th_example }}</th>
+                        <th>{{ t.adm_th_actions }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -40,9 +40,9 @@
                         <td><span class="badge bg-secondary">{{ m.type }}</span></td>
                         <td>
                             {% if m.is_active %}
-                            <span class="badge bg-success">Active</span>
+                            <span class="badge bg-success">{{ t.adm_status_active }}</span>
                             {% else %}
-                            <span class="badge bg-danger">Disabled</span>
+                            <span class="badge bg-danger">{{ t.adm_status_disabled }}</span>
                             {% endif %}
                         </td>
                         <td>
@@ -54,12 +54,13 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="/admin/models/{{ m.id }}" class="btn btn-sm btn-outline-primary">Configure</a>
+                            <a href="/admin/models/{{ m.id }}" class="btn btn-sm btn-outline-primary">{{ t.adm_btn_conf
+                                }}</a>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="text-center py-4">No models added yet.</td>
+                        <td colspan="6" class="text-center py-4">{{ t.adm_no_models }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -73,19 +74,19 @@
     <div class="modal-dialog">
         <div class="modal-content text-dark">
             <div class="modal-header">
-                <h5 class="modal-title">Add New Model</h5>
+                <h5 class="modal-title">{{ t.adm_mod_add_new }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form action="/admin/models/add" method="post">
                     <div class="mb-3">
-                        <label class="form-label">Replicate Model ID</label>
-                        <input type="text" name="model_ref" class="form-control"
-                            placeholder="owner/name (e.g. stability-ai/sdxl)" required>
-                        <div class="form-text">We will fetch the latest version and schema automatically.</div>
+                        <label class="form-label">{{ t.adm_lbl_ref }}</label>
+                        <input type="text" name="model_ref" class="form-control" placeholder="{{ t.adm_ph_ref }}"
+                            required>
+                        <div class="form-text">{{ t.adm_help_fetch }}</div>
                     </div>
                     <div class="d-grid">
-                        <button class="btn btn-primary">Fetch & Add</button>
+                        <button class="btn btn-primary">{{ t.adm_btn_fetch }}</button>
                     </div>
                 </form>
             </div>
