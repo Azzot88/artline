@@ -122,9 +122,47 @@ body {
     gap: 1.5rem;
 }
 
-.job-card {
+/* Masonry (Vertical / Pinterest-style) */
+.masonry-grid {
+    column-count: 4;
+    column-gap: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+    .masonry-grid {
+        column-count: 3;
+    }
+}
+
+@media (max-width: 900px) {
+    .masonry-grid {
+        column-count: 2;
+    }
+}
+
+@media (max-width: 600px) {
+    .masonry-grid {
+        column-count: 1;
+    }
+}
+
+.masonry-grid .job-card {
+    break-inside: avoid;
+    margin-bottom: 1.5rem;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
     overflow: hidden;
+    background: var(--glass-bg);
+    position: relative;
+    /* For overlays */
+}
+
+/* Ensure images don't break layout */
+.masonry-grid .job-card img {
+    width: 100%;
+    height: auto;
+    display: block;
 }
 
 .job-card:hover {
@@ -134,7 +172,8 @@ body {
 }
 
 .job-img-wrapper {
-    height: 200px;
+    /* height: 200px;  <-- REMOVE fixed height for masonry */
+    width: 100%;
     overflow: hidden;
     position: relative;
     background: #000;

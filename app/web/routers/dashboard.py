@@ -74,7 +74,64 @@ async def dashboard(
             "ai_models": ai_models, 
             "models_json": json.dumps(models_data),
             "t": get_t(request),
-            "lang": get_current_lang(request)
+            "lang": get_current_lang(request),
+            # Layout Props
+            "context": "home",
+            "active_page": "home",
+            "nav_links": [
+                {"label": "Мастерская", "url": "/"},
+                {"label": "Галерея", "url": "#gallery"},
+                {"label": "Цены", "url": "/premium"}
+            ]
+        }
+    )
+
+@router.get("/account", response_class=HTMLResponse)
+async def account_page(
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    balance = await get_user_balance(db, user.id)
+    return templates.TemplateResponse(
+        request=request,
+        name="account.html", # To be created
+        context={
+            "user": user,
+            "balance": balance,
+            "t": get_t(request),
+            "lang": get_current_lang(request),
+            "context": "account",
+            "active_page": "account",
+            "nav_links": [
+                {"label": "Профиль", "url": "/account"},
+                {"label": "Настройки", "url": "/account/settings"},
+                {"label": "Выход", "url": "/logout"}
+            ]
+        }
+    )
+
+@router.get("/billing", response_class=HTMLResponse)
+async def billing_page(
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    balance = await get_user_balance(db, user.id)
+    return templates.TemplateResponse(
+        request=request,
+        name="billing.html", # To be created
+        context={
+            "user": user,
+            "balance": balance,
+            "t": get_t(request),
+            "lang": get_current_lang(request),
+            "context": "billing",
+            "active_page": "billing",
+            "nav_links": [
+                {"label": "Тарифы", "url": "/billing"},
+                {"label": "История", "url": "/billing/history"}
+            ]
         }
     )
 
@@ -356,7 +413,18 @@ async def sync_job_status(
         return JSONResponse({"status": new_status, "synced": True, "result_url": job.result_url})
         
     except Exception as e:
+        if request.headers.get("HX-Request"):
+             return templates.TemplateResponse("partials/result_card.html", {"request": request, "job": job})
         return JSONResponse({"error": str(e)}, 500)
+
+    # Success Response
+    if request.headers.get("HX-Request"):
+        # If status is still running, we might want to keep the polling div?
+        # The result_card.html partial handles the state (running vs succeeded).
+        # So we just return the updated card.
+        return templates.TemplateResponse("partials/result_card.html", {"request": request, "job": job})
+    
+    return JSONResponse({"status": new_status, "synced": True, "result_url": job.result_url})
 
 @router.get("/gallery/page/{page}", response_class=HTMLResponse)
 async def gallery_fragment(

@@ -1,0 +1,32 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-transparent border-bottom border-secondary mb-4 p-3">
+    <div class="container-fluid">
+        <!-- Breadcrumbs / Dynamic Title -->
+        <div class="d-flex align-items-center">
+            {% if nav_links %}
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    {% for link in nav_links %}
+                    {% if loop.last %}
+                    <li class="breadcrumb-item active text-white" aria-current="page">{{ link.label }}</li>
+                    {% else %}
+                    <li class="breadcrumb-item"><a href="{{ link.url }}" class="text-decoration-none text-white-50">{{
+                            link.label }}</a></li>
+                    {% endif %}
+                    {% endfor %}
+                </ol>
+            </nav>
+            {% else %}
+            <span class="navbar-brand mb-0 h1">{{ title | default('ArtLine') }}</span>
+            {% endif %}
+        </div>
+
+        <div class="d-flex align-items-center">
+            <!-- Language Switcher could go here if moving from bottom -->
+            <!-- Balance Check (already in Sidebar for billing, but maybe useful here too?) -->
+            <!-- Spec says Navbar is textual navigation, balance is in Sidebar for Account context. 
+                 For Home, balance is hidden or small. 
+                 Let's keep it minimal as per spec. 
+            -->
+        </div>
+    </div>
+</nav>

@@ -1,0 +1,41 @@
+<div class="job-card mb-3 border-secondary" id="job-card-{{ job.id }}"
+    style="break-inside: avoid; background-color: #1a1a1a; border-radius: 12px; overflow: hidden; position: relative;">
+    {% if job.status == 'succeeded' %}
+    {% if job.kind == 'video' %}
+    <video src="{{ job.result_url }}" class="w-100 d-block" autoplay loop muted playsinline
+        style="width: 100%; height: auto; display: block;"></video>
+    <div class="position-absolute top-50 start-50 translate-middle pointer-events-none">
+        <i class="bi bi-play-circle-fill fs-2 text-white opacity-75"></i>
+    </div>
+    {% else %}
+    <img src="{{ job.result_url }}" class="w-100 d-block" alt="{{ job.prompt[:50] }}" loading="lazy"
+        style="width: 100%; height: auto; display: block;">
+    {% endif %}
+    {% elif job.status == 'failed' %}
+    <div class="d-flex flex-column align-items-center justify-content-center bg-dark text-danger p-4"
+        style="min-height: 200px;">
+        <i class="bi bi-exclamation-circle fs-1 mb-2"></i>
+        <span class="small text-center">{{ job.error_message or 'Generation failed' }}</span>
+    </div>
+    {% else %}
+    <!-- Running/Queued -->
+    <div class="d-flex flex-column align-items-center justify-content-center bg-dark text-white-50 p-4"
+        style="min-height: 200px;" hx-post="/jobs/{{ job.id }}/sync" hx-trigger="load delay:3s" hx-swap="outerHTML">
+        <div class="spinner-border text-warning mb-3" role="status"></div>
+        <span class="small">{{ job.status|capitalize }}...</span>
+    </div>
+    {% endif %}
+
+    <!-- Actions (Only if Succeeded) -->
+    {% if job.status == 'succeeded' %}
+    <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-end p-3 text-white opacity-0 hover-opacity-100 transition-base"
+        style="background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); transition: opacity 0.2s ease;">
+        <p class="small mb-1 text-truncate fw-bold">{{ job.prompt }}</p>
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="badge bg-secondary opacity-75" style="font-size: 0.6rem;">{{ job.kind }}</span>
+            <a href="{{ job.result_url }}" download class="btn btn-sm btn-link text-white p-0"><i
+                    class="bi bi-download"></i></a>
+        </div>
+    </div>
+    {% endif %}
+</div>

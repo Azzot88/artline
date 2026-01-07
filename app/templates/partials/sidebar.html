@@ -1,0 +1,115 @@
+<div class="d-flex flex-column flex-shrink-0 p-3 bg-dark"
+    style="width: 280px; height: 100vh; position: fixed; left: 0; top: 0; z-index: 1000; border-right: 1px solid var(--glass-border);">
+    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+        <span class="fs-4 fw-bold text-gradient">ArtLine</span>
+    </a>
+    <hr>
+
+    <!-- Context: Admin -->
+    {% if user and user.is_admin and context == 'admin' %}
+    <ul class="nav nav-pills flex-column mb-auto">
+        <li class="nav-item">
+            <a href="/admin" class="nav-link text-white {% if active_page == 'admin_dashboard' %}active{% endif %}">
+                <i class="bi bi-speedometer2 me-2"></i> Dashboard
+            </a>
+        </li>
+        <li>
+            <a href="/admin/models" class="nav-link text-white {% if active_page == 'admin_models' %}active{% endif %}">
+                <i class="bi bi-box-seam me-2"></i> Models
+            </a>
+        </li>
+        <li>
+            <a href="/admin/providers"
+                class="nav-link text-white {% if active_page == 'admin_providers' %}active{% endif %}">
+                <i class="bi bi-server me-2"></i> Providers
+            </a>
+        </li>
+        <li>
+            <a href="/admin/users" class="nav-link text-white {% if active_page == 'admin_users' %}active{% endif %}">
+                <i class="bi bi-people me-2"></i> Users
+            </a>
+        </li>
+    </ul>
+
+    <!-- Context: Finance/Account -->
+    {% elif context == 'billing' or context == 'account' %}
+    <div class="mb-4">
+        <div class="card bg-secondary text-white border-0 mb-3">
+            <div class="card-body p-3">
+                <small class="text-white-50">Current Balance</small>
+                <h3 class="fw-bold mb-0">
+                    <span id="sidebar-balance" hx-get="/balance/partial" hx-trigger="load, balanceChanged from:body">
+                        {{ balance if balance is defined else '...' }}
+                    </span>
+                    <span class="fs-6 text-white-50">Cr</span>
+                </h3>
+            </div>
+        </div>
+        <a href="/billing" class="btn btn-primary w-100 mb-2">
+            <i class="bi bi-plus-circle me-2"></i> Top Up
+        </a>
+    </div>
+    <ul class="nav nav-pills flex-column mb-auto">
+        <li>
+            <a href="/account" class="nav-link text-white {% if active_page == 'account' %}active{% endif %}">
+                <i class="bi bi-person-circle me-2"></i> Profile
+            </a>
+        </li>
+        <li>
+            <a href="/billing" class="nav-link text-white {% if active_page == 'billing' %}active{% endif %}">
+                <i class="bi bi-wallet2 me-2"></i> Billing
+            </a>
+        </li>
+    </ul>
+
+    <!-- Context: Default (Workbench/Home) -->
+    {% else %}
+    <ul class="nav nav-pills flex-column mb-auto">
+        <li class="nav-item">
+            <a href="/" class="nav-link text-white {% if active_page == 'home' %}active{% endif %}">
+                <i class="bi bi-magic me-2"></i> Workbench
+            </a>
+        </li>
+        <li>
+            <!-- My Session Link: Targets the session list in sidebar or scrolls to it? 
+                 Spec says: "Sidebar: Link 'My Session' (0)" 
+                 Let's make it a link that highlights or anchors.
+            -->
+            <a href="#" class="nav-link text-white d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-images me-2"></i> My Session</span>
+                <span id="my-session-counter" class="badge bg-primary rounded-pill">0</span>
+            </a>
+        </li>
+        {% if user and user.is_admin %}
+        <li>
+            <a href="/admin" class="nav-link text-warning mt-3">
+                <i class="bi bi-shield-lock me-2"></i> Admin Panel
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+    {% endif %}
+
+    <hr>
+
+    <!-- User Dropdown (Bottom) -->
+    <div class="dropdown">
+        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle fs-4 me-2"></i>
+            <strong>{{ user.email if user and user.email else 'Guest' }}</strong>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+            {% if user and user.email %}
+            <li><a class="dropdown-item" href="/account">Settings</a></li>
+            <li>
+                <hr class="dropdown-divider">
+            </li>
+            <li><a class="dropdown-item" href="/logout">Sign out</a></li>
+            {% else %}
+            <li><a class="dropdown-item" href="/login">Login</a></li>
+            <li><a class="dropdown-item" href="/signup">Sign up</a></li>
+            {% endif %}
+        </ul>
+    </div>
+</div>

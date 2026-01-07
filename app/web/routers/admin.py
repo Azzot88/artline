@@ -66,7 +66,14 @@ async def admin_dashboard(
             "providers": providers,
             "recent_users": recent_users_list,
             "t": get_t(request),
-            "lang": get_current_lang(request)
+            "lang": get_current_lang(request),
+            # Layout Props
+            "context": "admin",
+            "active_page": "admin_dashboard",
+            "nav_links": [
+                {"label": "Dashboard", "url": "/admin"},
+                {"label": "Overview", "url": "#"}
+            ]
         }
     )
 
@@ -92,7 +99,14 @@ async def admin_users(
             "user": user, 
             "users": users_data,
             "t": get_t(request),
-            "lang": get_current_lang(request)
+            "lang": get_current_lang(request),
+            # Layout Props
+            "context": "admin",
+            "active_page": "admin_users",
+            "nav_links": [
+                {"label": "Admin", "url": "/admin"},
+                {"label": "Users", "url": "/admin/users"}
+            ]
         }
     )
 
