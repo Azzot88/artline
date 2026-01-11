@@ -41,3 +41,19 @@ class JobRead(BaseModel):
 # Ledger/Balance
 class BalanceRead(BaseModel):
     amount: int
+
+# SPA Schemas
+class UserContext(BaseModel):
+    user: Optional[UserRead] = None
+    is_guest: bool
+    balance: int
+    guest_id: Optional[str] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class JobRequestSPA(BaseModel):
+    model_id: str
+    prompt: str
+    params: dict = {}
+    kind: str = "image"
+
