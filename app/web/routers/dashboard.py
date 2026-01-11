@@ -37,9 +37,12 @@ async def dashboard(
         balance = 0
         jobs = []
 
-    # Fetch Active AI Models
     models_result = await db.execute(select(AIModel).where(AIModel.is_active == True))
     ai_models = models_result.scalars().all()
+
+    # Fetch Curated Jobs for Community Gallery
+    from app.domain.jobs.service import get_curated_jobs
+    curated_jobs = await get_curated_jobs(db, limit=6)
     
     # Serialize for Frontend Logic
     models_data = []
@@ -69,7 +72,9 @@ async def dashboard(
         context={
             "user": user, 
             "balance": balance, 
+            "balance": balance, 
             "jobs": jobs,
+            "curated_jobs": curated_jobs,
             "message": msg,
             "ai_models": ai_models, 
             "models_json": json.dumps(models_data),
@@ -430,9 +435,38 @@ async def sync_job_status(
 async def gallery_fragment(
     page: int,
     request: Request,
+    type: str = "all", # "all" | "curated"
     db: AsyncSession = Depends(get_db)
 ):
-    jobs, next_page = await get_gallery_jobs(db, page=page)
+    offset = (page - 1) * PAGE_SIZE
+    query = (
+        select(Job)
+        .where(Job.status == 'succeeded')
+        .where(Job.result_url.isnot(None))
+    )
+    
+    if type == "curated":
+        query = query.where(Job.is_curated == True)
+    else:
+        # For public gallery, maybe we only show public items + curated items? 
+        # Or just public items? Assuming "community gallery" shows public items.
+        # User said: "Users could mark their works public and admin see it in own gallery... 
+        # then mark the best which will appear it curated gallery".
+        # So "gallery" endpoint likely lists PUBLIC items.
+        query = query.where(Job.is_public == True)
+
+    # Sort
+    if type == "curated":
+         query = query.order_by(Job.likes.desc())
+    else:
+         query = query.order_by(Job.created_at.desc())
+         
+    query = query.limit(PAGE_SIZE).offset(offset)
+    
+    result = await db.execute(query)
+    jobs = result.scalars().all()
+    
+    next_page = page + 1 if len(jobs) == PAGE_SIZE else None
     
     return templates.TemplateResponse(
         request=request, 
@@ -442,3 +476,42 @@ async def gallery_fragment(
             "next_page": next_page
         }
     )
+
+@router.post("/jobs/{job_id}/public")
+async def toggle_job_public(
+    job_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(Job).where(Job.id == job_id, Job.user_id == user.id)
+    result = await db.execute(stmt)
+    job = result.scalar_one_or_none()
+    
+    if not job:
+        return JSONResponse({"error": "Job not found"}, 404)
+        
+    job.is_public = not job.is_public
+    await db.commit()
+    
+    return JSONResponse({"is_public": job.is_public})
+
+@router.post("/jobs/{job_id}/like")
+async def toggle_job_like(
+    job_id: str,
+    db: AsyncSession = Depends(get_db)
+    # Likes are anonymous or tracked? User didn't specify. 
+    # For now, simplistic implementation: just increment. 
+    # ideally we should track who liked what to prevent double-voting.
+    # But for MVP based on description "highest likes", I'll just increment.
+):
+    stmt = select(Job).where(Job.id == job_id)
+    result = await db.execute(stmt)
+    job = result.scalar_one_or_none()
+    
+    if not job:
+        return JSONResponse({"error": "Job not found"}, 404)
+        
+    job.likes += 1
+    await db.commit()
+    
+    return JSONResponse({"likes": job.likes})

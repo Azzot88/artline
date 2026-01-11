@@ -31,6 +31,9 @@ class JobRead(BaseModel):
     status: str
     progress: int
     result_url: Optional[str] = None
+    is_public: bool = False
+    is_curated: bool = False
+    likes: int = 0
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

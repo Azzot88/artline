@@ -31,6 +31,11 @@ class Job(Base):
     cost_credits: Mapped[int] = mapped_column(Integer, default=0)
     progress: Mapped[int] = mapped_column(Integer, default=0)
     
+    # Gallery & Curation
+    is_public: Mapped[bool] = mapped_column(default=False, index=True)
+    is_curated: Mapped[bool] = mapped_column(default=False, index=True)
+    likes: Mapped[int] = mapped_column(Integer, default=0)
+    
     result_url: Mapped[str | None] = mapped_column(String, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     

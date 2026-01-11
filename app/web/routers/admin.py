@@ -130,3 +130,21 @@ async def add_user_credits(
     )
     
     return RedirectResponse(url="/admin/users", status_code=status.HTTP_302_FOUND)
+
+@router.post("/jobs/{job_id}/curate")
+async def toggle_job_curated(
+    job_id: str,
+    user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(Job).where(Job.id == job_id)
+    result = await db.execute(stmt)
+    job = result.scalar_one_or_none()
+    
+    if not job:
+        return JSONResponse({"error": "Job not found"}, 404)
+        
+    job.is_curated = not job.is_curated
+    await db.commit()
+    
+    return JSONResponse({"is_curated": job.is_curated})

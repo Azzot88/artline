@@ -123,3 +123,15 @@ async def get_job(db: AsyncSession, job_id: str, user_id: uuid.UUID):
         select(Job).where(Job.id == job_id, Job.user_id == user_id)
     )
     return result.scalar_one_or_none()
+
+async def get_curated_jobs(db: AsyncSession, limit: int = 6):
+    stmt = (
+        select(Job)
+        .where(Job.is_curated == True)
+        .where(Job.status == 'succeeded')
+        .where(Job.result_url.isnot(None))
+        .order_by(Job.likes.desc())
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    return result.scalars().all()
