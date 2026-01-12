@@ -29,6 +29,7 @@ class AIModel(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     
     display_name: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     provider: Mapped[str] = mapped_column(String, nullable=False) # e.g. "replicate"
     model_ref: Mapped[str] = mapped_column(String, nullable=False) # e.g. "stability-ai/sdxl"
     version_id: Mapped[str] = mapped_column(String, nullable=True)
@@ -46,6 +47,7 @@ class AIModel(Base):
     resolutions: Mapped[list[str] | None] = mapped_column(JSON, nullable=True) # ["1024x1024", "16:9"]
     durations: Mapped[list[int] | None] = mapped_column(JSON, nullable=True) # [5, 10] (seconds)
     costs: Mapped[dict | None] = mapped_column(JSON, nullable=True) # {"base": 1, "duration_5": 2}
+    capabilities: Mapped[list[str] | None] = mapped_column(JSON, nullable=True) # ["text-to-image"]
 
     # UI Config
     ui_config: Mapped[dict | None] = mapped_column(JSON, nullable=True)
@@ -57,7 +59,13 @@ class AIModel(Base):
     raw_schema_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     normalized_caps_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
+    # Pricing & Stats
+    credits_per_generation: Mapped[int] = mapped_column(Integer, default=5)
+    total_generations: Mapped[int] = mapped_column(Integer, default=0)
+    average_rating: Mapped[float | None] = mapped_column(JSON, nullable=True) # or Float
+
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # updated_at is already in file at line 61
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
 
 

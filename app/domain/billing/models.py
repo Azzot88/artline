@@ -19,6 +19,15 @@ class LedgerEntry(Base):
     currency: Mapped[str] = mapped_column(String, default="credits")
     reason: Mapped[str] = mapped_column(String, nullable=False)  # "topup", "job_cost", "refund"
     external_id: Mapped[str | None] = mapped_column(String, nullable=True)  # Payment provider ID
+    
+    related_job_id: Mapped[str | None] = mapped_column(ForeignKey("jobs.id"), nullable=True)
+    
+    # Money Tracking
+    payment_amount: Mapped[int | None] = mapped_column(Integer, nullable=True) # In cents
+    payment_currency: Mapped[str] = mapped_column(String, default="USD")
+    balance_before: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    balance_after: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     user: Mapped["User"] = relationship("User", back_populates="ledger_entries")

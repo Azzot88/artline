@@ -18,7 +18,19 @@ class User(Base):
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    
+    # Profile
+    username: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
+    avatar_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    language: Mapped[str] = mapped_column(String, default="ru")
+    
+    # Stats / Cache
+    balance: Mapped[int] = mapped_column(Integer, default=0)
+    total_generations: Mapped[int] = mapped_column(Integer, default=0)
+    total_credits_spent: Mapped[int] = mapped_column(Integer, default=0)
+    
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     
     # Relationships
     # Use strings to avoid circular imports at runtime
