@@ -25,6 +25,12 @@ services:
     networks:
       - artline_network
 
+  frontend:
+    build: ./frontend
+    restart: always
+    networks:
+      - artline_network
+
   nginx:
     image: nginx:stable-alpine
     restart: always
