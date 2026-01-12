@@ -8,20 +8,28 @@ sys.path.append(os.getcwd())
 from app.domain.users.models import User
 from app.domain.jobs.models import Job
 from app.domain.providers.models import AIModel
+from app.domain.billing.models import LedgerEntry
+from app.domain.users.likes_model import Like
 from app.schemas import UserRead, JobRead
 from pydantic import BaseModel
 
-def check_field_exists(model_class, schema_class, field_map=None):
+def check_field_exists(model_class, schema_class=None, expected_fields=None, field_map=None):
     if field_map is None:
         field_map = {}
         
-    print(f"\nChecking {model_class.__name__} vs {schema_class.__name__}...")
+    print(f"\nChecking {model_class.__name__}...")
     
-    schema_fields = schema_class.model_fields.keys()
+    if schema_class:
+        check_fields = schema_class.model_fields.keys()
+        print(f"  Against Schema: {schema_class.__name__}")
+    else:
+        check_fields = expected_fields
+        print(f"  Against Expected Fields List")
+    
     model_columns = [c.name for c in model_class.__table__.columns]
     
     missing = []
-    for field in schema_fields:
+    for field in check_fields:
         # Check explicit map or direct name
         model_field = field_map.get(field, field)
         
@@ -35,23 +43,37 @@ def check_field_exists(model_class, schema_class, field_map=None):
             print(f"  [OK] {field}")
             
     if missing:
-        print(f"❌ MISSING FIELDS in DB Model for schema {schema_class.__name__}: {missing}")
+        print(f"❌ MISSING FIELDS in DB Model {model_class.__name__}: {missing}")
         return False
     
-    print(f"✅ Schema {schema_class.__name__} looks compatible with DB Model.")
+    print(f"✅ Model {model_class.__name__} has all required fields.")
     return True
 
 print("=== VERIFYING SCHEMA CONSISTENCY ===")
 
 # 1. User
-check_field_exists(User, UserRead)
+check_field_exists(User, schema_class=UserRead)
 
 # 2. Job
-check_field_exists(Job, JobRead, field_map={'credits_spent': 'cost_credits'}) # Logic maps cost_credits? 
-# Wait, user asked for credits_spent column. I implemented cost_credits in original model.
-# In my plan I said: "Rename/Map cost_credits -> credits_spent". 
-# In migration I added cost_credits? No, cost_credits was already there. 
-# But I added credits_spent in the migration plan? 
-# Let's check Job model again.
+# Map credits_spent (schema) -> credits_spent (property)
+check_field_exists(Job, schema_class=JobRead)
+
+# 3. AIModel (No public schema yet, checking expected fields)
+ai_model_fields = [
+    'description', 'capabilities', 'credits_per_generation', 
+    'total_generations', 'average_rating'
+]
+check_field_exists(AIModel, expected_fields=ai_model_fields)
+
+# 4. LedgerEntry
+ledger_fields = [
+    'related_job_id', 'payment_amount', 'payment_currency', 
+    'balance_before', 'balance_after'
+]
+check_field_exists(LedgerEntry, expected_fields=ledger_fields)
+
+# 5. Like
+like_fields = ['user_id', 'job_id']
+check_field_exists(Like, expected_fields=like_fields)
 
 print("\n=== VERIFICATION COMPLETE ===")
