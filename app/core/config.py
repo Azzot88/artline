@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: Optional[str] = None
 
     # Webhooks
-    WEBHOOK_HOST: str = "https://artline.dealvault.club"
+    WEBHOOK_HOST: str = "https://workbench.ink"
 
 
 settings = Settings()
