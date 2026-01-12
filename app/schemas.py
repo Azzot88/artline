@@ -11,6 +11,11 @@ class UserCreate(BaseModel):
 class UserRead(BaseModel):
     id: uuid.UUID
     email: EmailStr
+    username: Optional[str] = None
+    avatar_url: Optional[str] = None
+    balance: int
+    language: str = "ru"
+    total_generations: int = 0
     created_at: datetime
     
     model_config = ConfigDict(from_attributes=True)
@@ -31,10 +36,23 @@ class JobRead(BaseModel):
     status: str
     progress: int
     result_url: Optional[str] = None
+    
+    # Metadata
+    input_type: str = "text"
+    input_image_url: Optional[str] = None
+    format: str = "square"
+    resolution: str = "1080"
+    duration: Optional[int] = None
+    credits_spent: int = 0
+    
+    # Social
     is_public: bool = False
     is_curated: bool = False
     likes: int = 0
+    views: int = 0
+    
     created_at: datetime
+    completed_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 

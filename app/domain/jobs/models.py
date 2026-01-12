@@ -43,8 +43,8 @@ class Job(Base):
     progress: Mapped[int] = mapped_column(Integer, default=0)
     
     # Gallery & Curation
+    # Gallery & Curation
     is_public: Mapped[bool] = mapped_column(default=False, index=True)
-    is_curated: Mapped[bool] = mapped_column(default=False, index=True)
     is_curated: Mapped[bool] = mapped_column(default=False, index=True)
     likes: Mapped[int] = mapped_column(Integer, default=0)
     views: Mapped[int] = mapped_column(Integer, default=0)
@@ -53,8 +53,11 @@ class Job(Base):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
     completed_at: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    
+    @property
+    def credits_spent(self) -> int:
+        return self.cost_credits
 
     user: Mapped["User"] = relationship("app.domain.users.models.User", back_populates="jobs")
