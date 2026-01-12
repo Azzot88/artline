@@ -8,10 +8,51 @@ from app.domain.billing.service import get_user_balance
 from app.domain.jobs.service import create_job, get_user_jobs
 from app.domain.jobs.runner import process_job
 from app.domain.users.guest_service import get_or_create_guest
-from app.schemas import UserContext, JobRead, JobRequestSPA, UserRead
-import uuid
+from app.schemas import UserContext, JobRead, JobRequestSPA, UserRead, UserCreate
+from app.core.security import verify_password, create_access_token
+from datetime import timedelta
+from app.core.config import settings
+from fastapi import Response
 
-router = APIRouter()
+# SPA Auth Schemas (Internal)
+from pydantic import BaseModel
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+@router.post("/auth/login")
+async def spa_login(
+    creds: LoginRequest,
+    response: Response,
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(User).where(User.email == creds.email))
+    user = result.scalar_one_or_none()
+    
+    if not user or not verify_password(creds.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    # Create token
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.email}, expires_delta=access_token_expires
+    )
+    
+    # Set Cookie
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {access_token}",
+        httponly=True,
+        max_age=18000,
+        samesite="lax",
+        secure=False 
+    )
+    return {"ok": True, "user": UserRead.model_validate(user)}
+
+@router.post("/auth/logout")
+async def spa_logout(response: Response):
+    response.delete_cookie("access_token")
+    return {"ok": True}
 
 @router.get("/me", response_model=UserContext)
 async def get_me(
