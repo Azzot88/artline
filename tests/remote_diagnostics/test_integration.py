@@ -11,6 +11,7 @@ import uuid
 import json
 import os
 import asyncio
+from unittest.mock import patch
 
 # --- Fixtures ---
 
