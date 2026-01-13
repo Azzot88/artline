@@ -259,11 +259,33 @@ class ReplicateService:
         
         for key, value in sanitized.items():
             if key in allowed_keys:
-                # We can do extra validation here based on field_def if needed
-                # For now, just trust the value is correct type (handled by sanitize)
+                field_def = allowed_keys[key]
+                
+                # Enum Validation
+                if field_def.get("type") == "select" and "options" in field_def:
+                    if value not in field_def["options"]:
+                         logger.warning(f"Dropping invalid enum value for {key}: {value}")
+                         continue
+
+                # Boolean Casting
+                if field_def.get("type") == "boolean":
+                    if isinstance(value, str):
+                        if value.lower() == "true": value = True
+                        elif value.lower() == "false": value = False
+                        else: continue # Not a boolean
+                
+                # Numeric Sanity (sanitize_input handles most, but ensuring)
+                if field_def.get("type") == "integer" and not isinstance(value, int):
+                     try: value = int(value)
+                     except: continue
+                
+                if field_def.get("type") == "float" and not isinstance(value, (float, int)):
+                     try: value = float(value)
+                     except: continue
+
                 payload[key] = value
+                
             elif key == "prompt":
-                 # Explicitly allow prompt if it wasn't in allowed_keys for some reason
                  payload[key] = value
 
         return payload
