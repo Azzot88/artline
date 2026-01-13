@@ -23,6 +23,9 @@ import {
 import { formatToResolutions } from "@/polymet/data/types"
 import type { ParameterValues, ImageFormatType, VideoFormatType } from "@/polymet/data/types"
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
+
 export function Workbench() {
   const t = useTranslations()
   const [creationType, setCreationType] = useState<CreationType>("image")
@@ -31,7 +34,7 @@ export function Workbench() {
   const [file, setFile] = useState<File | null>(null)
 
   // Use Dynamic Models
-  const { models, loading: modelsLoading } = useModels()
+  const { models, loading: modelsLoading, error: modelsError } = useModels()
   const [model, setModel] = useState("")
 
   // Select first model when loaded
@@ -178,6 +181,23 @@ export function Workbench() {
           {t.appSubtitle}
         </p>
       </div>
+
+      {modelsError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error Loading Models</AlertTitle>
+          <AlertDescription>
+            {modelsError}. Please ensure the backend is running and you are logged in.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {modelsLoading && (
+        <div className="flex items-center justify-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <span className="ml-3 text-muted-foreground">Loading models...</span>
+        </div>
+      )}
 
       {/* Main Unified Card - Large Textarea with Controls Inside */}
       <Card className="overflow-hidden">

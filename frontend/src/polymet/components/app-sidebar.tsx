@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { generations } from "@/polymet/data/generations-data"
 import { useTranslations } from "@/polymet/components/language-provider"
-import { useUser } from "@/polymet/components/user-provider" // New Hook
+import { useAuth } from "@/polymet/components/auth-provider"
 
 interface NavItem {
   key: string
@@ -36,7 +36,7 @@ interface AppSidebarProps {
 export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
   const location = useLocation()
   const t = useTranslations()
-  const { user, loading, isGuest } = useUser() // Use Hook
+  const { user, isLoading: loading, isGuest, logout } = useAuth()
 
   // Mock user role - in real app, get from auth context
   // For now assume everyone can see everything or just hide admin for non-admin
@@ -253,16 +253,31 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
           </Card>
 
 
-          {/* Settings & Logout */}
+          {/* Settings & Logout/Login */}
           <div className="space-y-1">
             <Button variant="ghost" className="w-full justify-start" size="sm">
               <SettingsIcon className="w-4 h-4 mr-3" />
               {t.settings}
             </Button>
-            <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10" size="sm">
-              <LogOutIcon className="w-4 h-4 mr-3" />
-              {t.logout}
-            </Button>
+
+            {isGuest ? (
+              <Link to="/login">
+                <Button variant="ghost" className="w-full justify-start text-primary hover:text-primary hover:bg-primary/10" size="sm">
+                  <UserIcon className="w-4 h-4 mr-3" />
+                  Login / Sign Up
+                </Button>
+              </Link>
+            ) : (
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+                size="sm"
+                onClick={logout}
+              >
+                <LogOutIcon className="w-4 h-4 mr-3" />
+                {t.logout}
+              </Button>
+            )}
           </div>
         </div>
       </div>

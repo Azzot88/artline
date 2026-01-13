@@ -27,11 +27,13 @@ export default function AIWorkbenchApp() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
+            {/* Public App Routes (Accessible by Guests) */}
+            <Route path="/" element={<AppLayout><Workbench /></AppLayout>} />
+            <Route path="/workbench" element={<AppLayout><Workbench /></AppLayout>} />
+            <Route path="/gallery" element={<AppLayout><Gallery /></AppLayout>} />
+
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<AppLayout><Workbench /></AppLayout>} />
-              <Route path="/workbench" element={<AppLayout><Workbench /></AppLayout>} />
-              <Route path="/gallery" element={<AppLayout><Gallery /></AppLayout>} />
               <Route path="/instance/:instanceId" element={<AppLayout><InstanceDetail /></AppLayout>} />
               <Route path="/account" element={<AppLayout><Account /></AppLayout>} />
               <Route path="/dashboard" element={<AppLayout showRightSidebar={false}><Dashboard /></AppLayout>} />
