@@ -126,6 +126,15 @@ async def test_worker_replicate_handshake(client: AsyncClient, seed_env, db_sess
     res = await client.post("/api/jobs", json=payload)
     job_id = res.json()["id"]
     
+    # DEBUG: Check DB Connection Match
+    from app.core.config import settings
+    from app.domain.jobs import runner
+    print(f"DEBUG: Settings URI: {settings.SQLALCHEMY_DATABASE_URI}")
+    print(f"DEBUG: Runner Engine: {runner.sync_engine.url}")
+    
+    # FORCE COMMIT to ensure Sync Worker can see the job
+    await db_session.commit()
+
     # MOCK ReplicateService inside runner.py
     # We trap the 'submit_prediction' call to verify arguments without hitting API
     with patch("app.domain.jobs.runner.ReplicateService") as MockService:
@@ -139,6 +148,10 @@ async def test_worker_replicate_handshake(client: AsyncClient, seed_env, db_sess
         result = process_job(job_id)
         
         # ASSERT
+        if result == "Job not found":
+             # Fallback debug
+             print(f"Job {job_id} was not found in runner DB.")
+             
         assert "Submitted: mock_provider_id_123" in result
         
         # Verify DB update
