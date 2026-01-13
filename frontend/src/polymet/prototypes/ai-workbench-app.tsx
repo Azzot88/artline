@@ -16,6 +16,7 @@ import { Login } from "@/polymet/pages/login"
 import { Register } from "@/polymet/pages/register"
 import { AdminPanel } from "@/polymet/pages/admin-panel"
 import { UserProfile } from "@/polymet/pages/user-profile"
+import { LandingPage } from "@/polymet/pages/landing-page"
 
 export default function AIWorkbenchApp() {
   return (
@@ -28,7 +29,7 @@ export default function AIWorkbenchApp() {
             <Route path="/register" element={<Register />} />
 
             {/* Public App Routes (Accessible by Guests) */}
-            <Route path="/" element={<AppLayout><Workbench /></AppLayout>} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/workbench" element={<AppLayout><Workbench /></AppLayout>} />
             <Route path="/gallery" element={<AppLayout><Gallery /></AppLayout>} />
 
