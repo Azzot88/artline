@@ -1,8 +1,8 @@
 import { Link, useLocation } from "react-router-dom"
-import { 
-  SparklesIcon, 
-  ImageIcon, 
-  UserIcon, 
+import {
+  SparklesIcon,
+  ImageIcon,
+  UserIcon,
   LayoutDashboardIcon,
   SlidersIcon,
   CoinsIcon,
@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { generations } from "@/polymet/data/generations-data"
 import { useTranslations } from "@/polymet/components/language-provider"
+import { useUser } from "@/polymet/components/user-provider" // New Hook
 
 interface NavItem {
   key: string
@@ -35,8 +36,11 @@ interface AppSidebarProps {
 export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
   const location = useLocation()
   const t = useTranslations()
+  const { user, loading, isGuest } = useUser() // Use Hook
+
   // Mock user role - in real app, get from auth context
-  const isAdmin = true
+  // For now assume everyone can see everything or just hide admin for non-admin
+  const isAdmin = false
 
   const isActive = (href: string) => {
     return location.pathname === href || location.pathname.startsWith(href + "/")
@@ -87,7 +91,7 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
     <>
       {/* Mobile Overlay */}
       {isOpen && onClose && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={onClose}
         />
@@ -119,16 +123,18 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
 
         {/* Credits Display */}
         <div className="px-4 py-4">
-        <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-primary/10 border border-primary/20">
-          <div className="flex items-center gap-2">
-            <CoinsIcon className="w-4 h-4 text-primary" />
-            <span className="text-sm font-semibold text-primary">250</span>
+          <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-primary/10 border border-primary/20">
+            <div className="flex items-center gap-2">
+              <CoinsIcon className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold text-primary">
+                {loading ? "..." : (user?.balance || 0)}
+              </span>
+            </div>
+            <Button variant="ghost" size="sm" className="h-7 text-xs">
+              {t.buyMore}
+            </Button>
           </div>
-          <Button variant="ghost" size="sm" className="h-7 text-xs">
-            {t.buyMore}
-          </Button>
         </div>
-      </div>
 
         <Separator />
 
@@ -140,7 +146,7 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
               const Icon = item.icon
               const active = isActive(item.href)
               const title = t[item.key as keyof typeof t] as string
-              
+
               return (
                 <Link key={item.href} to={item.href} onClick={onClose}>
                   <div
@@ -175,7 +181,7 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
               const Icon = item.icon
               const active = isActive(item.href)
               const title = t[item.key as keyof typeof t] as string
-              
+
               return (
                 <Link key={item.href} to={item.href} onClick={onClose}>
                   <div
@@ -196,33 +202,35 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
 
           <Separator className="my-4" />
 
-          {/* Admin Navigation */}
-          <div className="space-y-1">
-            <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-              АДМИНИСТРИРОВАНИЕ
-            </p>
-            {adminNavItems.map((item) => {
-              const Icon = item.icon
-              const active = isActive(item.href)
-              const title = t[item.key as keyof typeof t] as string
-              
-              return (
-                <Link key={item.href} to={item.href} onClick={onClose}>
-                  <div
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                      active
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                    )}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{title}</span>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
+          {/* Admin Navigation - Only show if needed, currently hidden/admin hardcoded to false */}
+          {isAdmin && (
+            <div className="space-y-1">
+              <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                АДМИНИСТРИРОВАНИЕ
+              </p>
+              {adminNavItems.map((item) => {
+                const Icon = item.icon
+                const active = isActive(item.href)
+                const title = t[item.key as keyof typeof t] as string
+
+                return (
+                  <Link key={item.href} to={item.href} onClick={onClose}>
+                    <div
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                        active
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span>{title}</span>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
         </nav>
 
         {/* Bottom Actions */}
@@ -238,16 +246,9 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">{t.totalGenerations}</span>
-                <span className="text-sm font-semibold">{totalGenerations}</span>
+                <span className="text-sm font-semibold">{loading ? "..." : (user?.total_generations || 0)}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{t.creditsUsed}</span>
-                <span className="text-sm font-semibold">{totalCreditsUsed}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{t.avgCreditsPerGen}</span>
-                <span className="text-sm font-semibold">{avgCreditsPerGen}</span>
-              </div>
+              {/* Removed creditsUsed and Avg since we don't have that in simple user object yet */}
             </CardContent>
           </Card>
 
