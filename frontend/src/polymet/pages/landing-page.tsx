@@ -331,27 +331,17 @@ export function LandingPage() {
                             <span>ИИ Мастерская</span>
                         </div>
                         <div className="text-muted-foreground">
-                            <p>Телефон: +7 (999) 123-45-67</p>
-                            <p>Email: support@aihub.dev</p>
+                            <p>Email: workbenchai@gmx.com</p>
                         </div>
                     </div>
 
                     <div className="md:col-span-2 space-y-4">
                         <h3 className="font-semibold text-foreground">Юридическая информация</h3>
-                        <div className="grid md:grid-cols-2 gap-8 text-muted-foreground">
-                            <div>
-                                <strong className="block text-foreground mb-2">Реквизиты:</strong>
-                                <p>ООО «АртЛайн Технолоджи»</p>
-                                <p>Юр. адрес: г. Москва, ул. Вавилова, д. 1</p>
-                                <p>ИНН 7700000000 / КПП 770101001</p>
-                            </div>
-                            <div>
-                                <strong className="block text-foreground mb-2">Банковские реквизиты:</strong>
-                                <p>Р/с 40702810000000000000</p>
-                                <p>Банк: АО «Тинькофф Банк»</p>
-                                <p>БИК 044525974</p>
-                                <p>К/с 30101810145250000974</p>
-                            </div>
+                        <div className="text-muted-foreground space-y-1">
+                            <p>Общество с ограниченной ответственностью "Мирекс"</p>
+                            <p>Юридический адрес: Кыргызская Республика, г.Бишкек, Первомайский район, ул.Озерное-7, 65, уч.641</p>
+                            <p>ИНН KG 01207202210245</p>
+                            <p>ИНН RUS 9909690541</p>
                         </div>
                     </div>
 
