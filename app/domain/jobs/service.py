@@ -73,8 +73,6 @@ async def create_job(
         cost_credits=cost,
         status="queued",
         progress=0,
-        status="queued",
-        progress=0,
         owner_type="guest" if is_guest else "user",
         is_public=True # Default to public per user request
     )
