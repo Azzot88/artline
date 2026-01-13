@@ -1,4 +1,5 @@
 import pytest
+import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -13,7 +14,7 @@ import asyncio
 
 # --- Fixtures ---
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def seed_env(db_session: AsyncSession):
     """Seeds the DB with basic Require Data (Models, Provider Config)"""
     # 1. Provider Config
