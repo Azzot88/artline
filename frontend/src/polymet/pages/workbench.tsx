@@ -11,9 +11,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { PlusIcon, SparklesIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTranslations } from "@/polymet/components/language-provider"
-import { aiModels } from "@/polymet/data/models-data"
-import { 
-  getEnabledParameters, 
+import { useModels } from "@/hooks/use-models" // New Hook
+import { api } from "@/lib/api" // API Client
+import { toast } from "sonner" // Toast
+
+import {
+  getEnabledParameters,
   getModelParameterConfigs,
   getEffectiveDefault
 } from "@/polymet/data/model-parameters-data"
@@ -26,38 +29,53 @@ export function Workbench() {
   const [inputType, setInputType] = useState<InputType>("text")
   const [prompt, setPrompt] = useState("")
   const [file, setFile] = useState<File | null>(null)
-  const [model, setModel] = useState("dalle-3")
+
+  // Use Dynamic Models
+  const { models, loading: modelsLoading } = useModels()
+  const [model, setModel] = useState("")
+
+  // Select first model when loaded
+  useEffect(() => {
+    if (models.length > 0 && !model) {
+      // Prefer Flux if available, else first
+      const flux = models.find(m => m.name.toLowerCase().includes("flux"))
+      setModel(flux ? flux.id : models[0].id)
+    }
+  }, [models, model])
+
   const [loading, setLoading] = useState(false)
-  
+
   // Dynamic parameters based on selected model
   const [parameterValues, setParameterValues] = useState<ParameterValues>({})
-  
+
   // Get model parameters (max 4, excluding prompt/negative_prompt)
   const allParameters = getEnabledParameters(model)
   const parameterConfigs = getModelParameterConfigs(model)
-  
+
   // Filter out prompt-like parameters and limit to 4
   // Format parameter is ALWAYS shown first if present
   const formatParam = allParameters.find(p => p.name === 'format')
   const otherParams = allParameters
-    .filter(p => 
+    .filter(p =>
       p.name !== 'format' &&
-      !p.name.toLowerCase().includes('prompt') && 
+      !p.name.toLowerCase().includes('prompt') &&
       !p.name.toLowerCase().includes('description') &&
       !p.name.toLowerCase().includes('width') &&
       !p.name.toLowerCase().includes('height') &&
       !p.name.toLowerCase().includes('size')
     )
-  
+
   // Combine: format first, then other parameters (max 4 total)
-  const displayParameters = formatParam 
+  const displayParameters = formatParam
     ? [formatParam, ...otherParams].slice(0, 4)
     : otherParams.slice(0, 4)
-  
-  // Get model credits from models-data
-  const selectedModel = aiModels.find(m => m.id === model)
-  const modelCredits = selectedModel?.credits || 5
-  
+
+  // Get model credits from dynamic list or fallback
+  const selectedModel = models.find(m => m.id === model)
+  // Backend doesn't send credits yet? Default to 5
+  // If backend updated to send credits, use it.
+  const modelCredits = 5
+
   // Initialize parameter values with defaults when model changes
   useEffect(() => {
     const initialValues: ParameterValues = {}
@@ -67,63 +85,76 @@ export function Workbench() {
     })
     setParameterValues(initialValues)
   }, [model])
-  
+
   const handleParameterChange = (parameterId: string, value: any) => {
     setParameterValues(prev => {
       const newValues = { ...prev, [parameterId]: value }
-      
+
       // If format changed, auto-calculate resolution
       const param = allParameters.find(p => p.id === parameterId)
       if (param?.name === 'format') {
         // Find resolution/size parameter
-        const resolutionParam = allParameters.find(p => 
+        const resolutionParam = allParameters.find(p =>
           p.name === 'resolution' || p.name === 'size'
         )
-        
+
         if (resolutionParam) {
           // Get quality from quality parameter if exists
           const qualityParam = allParameters.find(p => p.name === 'quality')
           const quality = qualityParam ? newValues[qualityParam.id] : 'hd'
-          
+
           // Map quality to resolution quality
           const resQuality = quality === 'hd' ? 'hd' : quality === '4k' ? '4k' : 'sd'
-          
+
           // Get available resolutions for this format
           const availableResolutions = formatToResolutions(value as ImageFormatType | VideoFormatType, resQuality)
-          
+
           // Set to first available resolution (usually the best quality)
           if (availableResolutions.length > 0) {
             newValues[resolutionParam.id] = availableResolutions[availableResolutions.length - 1]
           }
         }
       }
-      
+
       return newValues
     })
   }
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
+    if (!prompt.trim()) {
+      toast.error("Please enter a prompt")
+      return
+    }
+
     setLoading(true)
-    // Simulate API call
-    setTimeout(() => {
+
+    try {
+      const payload = {
+        model_id: model,
+        prompt: prompt,
+        kind: creationType,
+        params: parameterValues
+      }
+
+      const res = await api.post<any>("/jobs", payload)
+      toast.success("Job started!", { description: "You can view progress in the gallery." })
+
+      // Reset or redirect?
+      // Typically stay on workbench or go to dashboard
+    } catch (err: any) {
+      console.error(err)
+      toast.error("Generation Failed", { description: err.message || "Unknown error" })
+    } finally {
       setLoading(false)
-      console.log("Generated:", { 
-        creationType, 
-        inputType, 
-        prompt, 
-        file, 
-        model, 
-        parameters: parameterValues,
-        cost: modelCredits
-      })
-    }, 3000)
+    }
   }
 
   const isGenerateDisabled = () => {
     if (inputType === "text" && !prompt.trim()) return true
     if (inputType === "image" && !file) return true
     if (!model) return true
-    
+    if (modelsLoading) return true
+
     // Check required parameters
     const requiredParams = allParameters.filter(p => p.required)
     for (const param of requiredParams) {
@@ -132,7 +163,7 @@ export function Workbench() {
         return true
       }
     }
-    
+
     return false
   }
 
@@ -157,8 +188,8 @@ export function Workbench() {
             <div className="absolute top-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-b border-border p-4 z-10">
               <div className="flex flex-wrap items-center gap-4">
                 <CreationTypeToggle value={creationType} onChange={setCreationType} />
-                <InputTypeToggle 
-                  value={inputType} 
+                <InputTypeToggle
+                  value={inputType}
                   onChange={setInputType}
                   creationType={creationType}
                 />
@@ -216,22 +247,22 @@ export function Workbench() {
                 </div>
               </div>
             )}
-            
+
             {/* Bottom Controls Bar - Content-Driven Responsive Layout */}
             <div className="absolute bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-4">
               {/* Format & Resolution Indicator */}
               {(() => {
                 const formatParam = allParameters.find(p => p.name === 'format')
                 const resolutionParam = allParameters.find(p => p.name === 'resolution' || p.name === 'size')
-                
+
                 if (formatParam && resolutionParam) {
                   const format = parameterValues[formatParam.id]
                   const resolution = parameterValues[resolutionParam.id]
-                  
+
                   if (format && resolution) {
                     return (
                       <div className="mb-3">
-                        <FormatResolutionIndicator 
+                        <FormatResolutionIndicator
                           format={format}
                           resolution={resolution}
                         />
@@ -241,25 +272,27 @@ export function Workbench() {
                 }
                 return null
               })()}
-              
+
               <div className="flex flex-wrap items-end gap-3">
                 {/* Model Selector */}
                 <div className="flex-shrink-0 w-full sm:w-auto sm:min-w-[200px] sm:max-w-[300px]">
-                  <ModelSelector 
+                  <ModelSelector
                     value={model}
                     onChange={setModel}
                     creationType={creationType}
+                    models={models}
+                    loading={modelsLoading}
                   />
                 </div>
-                
+
                 {/* Dynamic Parameters (max 4) - Format is always first */}
                 {displayParameters.map(param => {
                   const config = parameterConfigs.find(c => c.parameter_id === param.id)
                   const isFormat = param.name === 'format'
-                  
+
                   return (
-                    <div 
-                      key={param.id} 
+                    <div
+                      key={param.id}
                       className={`flex-shrink-0 w-full sm:w-auto ${isFormat ? 'sm:min-w-[120px] sm:max-w-[150px]' : 'sm:min-w-[150px] sm:max-w-[200px]'}`}
                     >
                       <ModelParameterControl
@@ -273,10 +306,10 @@ export function Workbench() {
                     </div>
                   )
                 })}
-                
+
                 {/* Generate Button */}
                 <div className="flex-shrink-0 w-full sm:w-auto sm:ml-auto">
-                  <GenerateButton 
+                  <GenerateButton
                     credits={modelCredits}
                     onClick={handleGenerate}
                     disabled={isGenerateDisabled()}
@@ -286,15 +319,16 @@ export function Workbench() {
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </CardContent>
+    </Card>
 
-      {/* Community Gallery Card */}
-      <Card>
-        <CardContent className="pt-6">
-          <CommunityGallery />
-        </CardContent>
-      </Card>
-    </div>
+      {/* Community Gallery Card */ }
+  <Card>
+    <CardContent className="pt-6">
+      <CommunityGallery />
+    </CardContent>
+  </Card>
+    </div >
   )
 }

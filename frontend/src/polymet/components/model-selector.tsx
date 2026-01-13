@@ -69,19 +69,21 @@ interface ModelSelectorProps {
   value: string
   onChange: (value: string) => void
   creationType: "image" | "video"
+  models: AIModel[]
+  loading?: boolean
 }
 
-export function ModelSelector({ value, onChange, creationType }: ModelSelectorProps) {
-  const filteredModels = AI_MODELS.filter(
+export function ModelSelector({ value, onChange, creationType, models, loading }: ModelSelectorProps) {
+  const filteredModels = models.filter(
     model => model.category === creationType || model.category === "both"
   )
 
   return (
-    <Select value={value} onValueChange={onChange}>
+    <Select value={value} onValueChange={onChange} disabled={loading}>
       <SelectTrigger className="w-full">
         <div className="flex items-center gap-2">
           <SparklesIcon className="w-4 h-4 text-primary" />
-          <SelectValue placeholder="Select AI Model" />
+          <SelectValue placeholder={loading ? "Loading models..." : "Select AI Model"} />
         </div>
       </SelectTrigger>
       <SelectContent className="max-w-xs">
@@ -99,5 +101,3 @@ export function ModelSelector({ value, onChange, creationType }: ModelSelectorPr
     </Select>
   )
 }
-
-export { AI_MODELS }
