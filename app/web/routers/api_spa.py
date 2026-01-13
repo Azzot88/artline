@@ -14,6 +14,8 @@ from datetime import timedelta
 from app.core.config import settings
 from fastapi import Response
 
+router = APIRouter()
+
 # SPA Auth Schemas (Internal)
 from pydantic import BaseModel
 class LoginRequest(BaseModel):
