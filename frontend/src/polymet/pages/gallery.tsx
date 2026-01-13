@@ -1,38 +1,64 @@
-import { useState } from "react"
-import { generations } from "@/polymet/data/generations-data"
+import { useState, useEffect } from "react"
 import { GenerationCard } from "@/polymet/components/generation-card"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { 
-  SearchIcon
-} from "lucide-react"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { SearchIcon, Loader2 } from "lucide-react"
 import { useTranslations } from "@/polymet/components/language-provider"
+import { api } from "@/lib/api"
+import { toast } from "sonner"
+import { Generation } from "@/polymet/data/types"
 
 export function Gallery() {
+  const [generations, setGenerations] = useState<Generation[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
-  const [filterModel, setFilterModel] = useState("all")
-  const [filterProvider, setFilterProvider] = useState("all")
   const t = useTranslations()
+
+  const fetchGenerations = async () => {
+    try {
+      setLoading(true)
+      const data = await api.get<Generation[]>("/jobs")
+      // Ensure data is array
+      if (Array.isArray(data)) {
+        // Map backend job to frontend generation interface if needed
+        // Assuming backend returns JobRead which is compatible or we map it
+        // For now trusting the shape or simple mapping
+        const mapped = data.map((job: any) => ({
+          id: job.id,
+          image: job.result_url || job.image || "https://placehold.co/600x400?text=Processing", // Fallback
+          prompt: job.prompt,
+          model: job.model_id || "flux-pro", // Fallback
+          provider: "replicate",
+          aspectRatio: job.format === "portrait" ? "2:3" : job.format === "landscape" ? "3:2" : "1:1",
+          credits: job.credits_spent || 1,
+          likes: job.likes || 0,
+          views: job.views || 0,
+          author: {
+            name: "User", // user.username
+            avatar: "https://github.com/shadcn.png"
+          },
+          timestamp: job.created_at,
+          isVideo: job.kind === "video"
+        }))
+        setGenerations(mapped)
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error("Failed to load gallery")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchGenerations()
+  }, [])
 
   // Filter generations
   const filteredGenerations = generations.filter(gen => {
     const matchesSearch = gen.prompt.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesModel = filterModel === "all" || gen.model === filterModel
-    const matchesProvider = filterProvider === "all" || gen.provider === filterProvider
-    return matchesSearch && matchesModel && matchesProvider
+    return matchesSearch
   })
-
-  // Get unique models and providers for filters
-  const uniqueModels = Array.from(new Set(generations.map(g => g.model)))
-  const uniqueProviders = Array.from(new Set(generations.map(g => g.provider)))
 
   return (
     <div className="space-y-6">
@@ -46,17 +72,38 @@ export function Gallery() {
         </p>
       </div>
 
-
-
-      {/* Masonry Gallery */}
-      <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
-        {filteredGenerations.map((gen) => (
-          <GenerationCard key={gen.id} generation={gen} />
-        ))}
+      {/* Search and Filters Bar - Simplified for Now */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder={t.search}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Button variant="outline" onClick={fetchGenerations}>Refresh</Button>
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div className="flex justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      )}
+
+      {/* Masonry Gallery */}
+      {!loading && (
+        <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
+          {filteredGenerations.map((gen) => (
+            <GenerationCard key={gen.id} generation={gen} />
+          ))}
+        </div>
+      )}
+
       {/* Empty State */}
-      {filteredGenerations.length === 0 && (
+      {!loading && filteredGenerations.length === 0 && (
         <Card className="p-12 text-center">
           <div className="max-w-md mx-auto space-y-3">
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto">
@@ -64,21 +111,13 @@ export function Gallery() {
             </div>
             <h3 className="text-lg font-semibold">{t.noGenerations}</h3>
             <p className="text-sm text-muted-foreground">
-              Попробуйте изменить параметры поиска или фильтры
+              {generations.length === 0 ? "Generate something first!" : "Try changing search terms"}
             </p>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setSearchQuery("")
-                setFilterModel("all")
-                setFilterProvider("all")
-              }}
-            >
-              Очистить фильтры
-            </Button>
           </div>
         </Card>
       )}
     </div>
   )
 }
+// Need to add Input import back since I removed it from imports list above
+import { Input } from "@/components/ui/input"
