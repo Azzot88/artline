@@ -8,7 +8,11 @@ import { api } from "@/polymet/data/api-client"
 import type {
   BootstrapResponse,
   LoginRequest,
+  RegisterRequest,
   LoginResponse,
+  GuestInitResponse,
+  AdminStats,
+  UserWithBalance,
   LogoutResponse,
   CreateJobRequest,
   CreateJobResponse,
@@ -41,6 +45,19 @@ export const apiService = {
   async login(credentials: LoginRequest) {
     return api.post<LoginResponse>("/auth/login", credentials)
   },
+
+  async register(credentials: RegisterRequest) {
+    return api.post<LoginResponse>("/auth/register", credentials)
+  },
+
+  async guestInit() {
+    return api.post<GuestInitResponse>("/auth/guest/init")
+  },
+
+  async updateProfile(data: Partial<RegisterRequest>) {
+    return api.put("/users/me", data)
+  },
+
 
   async logout() {
     return api.post<LogoutResponse>("/auth/logout")
@@ -113,10 +130,27 @@ export const apiService = {
 
     const queryString = params.toString()
     const endpoint = queryString ? `/gallery?${queryString}` : "/gallery"
-    
+
     return api.get<GalleryResponse>(endpoint)
   },
+
+  // ==========================================================================
+  // Admin
+  // ==========================================================================
+
+  async getAdminStats() {
+    return api.get<AdminStats>("/admin/stats")
+  },
+
+  async getAdminUsers(limit = 50, offset = 0) {
+    return api.get<UserWithBalance[]>(`/admin/users?limit=${limit}&offset=${offset}`)
+  },
+
+  async grantCredits(userId: string, amount: number) {
+    return api.post(`/admin/users/${userId}/credits`, { amount })
+  },
 }
+
 
 // ============================================================================
 // Polling Utility

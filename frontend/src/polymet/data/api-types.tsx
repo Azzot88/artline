@@ -19,7 +19,7 @@ export interface Job {
   error_message: string | null
   progress: number
   synced: boolean
-  
+
   // Additional fields
   model_id: string
   prompt: string
@@ -60,6 +60,38 @@ export interface LoginRequest {
   email: string
   password: string
 }
+
+export interface RegisterRequest {
+  email: string
+  password: string
+}
+
+export interface GuestInitResponse {
+  guest_id: string
+  balance: number
+}
+
+// ============================================================================
+// Admin Types
+// ============================================================================
+
+export interface AdminStats {
+  total_users: number
+  total_jobs: number
+  active_jobs: number
+  total_credits: number
+}
+
+export interface UserWithBalance {
+  id: string
+  email: string
+  is_active: boolean
+  is_superuser: boolean
+  is_admin: boolean
+  balance: number
+  created_at: string
+}
+
 
 export interface LoginResponse {
   ok: boolean

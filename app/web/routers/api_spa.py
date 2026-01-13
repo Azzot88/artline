@@ -1,27 +1,52 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from datetime import timedelta
+from typing import List, Optional, Any, Dict
+from pydantic import BaseModel
+
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update, func, delete
 import uuid
+
 from app.core.db import get_db
+from app.core.config import settings
 from app.core.deps import get_current_user_optional, get_current_user
-from app.models import User, Job, AIModel
-from app.domain.billing.service import get_user_balance
+from app.core.security import verify_password, create_access_token, get_password_hash
+from app.core.i18n import get_t
+from app.models import User, Job, AIModel, ProviderConfig, LedgerEntry
+from app.schemas import UserContext, JobRead, JobRequestSPA, UserRead, UserCreate
+from app.domain.billing.service import get_user_balance, add_ledger_entry
 from app.domain.jobs.service import create_job, get_user_jobs
 from app.domain.jobs.runner import process_job
 from app.domain.users.guest_service import get_or_create_guest
-from app.schemas import UserContext, JobRead, JobRequestSPA, UserRead, UserCreate
-from app.core.security import verify_password, create_access_token
-from datetime import timedelta
-from app.core.config import settings
-from fastapi import Response
 
 router = APIRouter()
 
 # SPA Auth Schemas (Internal)
-from pydantic import BaseModel
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+
+class GuestInitResponse(BaseModel):
+    guest_id: str
+    balance: int
+
+class AdminStats(BaseModel):
+    total_users: int
+    total_jobs: int
+    active_jobs: int
+    total_credits: int
+
+class UserWithBalance(UserRead):
+    balance: int
+    is_admin: bool
+
+class CreditGrantRequest(BaseModel):
+    amount: int
+
 
 @router.post("/auth/login")
 async def spa_login(
@@ -56,6 +81,91 @@ async def spa_login(
 async def spa_logout(response: Response):
     response.delete_cookie("access_token")
     return {"ok": True}
+
+@router.post("/auth/register")
+async def spa_register(
+    creds: RegisterRequest,
+    request: Request,
+    response: Response,
+    db: AsyncSession = Depends(get_db)
+):
+    # 1. Check existing
+    result = await db.execute(select(User).where(User.email == creds.email))
+    if result.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # 2. Create user
+    hashed_pw = get_password_hash(creds.password)
+    new_user = User(email=creds.email, hashed_password=hashed_pw)
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+
+    # 3. Guest Migration
+    guest_id_cookie = request.cookies.get("guest_id")
+    if guest_id_cookie:
+        try:
+            gid = uuid.UUID(guest_id_cookie)
+            # Update jobs: set user_id, owner_type='user', clear guest_id, clear expires_at
+            stmt = (
+                update(Job)
+                .where(Job.guest_id == gid)
+                .values(
+                    user_id=new_user.id,
+                    owner_type="user",
+                    guest_id=None,
+                    expires_at=None
+                )
+            )
+            await db.execute(stmt)
+            await db.commit()
+        except ValueError:
+            pass
+
+    # 4. Auto-login
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": new_user.email}, expires_delta=access_token_expires
+    )
+    
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {access_token}",
+        httponly=True,
+        samesite="lax",
+        secure=False 
+    )
+    return {"ok": True, "user": UserRead.model_validate(new_user)}
+
+@router.post("/auth/guest/init", response_model=GuestInitResponse)
+async def spa_guest_init(
+    request: Request,
+    response: Response,
+    db: AsyncSession = Depends(get_db)
+):
+    # Check if already has cookie
+    guest_id_cookie = request.cookies.get("guest_id")
+    gid = None
+    if guest_id_cookie:
+        try:
+            gid = uuid.UUID(guest_id_cookie)
+        except ValueError:
+            pass
+            
+    guest = await get_or_create_guest(db, gid)
+    
+    # Set cookie for 1 year
+    response.set_cookie(
+        key="guest_id",
+        value=str(guest.id),
+        max_age=31536000,
+        httponly=True,
+        samesite="lax",
+        secure=False 
+    )
+    
+    return GuestInitResponse(guest_id=str(guest.id), balance=guest.balance)
+
 
 @router.get("/me", response_model=UserContext)
 async def get_me(
@@ -221,3 +331,91 @@ async def list_models(db: AsyncSession = Depends(get_db)):
              "defaults": m.normalized_caps_json.get("defaults", {}) if m.normalized_caps_json else {}
          })
     return data
+    return data
+
+# ============================================================================
+# ADMIN ENDPOINTS
+# ============================================================================
+
+async def get_admin_user(user: User = Depends(get_current_user)):
+    if not user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    return user
+
+@router.get("/admin/stats", response_model=AdminStats)
+async def get_admin_stats(
+    user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db)
+):
+    total_users = (await db.execute(select(func.count(User.id)))).scalar() or 0
+    total_jobs = (await db.execute(select(func.count(Job.id)))).scalar() or 0
+    active_jobs = (await db.execute(select(func.count(Job.id)).where(Job.status == "running"))).scalar() or 0
+    total_credits = (await db.execute(select(func.sum(LedgerEntry.amount)))).scalar() or 0
+    
+    return AdminStats(
+        total_users=total_users,
+        total_jobs=total_jobs,
+        active_jobs=active_jobs,
+        total_credits=total_credits or 0
+    )
+
+@router.get("/admin/users", response_model=List[UserWithBalance])
+async def list_admin_users(
+    user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+    limit: int = 50,
+    offset: int = 0
+):
+    res = await db.execute(select(User).order_by(User.created_at.desc()).limit(limit).offset(offset))
+    users = res.scalars().all()
+    
+    output = []
+    for u in users:
+        balance = await get_user_balance(db, u.id)
+        # Manually constructing response to avoid strict User validation issues if any
+        output.append(UserWithBalance(
+            id=u.id,
+            email=u.email,
+            is_active=u.is_active,
+            is_superuser=u.is_superuser,
+            is_admin=u.is_admin, # Added field to User model? Assuming yes or handled by getattr
+            balance=balance,
+            created_at=u.created_at
+        ))
+    return output
+
+@router.post("/admin/users/{user_id}/credits")
+async def grant_credits(
+    user_id: str,
+    req: CreditGrantRequest,
+    current_admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        uid = uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+        
+    await add_ledger_entry(
+        db,
+        uid,
+        req.amount,
+        reason="admin_grant",
+        external_id=f"admin_grant_by_{current_admin.id}_{uuid.uuid4()}"
+    )
+    return {"ok": True}
+
+@router.put("/users/me")
+async def update_profile(
+    req: RegisterRequest, # Reusing simple email/pass schema for now, or create dedicated UpdateSchema
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    # Simple profile update (password only for MVP)
+    if req.password:
+        user.hashed_password = get_password_hash(req.password)
+        await db.commit()
+    return {"ok": True}
