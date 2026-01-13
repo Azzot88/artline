@@ -318,16 +318,17 @@ export function Workbench() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
 
-        </CardContent>
-      </Card>
-
-      {/* Community Gallery Card */}
-      <Card>
-        <CardContent className="pt-6">
-          <CommunityGallery />
-        </CardContent>
-      </Card>
+      {/* Community Gallery Card */ }
+  <Card>
+    <CardContent className="pt-6">
+      <CommunityGallery />
+    </CardContent>
+  </Card>
     </div >
   )
 }
