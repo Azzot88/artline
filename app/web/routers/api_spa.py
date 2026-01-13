@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+import uuid
 from app.core.db import get_db
 from app.core.deps import get_current_user_optional, get_current_user
 from app.models import User, Job, AIModel
