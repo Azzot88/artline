@@ -51,9 +51,9 @@ async def replicate_webhook(
             
         if download_url:
             try:
-                # DEBUG LOGGING
-                logger.error(f"DEBUG: Processing succeeded job {job.id}")
-                logger.error(f"DEBUG: AWS Config Check - Bucket: {settings.AWS_BUCKET_NAME}, Region: {settings.AWS_REGION}, KeyID Present: {bool(settings.AWS_ACCESS_KEY_ID)}")
+                # DEBUG LOGGING - Using print to force stdout
+                print(f"DEBUG: Processing succeeded job {job.id}", flush=True)
+                print(f"DEBUG: AWS Config Check - Bucket: {settings.AWS_BUCKET_NAME}, Region: {settings.AWS_REGION}, KeyID Present: {bool(settings.AWS_ACCESS_KEY_ID)}", flush=True)
 
                 # 1. Download Content
                 async with httpx.AsyncClient() as client:
@@ -61,7 +61,7 @@ async def replicate_webhook(
                     
                     if resp.status_code == 200:
                         file_content = resp.content
-                        logger.error(f"DEBUG: Downloaded {len(file_content)} bytes")
+                        print(f"DEBUG: Downloaded {len(file_content)} bytes", flush=True)
                         
                         # 2. Upload to S3
                         if settings.AWS_ACCESS_KEY_ID and settings.AWS_BUCKET_NAME:
@@ -74,7 +74,7 @@ async def replicate_webhook(
                                 ext = "jpg"
                                 
                             filename = f"generations/{job.id}.{ext}"
-                            logger.error(f"DEBUG: Attempting S3 upload to {filename}")
+                            print(f"DEBUG: Attempting S3 upload to {filename}", flush=True)
                             
                             def upload_s3(content, bucket, key):
                                 try:
@@ -93,7 +93,7 @@ async def replicate_webhook(
                                     )
                                     return f"https://{bucket}.s3.{settings.AWS_REGION}.amazonaws.com/{key}"
                                 except Exception as e:
-                                    logger.error(f"DEBUG: Boto3 inner exception: {e}")
+                                    print(f"DEBUG: Boto3 inner exception: {e}", flush=True)
                                     raise e
 
                             loop = asyncio.get_event_loop()
@@ -106,19 +106,19 @@ async def replicate_webhook(
                             )
                             
                             job.result_url = s3_url
-                            logger.error(f"DEBUG: Upload success: {s3_url}")
+                            print(f"DEBUG: Upload success: {s3_url}", flush=True)
                             logger.info(f"Uploaded asset to S3: {s3_url}")
                         else:
-                            logger.error("DEBUG: AWS Config missing in IF check")
+                            print("DEBUG: AWS Config missing in IF check", flush=True)
                             logger.warning("AWS S3 credentials missing. Using remote URL.")
                             job.result_url = download_url
                             
                     else:
-                        logger.error(f"Failed to download asset: {resp.status_code}")
+                        print(f"Failed to download asset: {resp.status_code}", flush=True)
                         job.result_url = download_url # Fallback to remote
                         
             except Exception as e:
-                logger.error(f"S3 Upload Exception (Outer): {e}")
+                print(f"S3 Upload Exception (Outer): {e}", flush=True)
                 job.result_url = download_url # Fallback
         
     elif status == "failed":
