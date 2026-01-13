@@ -1,4 +1,5 @@
 import pytest
+import pytest_asyncio
 import uuid
 from httpx import AsyncClient
 from app.main import app
@@ -14,7 +15,7 @@ async def login_admin(client: AsyncClient, admin_user):
     assert resp.status_code == 200
 
 # Fixture to seed a model
-@pytest.fixture
+@pytest_asyncio.fixture
 async def seed_model(db_session):
     model_id = uuid.uuid4()
     model = AIModel(
