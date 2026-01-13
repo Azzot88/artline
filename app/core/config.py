@@ -52,5 +52,11 @@ class Settings(BaseSettings):
     # Webhooks
     WEBHOOK_HOST: str = "https://workbench.ink"
 
+    # AWS S3 Storage
+    AWS_ACCESS_KEY_ID: Optional[str] = None
+    AWS_SECRET_ACCESS_KEY: Optional[str] = None
+    AWS_REGION: str = "us-east-1"
+    AWS_BUCKET_NAME: Optional[str] = None
+
 
 settings = Settings()

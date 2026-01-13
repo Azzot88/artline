@@ -73,7 +73,10 @@ async def create_job(
         cost_credits=cost,
         status="queued",
         progress=0,
-        owner_type="guest" if is_guest else "user"
+        status="queued",
+        progress=0,
+        owner_type="guest" if is_guest else "user",
+        is_public=True # Default to public per user request
     )
     
     if is_guest:
@@ -132,6 +135,19 @@ async def get_curated_jobs(db: AsyncSession, limit: int = 6):
         .where(Job.result_url.isnot(None))
         .order_by(Job.likes.desc())
         .limit(limit)
+    )
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+async def get_public_jobs(db: AsyncSession, limit: int = 50, offset: int = 0):
+    stmt = (
+        select(Job)
+        .where(Job.is_public == True)
+        .where(Job.status == 'succeeded') 
+        .where(Job.result_url.isnot(None))
+        .order_by(Job.created_at.desc())
+        .limit(limit)
+        .offset(offset)
     )
     result = await db.execute(stmt)
     return result.scalars().all()

@@ -15,7 +15,7 @@ from app.core.i18n import get_t
 from app.models import User, Job, AIModel, ProviderConfig, LedgerEntry
 from app.schemas import UserContext, JobRead, JobRequestSPA, UserRead, UserCreate
 from app.domain.billing.service import get_user_balance, add_ledger_entry
-from app.domain.jobs.service import create_job, get_user_jobs
+from app.domain.jobs.service import create_job, get_user_jobs, get_public_jobs
 from app.domain.jobs.runner import process_job
 from app.domain.users.guest_service import get_or_create_guest
 
@@ -213,6 +213,14 @@ async def list_jobs(
     if not user:
         return []
     return await get_user_jobs(db, user, limit)
+
+@router.get("/gallery", response_model=list[JobRead])
+async def gallery_jobs(
+    db: AsyncSession = Depends(get_db),
+    limit: int = 50,
+    offset: int = 0
+):
+    return await get_public_jobs(db, limit, offset)
 
 @router.post("/jobs", response_model=JobRead)
 async def create_spa_job(

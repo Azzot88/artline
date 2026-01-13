@@ -15,7 +15,7 @@ export function CommunityGallery() {
     const fetchRecent = async () => {
       try {
         setLoading(true)
-        const data = await api.get<Generation[]>("/jobs")
+        const data = await api.get<Generation[]>("/gallery")
         if (Array.isArray(data)) {
           // Map and slice
           const mapped = data.slice(0, 6).map((job: any) => ({
@@ -74,7 +74,7 @@ export function CommunityGallery() {
       )}
 
       <p className="text-xs text-muted-foreground text-center">
-        Recent creations from your history
+        Recent creations from the community
       </p>
     </div>
   )

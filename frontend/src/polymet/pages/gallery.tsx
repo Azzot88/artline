@@ -17,7 +17,7 @@ export function Gallery() {
   const fetchGenerations = async () => {
     try {
       setLoading(true)
-      const data = await api.get<Generation[]>("/jobs")
+      const data = await api.get<Generation[]>("/gallery")
       // Ensure data is array
       if (Array.isArray(data)) {
         // Map backend job to frontend generation interface if needed
