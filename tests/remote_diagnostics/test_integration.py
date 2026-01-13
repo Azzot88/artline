@@ -57,14 +57,14 @@ async def test_spa_initialization_flow(client: AsyncClient, seed_env):
     2. Verifies /api/spa/models returns the seeded model.
     """
     # 1. Guest Bootstrap
-    res = await client.get("/api/spa/me")
+    res = await client.get("/api/me")
     assert res.status_code == 200
     data = res.json()
     assert data["is_guest"] is True
     assert data["balance"] == 35 # Default guest balance
     
     # 2. List Models
-    res_models = await client.get("/api/spa/models")
+    res_models = await client.get("/api/models")
     assert res_models.status_code == 200
     models = res_models.json()
     assert len(models) >= 1
@@ -79,7 +79,7 @@ async def test_generation_submission_logic(client: AsyncClient, seed_env, db_ses
     3. Checks ledger/balance deduction.
     """
     # 1. Get Guest Context (Cookie)
-    res_me = await client.get("/api/spa/me")
+    res_me = await client.get("/api/me")
     guest_id = res_me.json()["guest_id"]
     client.cookies.set("guest_id", guest_id)
     
@@ -90,7 +90,7 @@ async def test_generation_submission_logic(client: AsyncClient, seed_env, db_ses
         "prompt": "A futuristic city verification test",
         "params": {"aspect_ratio": "16:9"}
     }
-    res_job = await client.post("/api/spa/jobs", json=payload)
+    res_job = await client.post("/api/jobs", json=payload)
     if res_job.status_code != 200:
         print(f"Error: {res_job.text}")
     assert res_job.status_code == 200
@@ -113,7 +113,7 @@ async def test_worker_replicate_handshake(client: AsyncClient, seed_env, db_sess
     3. Verifies Job goes from 'queued' -> 'running'.
     """
     # Setup: Create Job
-    res_me = await client.get("/api/spa/me")
+    res_me = await client.get("/api/me")
     client.cookies.set("guest_id", res_me.json()["guest_id"])
     
     payload = {
@@ -122,7 +122,7 @@ async def test_worker_replicate_handshake(client: AsyncClient, seed_env, db_sess
         "prompt": "Mock Test",
         "params": {}
     }
-    res = await client.post("/api/spa/jobs", json=payload)
+    res = await client.post("/api/jobs", json=payload)
     job_id = res.json()["id"]
     
     # MOCK ReplicateService inside runner.py
@@ -161,7 +161,7 @@ async def test_LIVE_replicate_generation(client: AsyncClient, seed_env, db_sessi
         pytest.skip("REPLICATE_API_TOKEN not set")
 
     # 1. Create Job
-    res_me = await client.get("/api/spa/me")
+    res_me = await client.get("/api/me")
     client.cookies.set("guest_id", res_me.json()["guest_id"])
     
     payload = {
@@ -170,7 +170,7 @@ async def test_LIVE_replicate_generation(client: AsyncClient, seed_env, db_sessi
         "prompt": "Orange cat in space suit, highly detailed, 8k",
         "params": {}
     }
-    res = await client.post("/api/spa/jobs", json=payload)
+    res = await client.post("/api/jobs", json=payload)
     job_id = res.json()["id"]
     
     # 2. Run Worker (REAL, no mocks)
