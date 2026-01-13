@@ -259,21 +259,14 @@ class ReplicateService:
         
         for key, value in sanitized.items():
             if key in allowed_keys:
-                field_def = allowed_keys[key]
-            # "owner/name" -> use latest
-            model = client.models.get(model_ref)
-            latest = model.versions.list()[0] # basic assumption
-            
-            kwargs = {
-                "version": latest,
-                "input": input_data,
-                "webhook_events_filter": ["completed"]
-            }
-            if webhook_url:
-                kwargs["webhook"] = webhook_url
-                
-            pred = client.predictions.create(**kwargs)
-            return pred.id
+                # We can do extra validation here based on field_def if needed
+                # For now, just trust the value is correct type (handled by sanitize)
+                payload[key] = value
+            elif key == "prompt":
+                 # Explicitly allow prompt if it wasn't in allowed_keys for some reason
+                 payload[key] = value
+
+        return payload
 
     def get_prediction(self, provider_job_id: str):
         """Fetch status of a prediction."""
