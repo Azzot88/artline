@@ -32,13 +32,12 @@ async def seed_env(db_session: AsyncSession):
     flux_id = uuid.uuid4()
     model = AIModel(
         id=flux_id,
-        name="flux-schnell",
         display_name="Flux Schnell",
         provider="replicate",
         model_ref="black-forest-labs/flux-schnell",
         version_id=None,
         is_active=True,
-        cost_per_generation=1, 
+        credits_per_generation=1, 
         normalized_caps_json={
             "inputs": [{"name": "prompt", "type": "string"}, {"name": "aspect_ratio", "type": "string"}],
             "defaults": {"aspect_ratio": "1:1"}
