@@ -25,8 +25,8 @@ FROM nginx:stable-alpine
 # Note: Adjust 'dist' to 'build' if using Create React App
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy custom Nginx configuration if needed (optional, using default for now)
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy custom Nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
