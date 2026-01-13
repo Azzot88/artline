@@ -30,6 +30,7 @@ export default function AIWorkbenchApp() {
 
             {/* Public App Routes (Accessible by Guests) */}
             <Route path="/" element={<LandingPage />} />
+            <Route path="/landingpage" element={<LandingPage />} />
             <Route path="/workbench" element={<AppLayout><Workbench /></AppLayout>} />
             <Route path="/gallery" element={<AppLayout><Gallery /></AppLayout>} />
 
