@@ -5,7 +5,7 @@ from sqlalchemy import select
 from app.domain.providers.models import AIModel, ProviderConfig
 from app.domain.jobs.models import Job
 from app.domain.jobs.runner import process_job
-from app.core.security import encrypt_key
+from app.domain.providers.service import encrypt_key
 import uuid
 import json
 import os
