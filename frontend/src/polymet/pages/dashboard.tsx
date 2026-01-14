@@ -4,9 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { 
-  ServerIcon, 
-  ActivityIcon, 
+import {
+  ServerIcon,
+  ActivityIcon,
   TrendingUpIcon,
   UsersIcon,
   CoinsIcon,
@@ -24,11 +24,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useTranslations } from "@/polymet/components/language-provider"
+import { useLanguage } from "@/polymet/components/language-provider"
 
 export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("")
-  const t = useTranslations()
+  const { t } = useLanguage()
 
   // Calculate stats
   const totalModels = aiModels.length
@@ -49,14 +49,14 @@ export function Dashboard() {
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-            {t.dashboard}
+            {t('dashboard.title')}
           </h1>
           <p className="text-muted-foreground">
-            Управление AI провайдерами и моделями
+            {t('dashboard.subtitle')}
           </p>
         </div>
         <Badge variant="outline" className="text-xs px-3 py-1">
-          {t.admin}
+          {t('navigation.admin')}
         </Badge>
       </div>
 
@@ -64,33 +64,33 @@ export function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">{t.providers}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.providers')}</CardTitle>
             <ServerIcon className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalProviders}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {activeProviders} {t.active.toLowerCase()}
+              {activeProviders} {t('common.active').toLowerCase()}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">{t.models}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.models')}</CardTitle>
             <ActivityIcon className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalModels}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {activeModels} {t.active.toLowerCase()}
+              {activeModels} {t('common.active').toLowerCase()}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">{t.totalGenerations}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.totalGenerations')}</CardTitle>
             <TrendingUpIcon className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -103,7 +103,7 @@ export function Dashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">{t.users}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.users')}</CardTitle>
             <UsersIcon className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -120,14 +120,14 @@ export function Dashboard() {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <CardTitle>{t.models}</CardTitle>
+              <CardTitle>{t('dashboard.models')}</CardTitle>
               <CardDescription>Настройка параметров моделей</CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <div className="relative flex-1 md:w-64">
                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Поиск моделей..."
+                  placeholder={t('common.search')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
@@ -145,13 +145,11 @@ export function Dashboard() {
             {filteredModels.map((model) => (
               <div key={model.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
                 <div className="flex items-center gap-4 flex-1">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    model.type === "image" ? "bg-blue-500/10" : "bg-purple-500/10"
-                  }`}>
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${model.type === "image" ? "bg-blue-500/10" : "bg-purple-500/10"
+                    }`}>
                     {model.type === "image" ? (
-                      <ImageIcon className={`w-5 h-5 ${
-                        model.type === "image" ? "text-blue-500" : "text-purple-500"
-                      }`} />
+                      <ImageIcon className={`w-5 h-5 ${model.type === "image" ? "text-blue-500" : "text-purple-500"
+                        }`} />
                     ) : (
                       <VideoIcon className="w-5 h-5 text-purple-500" />
                     )}
@@ -159,15 +157,15 @@ export function Dashboard() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold truncate">{model.name}</h3>
-                      <Badge 
+                      <Badge
                         variant={
-                          model.status === "active" ? "default" : 
-                          model.status === "maintenance" ? "secondary" : 
-                          "outline"
+                          model.status === "active" ? "default" :
+                            model.status === "maintenance" ? "secondary" :
+                              "outline"
                         }
                         className="flex-shrink-0"
                       >
-                        {model.status === "active" ? t.active : model.status === "maintenance" ? t.maintenance : t.disabled}
+                        {model.status === "active" ? t('common.active') : model.status === "maintenance" ? t('common.maintenance') : t('common.disabled')}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -175,7 +173,7 @@ export function Dashboard() {
                       <span>•</span>
                       <span className="flex items-center gap-1">
                         <CoinsIcon className="w-3 h-3" />
-                        {model.credits} {t.credits}
+                        {model.credits} {t('account.credits')}
                       </span>
                       <span>•</span>
                       <span>{model.maxResolution}</span>
@@ -186,7 +184,7 @@ export function Dashboard() {
                   <Link to={`/model-config/${model.id}`}>
                     <Button variant="outline" size="sm">
                       <SettingsIcon className="w-4 h-4 mr-2" />
-                      {t.settings}
+                      {t('common.settings')}
                     </Button>
                   </Link>
                   <DropdownMenu>
@@ -198,9 +196,9 @@ export function Dashboard() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem>Подробности</DropdownMenuItem>
                       <DropdownMenuItem>Тестировать</DropdownMenuItem>
-                      <DropdownMenuItem>{t.settings}</DropdownMenuItem>
+                      <DropdownMenuItem>{t('common.settings')}</DropdownMenuItem>
                       <DropdownMenuItem className="text-destructive">
-                        Отключить
+                        {t('common.disabled')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -216,7 +214,7 @@ export function Dashboard() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>{t.providers}</CardTitle>
+              <CardTitle>{t('dashboard.providers')}</CardTitle>
               <CardDescription>Управление API провайдерами и их статусом</CardDescription>
             </div>
             <Button size="sm">
@@ -230,8 +228,8 @@ export function Dashboard() {
             {providers.map((provider) => (
               <div key={provider.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
                 <div className="flex items-center gap-4">
-                  <img 
-                    src={provider.logo} 
+                  <img
+                    src={provider.logo}
                     alt={provider.name}
                     className="w-12 h-12 rounded-lg"
                   />
@@ -239,20 +237,20 @@ export function Dashboard() {
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold">{provider.name}</h3>
                       <Badge variant={provider.status === "active" ? "default" : "secondary"}>
-                        {provider.status === "active" ? t.active : provider.status}
+                        {provider.status === "active" ? t('common.active') : provider.status}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{provider.modelsCount} {t.models.toLowerCase()}</span>
+                      <span>{provider.modelsCount} {t('dashboard.models').toLowerCase()}</span>
                       <span>•</span>
-                      <span>{provider.totalGenerations.toLocaleString()} {t.totalGenerations.toLowerCase()}</span>
+                      <span>{provider.totalGenerations.toLocaleString()} {t('dashboard.totalGenerations').toLowerCase()}</span>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm">
                     <SettingsIcon className="w-4 h-4 mr-2" />
-                    {t.settings}
+                    {t('common.settings')}
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -265,7 +263,7 @@ export function Dashboard() {
                       <DropdownMenuItem>Редактировать API ключ</DropdownMenuItem>
                       <DropdownMenuItem>Проверить подключение</DropdownMenuItem>
                       <DropdownMenuItem className="text-destructive">
-                        Отключить
+                        {t('common.disabled')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

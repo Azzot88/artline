@@ -10,7 +10,7 @@ import { CommunityGallery } from "@/polymet/components/community-gallery"
 import { Textarea } from "@/components/ui/textarea"
 import { PlusIcon, SparklesIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useTranslations } from "@/polymet/components/language-provider"
+import { useLanguage } from "@/polymet/components/language-provider"
 import { useModels } from "@/hooks/use-models" // New Hook
 import { api } from "@/lib/api" // API Client
 import { toast } from "sonner" // Toast
@@ -27,7 +27,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 
 export function Workbench() {
-  const t = useTranslations()
+  const { t } = useLanguage()
   const [creationType, setCreationType] = useState<CreationType>("image")
   const [inputType, setInputType] = useState<InputType>("text")
   const [prompt, setPrompt] = useState("")
@@ -125,7 +125,7 @@ export function Workbench() {
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
-      toast.error("Please enter a prompt")
+      toast.error(t('workbench.toasts.enterPrompt'))
       return
     }
 
@@ -140,13 +140,13 @@ export function Workbench() {
       }
 
       const res = await api.post<any>("/jobs", payload)
-      toast.success("Job started!", { description: "You can view progress in the gallery." })
+      toast.success(t('workbench.toasts.jobStarted'), { description: t('workbench.toasts.jobStartedDesc') })
 
       // Reset or redirect?
       // Typically stay on workbench or go to dashboard
     } catch (err: any) {
       console.error(err)
-      toast.error("Generation Failed", { description: err.message || "Unknown error" })
+      toast.error(t('workbench.toasts.genFailed'), { description: err.message || t('workbench.toasts.unknownError') })
     } finally {
       setLoading(false)
     }
@@ -175,19 +175,19 @@ export function Workbench() {
       {/* Page Header */}
       <div className="space-y-2">
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-          {t.appTitle}
+          {t('workbench.appTitle')}
         </h1>
         <p className="text-muted-foreground">
-          {t.appSubtitle}
+          {t('workbench.appSubtitle')}
         </p>
       </div>
 
       {modelsError && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error Loading Models</AlertTitle>
+          <AlertTitle>{t('workbench.errorLoading')}</AlertTitle>
           <AlertDescription>
-            {modelsError}. Please ensure the backend is running and you are logged in.
+            {modelsError}. {t('workbench.errorLoadingDesc')}
           </AlertDescription>
         </Alert>
       )}
@@ -195,7 +195,7 @@ export function Workbench() {
       {modelsLoading && (
         <div className="flex items-center justify-center p-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="ml-3 text-muted-foreground">Loading models...</span>
+          <span className="ml-3 text-muted-foreground">{t('workbench.loading')}</span>
         </div>
       )}
 
@@ -223,7 +223,7 @@ export function Workbench() {
                   id="main-prompt-input"
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder={creationType === "image" ? t.describeImage : t.describeVideo}
+                  placeholder={creationType === "image" ? t('workbench.describeImage') : t('workbench.describeVideo')}
                   maxLength={1000}
                   className="w-full min-h-[400px] md:min-h-[400px] resize-y border-0 focus-visible:ring-0 text-base p-6 pt-24 pb-32"
                 />
@@ -238,7 +238,7 @@ export function Workbench() {
                     }}
                   >
                     <SparklesIcon className="w-4 h-4 mr-2" />
-                    {t.enhance}
+                    {t('workbench.enhance')}
                   </Button>
                 </div>
               </div>

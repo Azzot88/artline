@@ -1,6 +1,5 @@
 import { ImageIcon, VideoIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useTranslations } from "@/polymet/components/language-provider"
 
 export type CreationType = "image" | "video"
 
@@ -10,8 +9,7 @@ interface CreationTypeToggleProps {
 }
 
 export function CreationTypeToggle({ value, onChange }: CreationTypeToggleProps) {
-  const t = useTranslations()
-  
+
   return (
     <div className="flex items-center gap-2 p-1 bg-muted rounded-lg w-fit">
       <Button

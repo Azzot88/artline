@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { useTranslations } from "@/polymet/components/language-provider"
+import { useLanguage } from "@/polymet/components/language-provider"
 
 export type InputType = "text" | "image"
 
@@ -10,13 +10,13 @@ interface InputTypeToggleProps {
 }
 
 export function InputTypeToggle({ value, onChange, creationType }: InputTypeToggleProps) {
-  const t = useTranslations()
-  
+  const { t } = useLanguage()
+
   const getLabel = (type: InputType) => {
     if (type === "text") {
-      return creationType === "image" ? t.textToImage : t.textToVideo
+      return creationType === "image" ? t('workbench.textToImage') : t('workbench.textToVideo')
     } else {
-      return creationType === "image" ? t.imageToImage : t.videoToVideo
+      return creationType === "image" ? t('workbench.imageToImage') : t('workbench.videoToVideo')
     }
   }
 

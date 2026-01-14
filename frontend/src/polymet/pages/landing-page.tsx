@@ -45,7 +45,7 @@ export function LandingPage() {
 
                     <div className="container px-4 md:px-6 mx-auto text-center space-y-8">
                         <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80">
-                            New: VEO 3 & Nano Banana Support
+                            {t('landing.badges.newSupport')}
                         </div>
 
                         <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl xl:text-6xl max-w-4xl mx-auto">
@@ -168,7 +168,7 @@ export function LandingPage() {
                                 </CardContent>
                                 <CardFooter className="py-4">
                                     <Link to="/register" className="w-full">
-                                        <Button variant="outline" className="w-full h-10">Select Basic</Button>
+                                        <Button variant="outline" className="w-full h-10">{t('common.startUsing')}</Button>
                                     </Link>
                                 </CardFooter>
                             </Card>
@@ -197,7 +197,7 @@ export function LandingPage() {
                                 </CardContent>
                                 <CardFooter className="py-4">
                                     <Link to="/register" className="w-full">
-                                        <Button className="w-full h-10 shadow-sm">Select PRO</Button>
+                                        <Button className="w-full h-10 shadow-sm">{t('common.startUsing')}</Button>
                                     </Link>
                                 </CardFooter>
                             </Card>
@@ -221,7 +221,7 @@ export function LandingPage() {
                                 </CardContent>
                                 <CardFooter className="py-4">
                                     <Link to="/register" className="w-full">
-                                        <Button variant="outline" className="w-full h-10">Select STUDIO</Button>
+                                        <Button variant="outline" className="w-full h-10">{t('common.startUsing')}</Button>
                                     </Link>
                                 </CardFooter>
                             </Card>
@@ -276,7 +276,7 @@ export function LandingPage() {
                     </div>
                 </div>
                 <div className="container mx-auto px-4 mt-8 pt-8 border-t text-center text-muted-foreground">
-                    © {new Date().getFullYear()} {t('common.brand')}. All rights reserved.
+                    © {new Date().getFullYear()} {t('common.brand')}. {t('landing.footer.rights')}
                 </div>
             </footer>
         </div>

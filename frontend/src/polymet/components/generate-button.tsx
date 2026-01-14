@@ -1,7 +1,7 @@
 import { SparklesIcon, CoinsIcon, LoaderIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { useTranslations } from "@/polymet/components/language-provider"
+import { useLanguage } from "@/polymet/components/language-provider"
 
 interface GenerateButtonProps {
   credits: number
@@ -11,15 +11,15 @@ interface GenerateButtonProps {
   className?: string
 }
 
-export function GenerateButton({ 
-  credits, 
-  onClick, 
+export function GenerateButton({
+  credits,
+  onClick,
   disabled = false,
   loading = false,
-  className 
+  className
 }: GenerateButtonProps) {
-  const t = useTranslations()
-  
+  const { t } = useLanguage()
+
   return (
     <Button
       onClick={onClick}
@@ -30,12 +30,12 @@ export function GenerateButton({
       {loading ? (
         <>
           <LoaderIcon className="w-5 h-5 animate-spin" />
-          {t.generating}
+          {t('workbench.generating')}
         </>
       ) : (
         <>
           <SparklesIcon className="w-5 h-5" />
-          {t.generate}
+          {t('workbench.generate')}
           <div className="ml-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-foreground/20">
             <CoinsIcon className="w-4 h-4" />
             <span className="text-sm font-bold">{credits}</span>

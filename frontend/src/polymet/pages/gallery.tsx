@@ -3,16 +3,17 @@ import { GenerationCard } from "@/polymet/components/generation-card"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { SearchIcon, Loader2 } from "lucide-react"
-import { useTranslations } from "@/polymet/components/language-provider"
+import { useLanguage } from "@/polymet/components/language-provider"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
 import { Generation } from "@/polymet/data/types"
+import { Input } from "@/components/ui/input"
 
 export function Gallery() {
   const [generations, setGenerations] = useState<Generation[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
-  const t = useTranslations()
+  const { t } = useLanguage()
 
   const fetchGenerations = async () => {
     try {
@@ -65,10 +66,10 @@ export function Gallery() {
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-          {t.gallery}
+          {t('gallery.title')}
         </h1>
         <p className="text-muted-foreground">
-          {t.communityGallery}
+          {t('gallery.communityTitle')}
         </p>
       </div>
 
@@ -77,7 +78,7 @@ export function Gallery() {
         <div className="relative flex-1">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder={t.search}
+            placeholder={t('common.search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -109,7 +110,7 @@ export function Gallery() {
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto">
               <SearchIcon className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold">{t.noGenerations}</h3>
+            <h3 className="text-lg font-semibold">{t('gallery.noGenerations')}</h3>
             <p className="text-sm text-muted-foreground">
               {generations.length === 0 ? "Generate something first!" : "Try changing search terms"}
             </p>

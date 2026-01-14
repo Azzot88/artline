@@ -29,11 +29,11 @@ export function Register() {
                 login(res.user)
                 navigate("/workbench")
             } else {
-                setError("Registration failed")
+                setError(t('auth.errors.regFailed'))
             }
         } catch (err: any) {
             console.error(err)
-            setError(err.response?.data?.detail || "Registration failed")
+            setError(err.response?.data?.detail || t('auth.errors.regFailed'))
         } finally {
             setLoading(false)
         }
@@ -77,7 +77,7 @@ export function Register() {
                         </div>
 
                         <Button className="w-full mt-6" type="submit" disabled={loading}>
-                            {loading ? t('auth.register.submit') + "..." : t('auth.register.submit')}
+                            {loading ? t('auth.loading') : t('auth.register.submit')}
                         </Button>
                     </form>
                 </CardContent>

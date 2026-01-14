@@ -29,11 +29,11 @@ export function Login() {
                 login(res.user)
                 navigate("/workbench") // Default to workbench
             } else {
-                setError("Login failed")
+                setError(t('auth.errors.loginFailed'))
             }
         } catch (err: any) {
             console.error(err)
-            setError(err.response?.data?.detail || "Invalid credentials")
+            setError(err.response?.data?.detail || t('auth.errors.invalidCredentials'))
         } finally {
             setLoading(false)
         }
@@ -77,7 +77,7 @@ export function Login() {
                         </div>
 
                         <Button className="w-full mt-6" type="submit" disabled={loading}>
-                            {loading ? t('auth.login.submit') + "..." : t('auth.login.submit')}
+                            {loading ? t('auth.loading') : t('auth.login.submit')}
                         </Button>
                     </form>
                 </CardContent>

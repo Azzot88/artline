@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { 
-  CoinsIcon, 
-  CreditCardIcon, 
-  UserIcon, 
+import {
+  CoinsIcon,
+  CreditCardIcon,
+  UserIcon,
   MailIcon,
   CalendarIcon,
   TrendingUpIcon,
@@ -18,17 +18,17 @@ import {
   GlobeIcon
 } from "lucide-react"
 import { generations } from "@/polymet/data/generations-data"
-import { useTranslations } from "@/polymet/components/language-provider"
+import { useLanguage } from "@/polymet/components/language-provider"
 import { LanguageSelector } from "@/polymet/components/language-selector"
 
 export function Account() {
   const [name, setName] = useState("Yusuf Hilmi")
   const [email, setEmail] = useState("yusuf@example.com")
-  const t = useTranslations()
-  
+  const { t } = useLanguage()
+
   // Mock user role - in real app, get from auth context
   const isAdmin = true
-  
+
   // Mock user data
   const userStats = {
     credits: 250,
@@ -53,10 +53,10 @@ export function Account() {
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-          {t.account}
+          {t('account.title')}
         </h1>
         <p className="text-muted-foreground">
-          {t.profileDescription}
+          {t('account.description')}
         </p>
       </div>
 
@@ -66,8 +66,8 @@ export function Account() {
           {/* Profile Information */}
           <Card>
             <CardHeader>
-              <CardTitle>{t.profile}</CardTitle>
-              <CardDescription>{t.profileDescription}</CardDescription>
+              <CardTitle>{t('account.profile')}</CardTitle>
+              <CardDescription>{t('account.description')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
@@ -75,7 +75,7 @@ export function Account() {
                   <UserIcon className="w-10 h-10 text-primary-foreground" />
                 </div>
                 <div>
-                  <Button variant="outline" size="sm">{t.edit}</Button>
+                  <Button variant="outline" size="sm">{t('common.edit')}</Button>
                   <p className="text-xs text-muted-foreground mt-1">JPG, PNG или GIF. Макс 2МБ.</p>
                 </div>
               </div>
@@ -85,18 +85,18 @@ export function Account() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Полное имя</Label>
-                  <Input 
-                    id="name" 
-                    value={name} 
+                  <Input
+                    id="name"
+                    value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    value={email} 
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
@@ -108,8 +108,8 @@ export function Account() {
               </div>
 
               <div className="flex gap-2 pt-2">
-                <Button>{t.save}</Button>
-                <Button variant="outline">{t.cancel}</Button>
+                <Button>{t('common.save')}</Button>
+                <Button variant="outline">{t('common.cancel')}</Button>
               </div>
             </CardContent>
           </Card>
@@ -119,9 +119,9 @@ export function Account() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <GlobeIcon className="w-5 h-5" />
-                {t.language}
+                {t('account.language')}
               </CardTitle>
-              <CardDescription>{t.selectLanguage}</CardDescription>
+              <CardDescription>{t('account.selectLanguage')}</CardDescription>
             </CardHeader>
             <CardContent>
               <LanguageSelector isAdmin={isAdmin} />
@@ -131,25 +131,23 @@ export function Account() {
           {/* Credit History */}
           <Card>
             <CardHeader>
-              <CardTitle>{t.creditBalance}</CardTitle>
-              <CardDescription>{t.purchaseHistory}</CardDescription>
+              <CardTitle>{t('account.creditBalance')}</CardTitle>
+              <CardDescription>{t('account.purchaseHistory')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {transactions.map((transaction) => (
                   <div key={transaction.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        transaction.type === "purchase" 
-                          ? "bg-green-500/10" 
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${transaction.type === "purchase"
+                          ? "bg-green-500/10"
                           : "bg-orange-500/10"
-                      }`}>
+                        }`}>
                         {transaction.type === "purchase" ? (
-                          <CreditCardIcon className={`w-5 h-5 ${
-                            transaction.type === "purchase" 
-                              ? "text-green-500" 
+                          <CreditCardIcon className={`w-5 h-5 ${transaction.type === "purchase"
+                              ? "text-green-500"
                               : "text-orange-500"
-                          }`} />
+                            }`} />
                         ) : (
                           <CoinsIcon className="w-5 h-5 text-orange-500" />
                         )}
@@ -159,12 +157,11 @@ export function Account() {
                         <p className="text-xs text-muted-foreground">{transaction.date}</p>
                       </div>
                     </div>
-                    <div className={`text-sm font-semibold ${
-                      transaction.type === "purchase" 
-                        ? "text-green-500" 
+                    <div className={`text-sm font-semibold ${transaction.type === "purchase"
+                        ? "text-green-500"
                         : "text-orange-500"
-                    }`}>
-                      {transaction.amount > 0 ? "+" : ""}{transaction.amount} {t.credits}
+                      }`}>
+                      {transaction.amount > 0 ? "+" : ""}{transaction.amount} {t('account.credits')}
                     </div>
                   </div>
                 ))}
@@ -180,7 +177,7 @@ export function Account() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CoinsIcon className="w-5 h-5 text-primary" />
-                {t.creditBalance}
+                {t('account.creditBalance')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -188,21 +185,21 @@ export function Account() {
                 <div className="text-5xl font-bold text-primary mb-2">
                   {userStats.credits}
                 </div>
-                <p className="text-sm text-muted-foreground">{t.credits}</p>
+                <p className="text-sm text-muted-foreground">{t('account.credits')}</p>
               </div>
-              
+
               <Button className="w-full" size="lg">
                 <CreditCardIcon className="w-4 h-4 mr-2" />
-                {t.buyMore}
+                {t('account.buyMore')}
               </Button>
 
               <div className="pt-4 border-t border-border space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t.creditsUsed}</span>
+                  <span className="text-muted-foreground">{t('account.creditsUsed')}</span>
                   <span className="font-medium">{userStats.totalCreditsUsed}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t.avgCreditsPerGen}</span>
+                  <span className="text-muted-foreground">{t('account.avgCost')}</span>
                   <span className="font-medium">
                     {Math.round(userStats.totalCreditsUsed / userStats.totalGenerations)}
                   </span>
@@ -216,7 +213,7 @@ export function Account() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUpIcon className="w-5 h-5" />
-                {t.quickStats}
+                {t('account.quickStats')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -226,7 +223,7 @@ export function Account() {
                     <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                       <ImageIcon className="w-4 h-4 text-primary" />
                     </div>
-                    <span className="text-sm">{t.image}</span>
+                    <span className="text-sm">{t('common.image')}</span>
                   </div>
                   <span className="text-lg font-semibold">{userStats.imageGenerations}</span>
                 </div>
@@ -236,7 +233,7 @@ export function Account() {
                     <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                       <VideoIcon className="w-4 h-4 text-primary" />
                     </div>
-                    <span className="text-sm">{t.video}</span>
+                    <span className="text-sm">{t('common.video')}</span>
                   </div>
                   <span className="text-lg font-semibold">{userStats.videoGenerations}</span>
                 </div>
@@ -244,14 +241,14 @@ export function Account() {
                 <Separator />
 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{t.totalGenerations}</span>
+                  <span className="text-sm font-medium">{t('dashboard.totalGenerations')}</span>
                   <span className="text-xl font-bold">{userStats.totalGenerations}</span>
                 </div>
               </div>
 
               <Button variant="outline" className="w-full">
                 <DownloadIcon className="w-4 h-4 mr-2" />
-                {t.download}
+                {t('common.download')}
               </Button>
             </CardContent>
           </Card>

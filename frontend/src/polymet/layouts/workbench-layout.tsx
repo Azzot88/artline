@@ -1,15 +1,15 @@
 import { SparklesIcon, CoinsIcon, UserIcon, HistoryIcon, SettingsIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Link } from "react-router-dom"
-import { useTranslations } from "@/polymet/components/language-provider"
+import { useLanguage } from "@/polymet/components/language-provider"
 
 interface WorkbenchLayoutProps {
   children: React.ReactNode
 }
 
 export function WorkbenchLayout({ children }: WorkbenchLayoutProps) {
-  const t = useTranslations()
-  
+  const { t } = useLanguage()
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -20,28 +20,28 @@ export function WorkbenchLayout({ children }: WorkbenchLayoutProps) {
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <SparklesIcon className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-lg hidden sm:inline-block">{t.appTitle}</span>
+            <span className="font-bold text-lg hidden sm:inline-block">{t('common.brand')}</span>
           </Link>
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link 
-              to="/workbench" 
+            <Link
+              to="/workbench"
               className="text-sm font-medium hover:text-primary transition-colors"
             >
-              {t.workbench}
+              {t('navigation.workbench')}
             </Link>
-            <Link 
-              to="/history" 
+            <Link
+              to="/history"
               className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             >
-              {t.generationHistory}
+              {t('navigation.history')}
             </Link>
-            <Link 
-              to="/gallery" 
+            <Link
+              to="/gallery"
               className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             >
-              {t.gallery}
+              {t('navigation.gallery')}
             </Link>
           </nav>
 
@@ -83,7 +83,7 @@ export function WorkbenchLayout({ children }: WorkbenchLayoutProps) {
         <div className="container px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2024 {t.appTitle}. Работает на нескольких AI API.
+              © 2024 {t('common.brand')}. Работает на нескольких AI API.
             </p>
             <div className="flex items-center gap-4">
               <Link to="/terms" className="text-sm text-muted-foreground hover:text-primary transition-colors">

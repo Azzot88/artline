@@ -2,12 +2,12 @@ import { useState, useEffect } from "react"
 import { GenerationCard } from "@/polymet/components/generation-card"
 import { SparklesIcon, Loader2 } from "lucide-react"
 import { Link } from "react-router-dom"
-import { useTranslations } from "@/polymet/components/language-provider"
+import { useLanguage } from "@/polymet/components/language-provider"
 import { api } from "@/lib/api"
 import { Generation } from "@/polymet/data/types"
 
 export function CommunityGallery() {
-  const t = useTranslations()
+  const { t } = useLanguage()
   const [generations, setGenerations] = useState<Generation[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -51,13 +51,13 @@ export function CommunityGallery() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <SparklesIcon className="w-4 h-4 text-primary" />
-          <h3 className="text-sm font-semibold">{t.communityGallery}</h3>
+          <h3 className="text-sm font-semibold">{t('gallery.communityTitle')}</h3>
         </div>
         <Link
           to="/gallery"
           className="text-xs text-primary hover:underline"
         >
-          {t.viewAll}
+          {t('common.viewAll')}
         </Link>
       </div>
 
