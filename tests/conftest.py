@@ -4,29 +4,21 @@ import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from typing import AsyncGenerator
-
-# Override settings for test
 import os
 import sys
+
+# Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-os.environ["POSTGRES_DB"] = "artline_test" 
-# Note: Ideally usage of testcontainer or separate DB. 
-# For now, assuming local DB or mocking. 
-# Better: Use SQLite for unit logic or Mock.
-# But application uses Postgres specific types (JSON, UUID)?
-# SQLite handles UUID/JSON reasonably well with SQLAlchemy.
+os.environ["POSTGRES_DB"] = "artline_test"
 
 from app.core.config import settings
 from app.core.db import Base, get_db
 from app.main import app as fastapi_app
-import app.models # Ensure models are loaded
-
-# Use in-memory SQLite for speed and isolation if possible, 
-# but models use specific PG types maybe? 
-# AIModel uses JSON. 
-# Let's try mocking get_db or using a test database URL if provided.
-# settings.SQLALCHEMY_DATABASE_URI will be used.
+# Models must be imported to register with Base
+import app.models  
+import app.domain.users.models
+import app.domain.billing.models
 
 @pytest_asyncio.fixture
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
