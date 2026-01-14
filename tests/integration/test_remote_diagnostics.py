@@ -225,6 +225,9 @@ async def test_LIVE_replicate_generation(client: AsyncClient, seed_env, db_sessi
     res = await client.post("/api/jobs", json=payload)
     job_id = res.json()["id"]
     
+    # FORCE COMMIT so Sync Worker can see it
+    await db_session.commit()
+
     # 2. Run Worker (REAL, no mocks)
     # This will hit Replicate API
     print(f"Submitting Job {job_id} to Replicate...")
