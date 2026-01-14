@@ -236,7 +236,7 @@ async def test_LIVE_replicate_generation(client: AsyncClient, seed_env, db_sessi
     # 3. Poll for Completion (Manual Sync Simulation)
     # We can use the /jobs/{id}/sync endpoint or just check DB
     print("Waiting for generation...")
-        for _ in range(30): # Wait up to 60s
+    for _ in range(30): # Wait up to 60s
             await asyncio.sleep(2)
             
             # Check status via API
