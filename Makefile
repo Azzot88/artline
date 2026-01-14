@@ -25,7 +25,7 @@ test-frontend:
 	$(NPM_CMD) run test
 
 test-coverage:
-	$(PYTEST_CMD) --cov=app --cov-report=html
+	$(PYTEST_CMD) --cov=app --cov-report=term-missing --cov-report=html
 	$(NPM_CMD) run coverage
 
 lint:
