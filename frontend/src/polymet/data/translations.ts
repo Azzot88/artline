@@ -197,22 +197,26 @@ export const translations = {
             }
         },
         auth: {
-            loginTitle: "Вход в систему",
-            registerTitle: "Регистрация",
-            emailLabel: "Email",
-            passwordLabel: "Пароль",
-            confirmPasswordLabel: "Подтвердите пароль",
-            submitLogin: "Войти",
-            submitRegister: "Зарегистрироваться",
-            haveAccount: "Уже есть аккаунт?",
-            noAccount: "Нет аккаунта?",
-            guestMode: "Продолжить как гость",
+            login: {
+                title: "Вход в систему",
+                subtitle: "Введите данные для входа",
+                submit: "Войти",
+                noAccount: "Нет аккаунта?"
+            },
+            register: {
+                title: "Регистрация",
+                subtitle: "Создайте аккаунт чтобы начать",
+                submit: "Зарегистрироваться",
+                hasAccount: "Уже есть аккаунт?"
+            },
+            email: "Email",
+            password: "Пароль",
+            loading: "Загрузка...",
             errors: {
                 loginFailed: "Ошибка входа",
                 invalidCredentials: "Неверные данные",
                 regFailed: "Ошибка регистрации"
-            },
-            loading: "Загрузка..."
+            }
         },
         documents: {
             title: "Документы и Информация",
@@ -262,6 +266,30 @@ export const translations = {
             register: "Тіркелу",
             language: "Тіл",
             backToMain: "Басты бетке",
+        },
+        workbench: {
+            appTitle: "AI Шеберханасы",
+            appSubtitle: "Контент жасауға арналған бірыңғай платформа",
+            textToImage: "Текст → Фото",
+            textToVideo: "Текст → Видео",
+            imageToImage: "Фото → Фото",
+            videoToVideo: "Видео → Видео",
+            generating: "Генерация...",
+            generate: "Жасау",
+            describeImage: "Жасағыңыз келетін суретті сипаттаңыз...",
+            describeVideo: "Жасағыңыз келетін видеоны сипаттаңыз...",
+            enhance: "Жақсарту",
+            toasts: {
+                enterPrompt: "Сұранысты енгізіңіз",
+                jobStarted: "Генерация басталды!",
+                jobStartedDesc: "Прогресті галереядан бақылай аласыз.",
+                genFailed: "Генерация қатесі",
+                unknownError: "Белгісіз қате"
+            },
+            loading: "Модельдер жүктелуде...",
+            errorLoading: "Модельдерді жүктеу қатесі",
+            errorLoadingDesc: "Сервердің жұмыс істеп тұрғанын және авторланғаныңызды тексеріңіз.",
+            inputFile: "Файлды таңдаңыз"
         },
         landing: {
             hero: {
@@ -364,22 +392,26 @@ export const translations = {
             }
         },
         auth: {
-            loginTitle: "Жүйеге кіру",
-            registerTitle: "Тіркелу",
-            emailLabel: "Email",
-            passwordLabel: "Құпия сөз",
-            confirmPasswordLabel: "Құпия сөзді растаңыз",
-            submitLogin: "Кіру",
-            submitRegister: "Тіркелу",
-            haveAccount: "Аккаунтыңыз бар ма?",
-            noAccount: "Аккаунт жоқ па?",
-            guestMode: "Қонақ ретінде жалғастыру",
+            login: {
+                title: "Жүйеге кіру",
+                subtitle: "Жүйеге кіру үшін деректерді енгізіңіз",
+                submit: "Кіру",
+                noAccount: "Аккаунт жоқ па?"
+            },
+            register: {
+                title: "Тіркелу",
+                subtitle: "Бастау үшін аккаунт жасаңыз",
+                submit: "Тіркелу",
+                hasAccount: "Аккаунтыңыз бар ма?"
+            },
+            email: "Email",
+            password: "Құпия сөз",
+            loading: "Жүктелуде...",
             errors: {
                 loginFailed: "Кіру қатесі",
                 invalidCredentials: "Деректер қате",
                 regFailed: "Тіркелу қатесі"
-            },
-            loading: "Жүктелуде..."
+            }
         },
         documents: {
             title: "Құжаттар мен Ақпарат",
@@ -428,6 +460,30 @@ export const translations = {
             register: "Катталуу",
             language: "Тил",
             backToMain: "Башкы бетке",
+        },
+        workbench: {
+            appTitle: "AI Устаканасы",
+            appSubtitle: "Контент жаратуу үчүн бирдиктүү платформа",
+            textToImage: "Текст → Фото",
+            textToVideo: "Текст → Видео",
+            imageToImage: "Фото → Фото",
+            videoToVideo: "Видео → Видео",
+            generating: "Генерация...",
+            generate: "Жасоо",
+            describeImage: "Жасагыңыз келген сүрөттү сүрөттөп бериңиз...",
+            describeVideo: "Жасагыңыз келген видеону сүрөттөп бериңиз...",
+            enhance: "Жакшыртуу",
+            toasts: {
+                enterPrompt: "Сураныч, суроо-талапты киргизиңиз",
+                jobStarted: "Генерация башталды!",
+                jobStartedDesc: "Прогрессти галереядан көзөмөлдөй аласыз.",
+                genFailed: "Генерация катасы",
+                unknownError: "Белгисиз ката"
+            },
+            loading: "Моделдер жүктөлүүдө...",
+            errorLoading: "Моделдерди жүктөө катасы",
+            errorLoadingDesc: "Сервер иштеп жатканын жана авторизацияланганыңызды текшериңиз.",
+            inputFile: "Файлды тандаңыз"
         },
         landing: {
             hero: {
@@ -530,22 +586,26 @@ export const translations = {
             }
         },
         auth: {
-            loginTitle: "Системага кирүү",
-            registerTitle: "Катталуу",
-            emailLabel: "Email",
-            passwordLabel: "Сыр сөз",
-            confirmPasswordLabel: "Сыр сөздү ырастаңыз",
-            submitLogin: "Кирүү",
-            submitRegister: "Катталуу",
-            haveAccount: "Аккаунтуңуз барбы?",
-            noAccount: "Аккаунт жокпу?",
-            guestMode: "Конок катары улантуу",
+            login: {
+                title: "Системага кирүү",
+                subtitle: "Кирүү үчүн маалыматтарды киргизиңиз",
+                submit: "Кирүү",
+                noAccount: "Аккаунт жокпу?"
+            },
+            register: {
+                title: "Катталуу",
+                subtitle: "Баштоо үчүн аккаунт түзүңүз",
+                submit: "Катталуу",
+                hasAccount: "Аккаунтуңуз барбы?"
+            },
+            email: "Email",
+            password: "Сыр сөз",
+            loading: "Жүктөлүүдө...",
             errors: {
                 loginFailed: "Кирүү катасы",
                 invalidCredentials: "Туура эмес маалыматтар",
                 regFailed: "Катталуу катасы"
-            },
-            loading: "Жүктөлүүдө..."
+            }
         },
         documents: {
             title: "Документтер жана Маалымат",
@@ -576,7 +636,7 @@ export const translations = {
                     "AI Устаканасы — креаторлор жана дизайнерлер үчүн инновациялык платформа.",
                     "Биз дүйнөнүн мыкты нейротармактарын (VEO 3, Nano Banana, Flux, SDXL) бир жерге чогулттук.",
                     "Дарек: Кыргыз Республикасы, Бишкек ш.",
-                    "Байланыш: support@artline.ai"
+                    "Байланыш: workbenchai@gmx.com"
                 ]
             }
         }

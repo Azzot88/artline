@@ -28,8 +28,13 @@ services:
       - artline_network
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      target: dev
     restart: always
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     networks:
       - artline_network
 

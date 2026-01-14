@@ -1,5 +1,16 @@
-# Stage 1: Build the React Application
-FROM node:18-alpine as build
+# Stage 1: Base (Install dependencies)
+FROM node:18-alpine as base
+WORKDIR /app
+COPY package*.json ./
+RUN npm install --legacy-peer-deps
+COPY . .
+
+# Stage 2: Development
+FROM base as dev
+CMD ["npm", "run", "dev", "--", "--host", "--port", "5173"]
+
+# Stage 3: Build the React Application
+FROM base as build
 
 WORKDIR /app
 
