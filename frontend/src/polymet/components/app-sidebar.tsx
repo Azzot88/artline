@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
   SparklesIcon,
   ImageIcon,
@@ -10,15 +10,15 @@ import {
   LogOutIcon,
   XIcon,
   TrendingUpIcon,
-  ClockIcon
+  CreditCardIcon,
+  Brain
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { generations } from "@/polymet/data/generations-data"
-import { useTranslations } from "@/polymet/components/language-provider"
+import { useLanguage } from "@/polymet/components/language-provider"
+import { LanguageSwitcher } from "@/polymet/components/language-switcher"
 import { useAuth } from "@/polymet/components/auth-provider"
 
 interface NavItem {
@@ -36,7 +36,8 @@ interface AppSidebarProps {
 
 export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
   const location = useLocation()
-  const t = useTranslations()
+  const navigate = useNavigate()
+  const { t } = useLanguage()
   const { user, isLoading: loading, isGuest, logout } = useAuth()
 
   // Use real admin flag from user object
@@ -50,26 +51,14 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
     {
       key: "workbench",
       href: "/workbench",
-      icon: SparklesIcon
-    },
-    {
-      key: "gallery",
-      href: "/gallery",
-      icon: ImageIcon
+      icon: LayoutDashboardIcon,
+      title: "common.startUsing"
     },
     {
       key: "tariffs",
       href: "/landingpage",
-      icon: CoinsIcon,
-      title: "Тарифы" // Hardcoded title fallback or added to translations? User asked to name it "Тарифы".
-    }
-  ]
-
-  const userNavItems: NavItem[] = [
-    {
-      key: "account",
-      href: "/account",
-      icon: UserIcon
+      icon: CreditCardIcon,
+      title: "common.tariffs"
     }
   ]
 
@@ -77,21 +66,29 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
     {
       key: "dashboard",
       href: "/dashboard",
-      icon: LayoutDashboardIcon
+      icon: LayoutDashboardIcon,
+      title: "Dashboard"
     },
     {
       key: "modelConfig",
       href: "/model-config",
-      icon: SlidersIcon
+      icon: SlidersIcon,
+      title: "Models"
     }
   ]
 
-  // Calculate stats
-  const totalGenerations = generations.length
-  const totalCreditsUsed = generations.reduce((sum, gen) => sum + gen.credits, 0)
-  const avgCreditsPerGen = Math.round(totalCreditsUsed / totalGenerations)
-
-
+  // Handle Settings click based on role
+  const handleSettingsClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (isAdmin) {
+      navigate("/admin")
+    } else if (isGuest) {
+      navigate("/login")
+    } else {
+      navigate("/account")
+    }
+    if (onClose) onClose()
+  }
 
   return (
     <>
@@ -111,10 +108,12 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
       )}>
         {/* Logo */}
         <div className="flex h-16 items-center gap-2 border-b border-border px-6">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <SparklesIcon className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <span className="font-bold text-lg">{t.appTitle}</span>
+          <Link to="/" onClick={onClose} className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <Brain className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <span className="font-bold text-lg">{t('common.brand')}</span>
+          </Link>
           {onClose && (
             <Button
               variant="ghost"
@@ -136,9 +135,7 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
                 {loading ? "..." : (user?.balance || 0)}
               </span>
             </div>
-            <Button variant="ghost" size="sm" className="h-7 text-xs">
-              {t.buyMore}
-            </Button>
+            {/* Future: Buy More button */}
           </div>
         </div>
 
@@ -151,7 +148,8 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
             {mainNavItems.map((item) => {
               const Icon = item.icon
               const active = isActive(item.href)
-              const title = t[item.key as keyof typeof t] as string
+              // Dynamically translate title if key exists, else use key or hardcoded defaults
+              const label = t(item.title || "")
 
               return (
                 <Link key={item.href} to={item.href} onClick={onClose}>
@@ -164,7 +162,7 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
                     )}
                   >
                     <Icon className="w-4 h-4" />
-                    <span>{title}</span>
+                    <span>{label}</span>
                     {item.badge && (
                       <span className="ml-auto text-xs px-1.5 py-0.5 rounded bg-primary/20">
                         {item.badge}
@@ -178,101 +176,44 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
 
           <Separator className="my-4" />
 
-          {/* User Navigation */}
+          {/* Settings & Language Group */}
           <div className="space-y-1">
             <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-              {t.account.toUpperCase()}
+              {t('common.settings')}
             </p>
-            {userNavItems.map((item) => {
-              const Icon = item.icon
-              const active = isActive(item.href)
-              const title = t[item.key as keyof typeof t] as string
 
-              return (
-                <Link key={item.href} to={item.href} onClick={onClose}>
-                  <div
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                      active
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                    )}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{title}</span>
-                  </div>
-                </Link>
-              )
-            })}
+            {/* Smart Settings Button */}
+            <div
+              onClick={handleSettingsClick}
+              className={cn(
+                "cursor-pointer flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                (isActive("/account") || isActive("/admin") || isActive("/login"))
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              )}
+            >
+              <SettingsIcon className="w-4 h-4" />
+              <span>{t('common.settings')}</span>
+            </div>
+
+            {/* Language Switcher Row */}
+            <div className="flex items-center justify-between px-3 py-2">
+              <span className="text-sm font-medium text-muted-foreground flex items-center gap-3">
+                {t('common.language')}
+              </span>
+              <LanguageSwitcher variant="ghost" />
+            </div>
           </div>
 
           <Separator className="my-4" />
 
-          {/* Admin Navigation - Only show if needed, currently hidden/admin hardcoded to false */}
-          {isAdmin && (
-            <div className="space-y-1">
-              <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                АДМИНИСТРИРОВАНИЕ
-              </p>
-              {adminNavItems.map((item) => {
-                const Icon = item.icon
-                const active = isActive(item.href)
-                const title = t[item.key as keyof typeof t] as string
-
-                return (
-                  <Link key={item.href} to={item.href} onClick={onClose}>
-                    <div
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                        active
-                          ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                      )}
-                    >
-                      <Icon className="w-4 h-4" />
-                      <span>{title}</span>
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
-        </nav>
-
-        {/* Bottom Actions */}
-        <div className="border-t border-border p-4 space-y-4">
-          {/* Quick Stats */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <TrendingUpIcon className="w-4 h-4 text-primary" />
-                {t.quickStats}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{t.totalGenerations}</span>
-                <span className="text-sm font-semibold">{loading ? "..." : (user?.total_generations || 0)}</span>
-              </div>
-              {/* Removed creditsUsed and Avg since we don't have that in simple user object yet */}
-            </CardContent>
-          </Card>
-
-
-          {/* Settings & Logout/Login */}
-          <div className="space-y-1">
-            <Link to={isAdmin ? "/admin" : (isGuest ? "/login" : "/account")}>
-              <Button variant="ghost" className="w-full justify-start" size="sm">
-                <SettingsIcon className="w-4 h-4 mr-3" />
-                {t.settings}
-              </Button>
-            </Link>
-
+          {/* User/Auth Actions */}
+          <div className="mt-auto pt-4">
             {isGuest ? (
-              <Link to="/login">
+              <Link to="/login" onClick={onClose}>
                 <Button variant="ghost" className="w-full justify-start text-primary hover:text-primary hover:bg-primary/10" size="sm">
                   <UserIcon className="w-4 h-4 mr-3" />
-                  Login / Sign Up
+                  {t('common.login')}
                 </Button>
               </Link>
             ) : (
@@ -283,11 +224,20 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
                 onClick={logout}
               >
                 <LogOutIcon className="w-4 h-4 mr-3" />
-                {t.logout}
+                {t('common.logout')}
               </Button>
             )}
           </div>
+        </nav>
+
+        {/* Quick Stats - Bottom */}
+        <div className="border-t border-border p-4">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+            <TrendingUpIcon className="w-3 h-3" />
+            <span>Generations: {loading ? "..." : (user?.total_generations || 0)}</span>
+          </div>
         </div>
+
       </div>
     </>
   )

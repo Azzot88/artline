@@ -1,77 +1,60 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react"
-import { LanguageCode, Translations, getCurrentLanguage, getTranslation, changeLanguage } from "@/polymet/data/translations-data"
+import React, { createContext, useContext, useEffect, useState } from 'react'
+import { translations, Language } from '@/polymet/data/translations'
+
+type Translations = typeof translations.ru
 
 interface LanguageContextType {
-  currentLanguage: LanguageCode
-  translations: Translations
-  setLanguage: (code: LanguageCode) => Promise<void>
-  t: Translations
+  language: Language
+  setLanguage: (lang: Language) => void
+  t: (path: string) => any
+  dict: Translations
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
 
-interface LanguageProviderProps {
-  children: ReactNode
-}
+const LANGUAGE_KEY = 'polymet_language'
 
-export function LanguageProvider({ children }: LanguageProviderProps) {
-  const [currentLanguage, setCurrentLanguage] = useState<LanguageCode>(getCurrentLanguage())
-  const [translations, setTranslations] = useState<Translations>(getTranslation(currentLanguage))
+export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const [language, setLanguageState] = useState<Language>('ru')
 
   useEffect(() => {
-    // Update translations when language changes
-    setTranslations(getTranslation(currentLanguage))
-  }, [currentLanguage])
-
-  useEffect(() => {
-    // Sync localStorage with cookie on mount (in case cookie was set by old GET endpoint)
-    const initialLang = getCurrentLanguage()
-    if (initialLang !== currentLanguage) {
-      setCurrentLanguage(initialLang)
-      localStorage.setItem('language', initialLang)
+    const saved = localStorage.getItem(LANGUAGE_KEY) as Language
+    if (saved && (saved === 'ru' || saved === 'kk' || saved === 'ky')) {
+      setLanguageState(saved)
     }
   }, [])
 
-  const handleSetLanguage = async (code: LanguageCode) => {
-    try {
-      // Call backend API to set cookie (no redirect)
-      await changeLanguage(code)
-      
-      // Update local state immediately for instant UI update
-      setCurrentLanguage(code)
-    } catch (error) {
-      console.error('Failed to change language:', error)
-      
-      // Even if backend fails, update UI (localStorage fallback is already handled)
-      setCurrentLanguage(code)
-    }
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang)
+    localStorage.setItem(LANGUAGE_KEY, lang)
   }
 
+  const getNestedValue = (obj: any, path: string) => {
+    return path.split('.').reduce((acc, part) => acc && acc[part], obj)
+  }
+
+  const t = (path: string) => {
+    const value = getNestedValue(translations[language], path)
+    if (value === undefined) {
+      console.warn(`Missing translation for key: ${path} in language: ${language}`)
+      return path
+    }
+    return value
+  }
+
+  const dict = translations[language]
+
   return (
-    <LanguageContext.Provider
-      value={{
-        currentLanguage,
-        translations,
-        setLanguage: handleSetLanguage,
-        t: translations,
-      }}
-    >
+    <LanguageContext.Provider value={{ language, setLanguage, t, dict }}>
       {children}
     </LanguageContext.Provider>
   )
 }
 
-// Custom hook to use language context
 export function useLanguage() {
   const context = useContext(LanguageContext)
   if (context === undefined) {
-    throw new Error("useLanguage must be used within a LanguageProvider")
+    throw new Error('useLanguage must be used within a LanguageProvider')
   }
   return context
-}
-
-// Shorthand hook for translations only
-export function useTranslations() {
-  const { t } = useLanguage()
-  return t
 }

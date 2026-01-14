@@ -6,10 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import { useLanguage } from "@/polymet/components/language-provider"
+import { LanguageSwitcher } from "@/polymet/components/language-switcher"
 
 export function Login() {
     const navigate = useNavigate()
     const { login } = useAuth()
+    const { t } = useLanguage()
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
@@ -37,17 +40,20 @@ export function Login() {
     }
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="flex items-center justify-center min-h-screen bg-background relative">
+            <div className="absolute top-4 right-4">
+                <LanguageSwitcher />
+            </div>
             <Card className="w-[350px]">
                 <CardHeader>
-                    <CardTitle>Login</CardTitle>
-                    <CardDescription>Enter your email to sign in to your account</CardDescription>
+                    <CardTitle>{t('auth.login.title')}</CardTitle>
+                    <CardDescription>{t('auth.login.subtitle')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit}>
                         <div className="grid w-full items-center gap-4">
                             <div className="flex flex-col space-y-1.5">
-                                <Label htmlFor="email">Email</Label>
+                                <Label htmlFor="email">{t('auth.email')}</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -58,7 +64,7 @@ export function Login() {
                                 />
                             </div>
                             <div className="flex flex-col space-y-1.5">
-                                <Label htmlFor="password">Password</Label>
+                                <Label htmlFor="password">{t('auth.password')}</Label>
                                 <Input
                                     id="password"
                                     type="password"
@@ -71,13 +77,13 @@ export function Login() {
                         </div>
 
                         <Button className="w-full mt-6" type="submit" disabled={loading}>
-                            {loading ? "Signing in..." : "Sign In"}
+                            {loading ? t('auth.login.submit') + "..." : t('auth.login.submit')}
                         </Button>
                     </form>
                 </CardContent>
                 <CardFooter className="flex justify-center">
                     <Link to="/register" className="text-sm text-muted-foreground hover:underline">
-                        Don't have an account? Sign up
+                        {t('auth.login.noAccount')}
                     </Link>
                 </CardFooter>
             </Card>
