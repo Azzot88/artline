@@ -1,10 +1,10 @@
 import { useState } from "react"
 import { useParams, Link } from "react-router-dom"
 import { getModelById } from "@/polymet/data/models-data"
-import { 
-  getModelParameters, 
+import {
+  getModelParameters,
   getModelParameterConfigs,
-  getModelCostSignals 
+  getModelCostSignals
 } from "@/polymet/data/model-parameters-data"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
-import { 
+import {
   ArrowLeftIcon,
   SaveIcon,
   TestTubeIcon,
@@ -34,14 +34,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useTranslations } from "@/polymet/components/language-provider"
+import { useLanguage } from "@/polymet/components/language-provider"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export function ModelConfig() {
   const { modelId = "dalle-3" } = useParams()
   const model = getModelById(modelId)
-  const t = useTranslations()
-  
+  const { dict } = useLanguage()
+
   // Get model parameters and cost signals
   const parameters = getModelParameters(modelId)
   const parameterConfigs = getModelParameterConfigs(modelId)
@@ -56,7 +56,7 @@ export function ModelConfig() {
   const [apiEndpoint, setApiEndpoint] = useState(model?.apiEndpoint || "")
   const [enableRateLimiting, setEnableRateLimiting] = useState(true)
   const [enableCaching, setEnableCaching] = useState(true)
-  
+
   // Parameter configs state (which parameters are enabled)
   const [parameterEnabled, setParameterEnabled] = useState<Record<string, boolean>>(
     parameterConfigs.reduce((acc, config) => {
@@ -64,23 +64,23 @@ export function ModelConfig() {
       return acc
     }, {} as Record<string, boolean>)
   )
-  
+
   // Calculate how many non-prompt parameters are enabled
   const getNonPromptEnabledCount = () => {
     return parameters.filter(param => {
-      const isPromptLike = param.name.toLowerCase().includes('prompt') || 
-                          param.name.toLowerCase().includes('description')
+      const isPromptLike = param.name.toLowerCase().includes('prompt') ||
+        param.name.toLowerCase().includes('description')
       return !isPromptLike && parameterEnabled[param.id]
     }).length
   }
-  
+
   const toggleParameter = (parameterId: string) => {
     const param = parameters.find(p => p.id === parameterId)
     if (!param) return
-    
-    const isPromptLike = param.name.toLowerCase().includes('prompt') || 
-                        param.name.toLowerCase().includes('description')
-    
+
+    const isPromptLike = param.name.toLowerCase().includes('prompt') ||
+      param.name.toLowerCase().includes('description')
+
     // If trying to enable a non-prompt parameter
     if (!parameterEnabled[parameterId] && !isPromptLike) {
       const currentCount = getNonPromptEnabledCount()
@@ -89,7 +89,7 @@ export function ModelConfig() {
         return
       }
     }
-    
+
     setParameterEnabled(prev => ({
       ...prev,
       [parameterId]: !prev[parameterId]
@@ -104,14 +104,14 @@ export function ModelConfig() {
             <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
               <AlertCircleIcon className="w-8 h-8 text-destructive" />
             </div>
-            <h3 className="text-lg font-semibold">{t.notFound}</h3>
+            <h3 className="text-lg font-semibold">{dict.common.notFound}</h3>
             <p className="text-sm text-muted-foreground">
               Модель, которую вы ищете, не существует или была удалена.
             </p>
             <Link to="/dashboard">
               <Button variant="outline">
                 <ArrowLeftIcon className="w-4 h-4 mr-2" />
-                Назад к {t.dashboard}
+                Назад к {dict.navigation.dashboard}
               </Button>
             </Link>
           </div>
@@ -140,7 +140,7 @@ export function ModelConfig() {
           </div>
         </div>
         <Badge variant="outline" className="text-xs px-3 py-1">
-          {t.admin}
+          {dict.navigation.admin}
         </Badge>
       </div>
 
@@ -156,18 +156,18 @@ export function ModelConfig() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">{t.modelName}</Label>
-                  <Input 
-                    id="name" 
-                    value={name} 
+                  <Label htmlFor="name">{dict.dashboard.modelName}</Label>
+                  <Input
+                    id="name"
+                    value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="provider">{t.modelProvider}</Label>
-                  <Input 
-                    id="provider" 
-                    value={model.provider} 
+                  <Label htmlFor="provider">{dict.dashboard.modelProvider}</Label>
+                  <Input
+                    id="provider"
+                    value={model.provider}
                     disabled
                     className="bg-muted"
                   />
@@ -175,10 +175,10 @@ export function ModelConfig() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">{t.modelDescription}</Label>
-                <Textarea 
-                  id="description" 
-                  value={description} 
+                <Label htmlFor="description">{dict.dashboard.modelDescription}</Label>
+                <Textarea
+                  id="description"
+                  value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={3}
                 />
@@ -187,32 +187,32 @@ export function ModelConfig() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="type">Тип</Label>
-                  <Input 
-                    id="type" 
-                    value={model.type === "image" ? t.image : t.video} 
+                  <Input
+                    id="type"
+                    value={model.type === "image" ? dict.common.image : dict.common.video}
                     disabled
                     className="bg-muted capitalize"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="status">{t.modelStatus}</Label>
+                  <Label htmlFor="status">{dict.dashboard.modelStatus}</Label>
                   <Select value={status} onValueChange={setStatus}>
                     <SelectTrigger id="status">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">{t.active}</SelectItem>
-                      <SelectItem value="inactive">{t.disabled}</SelectItem>
-                      <SelectItem value="maintenance">{t.maintenance}</SelectItem>
+                      <SelectItem value="active">{dict.common.active}</SelectItem>
+                      <SelectItem value="inactive">{dict.common.disabled}</SelectItem>
+                      <SelectItem value="maintenance">{dict.common.maintenance}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="credits">{t.modelCredits}</Label>
-                  <Input 
-                    id="credits" 
-                    type="number" 
-                    value={credits} 
+                  <Label htmlFor="credits">{dict.dashboard.modelCredits}</Label>
+                  <Input
+                    id="credits"
+                    type="number"
+                    value={credits}
                     onChange={(e) => setCredits(e.target.value)}
                   />
                 </div>
@@ -229,9 +229,9 @@ export function ModelConfig() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="apiEndpoint">API эндпоинт</Label>
-                <Input 
-                  id="apiEndpoint" 
-                  value={apiEndpoint} 
+                <Input
+                  id="apiEndpoint"
+                  value={apiEndpoint}
                   onChange={(e) => setApiEndpoint(e.target.value)}
                   placeholder="https://api.example.com/v1/generate"
                 />
@@ -263,7 +263,7 @@ export function ModelConfig() {
                       Ограничить запросы на пользователя в минуту
                     </p>
                   </div>
-                  <Switch 
+                  <Switch
                     id="rateLimiting"
                     checked={enableRateLimiting}
                     onCheckedChange={setEnableRateLimiting}
@@ -277,7 +277,7 @@ export function ModelConfig() {
                       Кэшировать похожие запросы для снижения затрат
                     </p>
                   </div>
-                  <Switch 
+                  <Switch
                     id="caching"
                     checked={enableCaching}
                     onCheckedChange={setEnableCaching}
@@ -313,13 +313,13 @@ export function ModelConfig() {
                           Ограничение: максимум 4 параметра
                         </p>
                         <p className="text-muted-foreground">
-                          Можно включить не более 4 параметров одновременно (исключая prompt-поля). 
+                          Можно включить не более 4 параметров одновременно (исключая prompt-поля).
                           Текущее количество: <strong>{getNonPromptEnabledCount()}/4</strong>
                         </p>
                       </div>
                     </div>
                   </div>
-                  
+
                   {parameters.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <p>Параметры для этой модели не найдены</p>
@@ -330,15 +330,14 @@ export function ModelConfig() {
                       {parameters.map(param => {
                         const config = parameterConfigs.find(c => c.parameter_id === param.id)
                         const isEnabled = parameterEnabled[param.id] ?? config?.enabled ?? false
-                        const isPromptLike = param.name.toLowerCase().includes('prompt') || 
-                                            param.name.toLowerCase().includes('description')
-                        
+                        const isPromptLike = param.name.toLowerCase().includes('prompt') ||
+                          param.name.toLowerCase().includes('description')
+
                         return (
-                          <div 
+                          <div
                             key={param.id}
-                            className={`p-3 border rounded-lg transition-colors ${
-                              isEnabled ? 'border-green-500/30 bg-green-500/5' : 'border-border bg-muted/30'
-                            }`}
+                            className={`p-3 border rounded-lg transition-colors ${isEnabled ? 'border-green-500/30 bg-green-500/5' : 'border-border bg-muted/30'
+                              }`}
                           >
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
@@ -363,7 +362,7 @@ export function ModelConfig() {
                                     </Badge>
                                   )}
                                 </div>
-                                
+
                                 <div className="text-xs text-muted-foreground space-y-1">
                                   {param.default_value !== null && param.default_value !== undefined && (
                                     <p>Default: {JSON.stringify(param.default_value)}</p>
@@ -378,7 +377,7 @@ export function ModelConfig() {
                                   )}
                                 </div>
                               </div>
-                              
+
                               <Switch
                                 checked={isEnabled}
                                 onCheckedChange={() => toggleParameter(param.id)}
@@ -389,7 +388,7 @@ export function ModelConfig() {
                       })}
                     </div>
                   )}
-                  
+
                   <div className="pt-4 border-t border-border">
                     <p className="text-xs text-muted-foreground">
                       Включенные параметры будут доступны в Мастерской для настройки генерации
@@ -411,7 +410,7 @@ export function ModelConfig() {
                           <p className="font-semibold">{costSignals.currency}</p>
                         </div>
                       </div>
-                      
+
                       {costSignals.cost_model === "by_fixed" && costSignals.fixed_price_per_run && (
                         <div className="p-4 border border-primary/20 bg-primary/5 rounded-lg">
                           <div className="flex items-center justify-between">
@@ -425,7 +424,7 @@ export function ModelConfig() {
                           </div>
                         </div>
                       )}
-                      
+
                       {costSignals.cost_model === "by_time" && (
                         <div className="space-y-3">
                           <div className="p-4 border border-primary/20 bg-primary/5 rounded-lg">
@@ -439,7 +438,7 @@ export function ModelConfig() {
                               </span>
                             </div>
                           </div>
-                          
+
                           <div className="grid grid-cols-3 gap-3">
                             <div className="p-3 border border-border rounded-lg">
                               <p className="text-xs text-muted-foreground mb-1">Среднее время</p>
@@ -456,21 +455,21 @@ export function ModelConfig() {
                           </div>
                         </div>
                       )}
-                      
+
                       {costSignals.hardware_class && (
                         <div className="p-3 border border-border rounded-lg">
                           <p className="text-xs text-muted-foreground mb-1">Класс оборудования</p>
                           <p className="font-medium">{costSignals.hardware_class}</p>
                         </div>
                       )}
-                      
+
                       {costSignals.notes && (
                         <div className="p-3 border border-border rounded-lg bg-muted/30">
                           <p className="text-xs text-muted-foreground mb-1">Примечания</p>
                           <p className="text-sm">{costSignals.notes}</p>
                         </div>
                       )}
-                      
+
                       <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
                         <ClockIcon className="w-3 h-3" />
                         <span>Обновлено: {new Date(costSignals.updated_at).toLocaleString()}</span>
@@ -486,11 +485,11 @@ export function ModelConfig() {
               </Tabs>
             </CardContent>
           </Card>
-          
+
           {/* Capabilities */}
           <Card>
             <CardHeader>
-              <CardTitle>{t.modelCapabilities}</CardTitle>
+              <CardTitle>{dict.dashboard.modelCapabilities}</CardTitle>
               <CardDescription>Возможности, поддерживаемые этой моделью</CardDescription>
             </CardHeader>
             <CardContent>
@@ -508,10 +507,10 @@ export function ModelConfig() {
           <div className="flex gap-2">
             <Button size="lg">
               <SaveIcon className="w-4 h-4 mr-2" />
-              {t.save}
+              {dict.common.save}
             </Button>
             <Button variant="outline" size="lg">
-              {t.cancel}
+              {dict.common.cancel}
             </Button>
             <Button variant="outline" size="lg" className="ml-auto">
               <TestTubeIcon className="w-4 h-4 mr-2" />
@@ -528,16 +527,15 @@ export function ModelConfig() {
               <CardTitle className="text-sm">Тип модели</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className={`w-16 h-16 rounded-lg flex items-center justify-center mx-auto mb-3 ${
-                model.type === "image" ? "bg-blue-500/10" : "bg-purple-500/10"
-              }`}>
+              <div className={`w-16 h-16 rounded-lg flex items-center justify-center mx-auto mb-3 ${model.type === "image" ? "bg-blue-500/10" : "bg-purple-500/10"
+                }`}>
                 {model.type === "image" ? (
                   <ImageIcon className="w-8 h-8 text-blue-500" />
                 ) : (
                   <VideoIcon className="w-8 h-8 text-purple-500" />
                 )}
               </div>
-              <p className="text-center text-sm font-medium capitalize">Генерация {model.type === "image" ? t.image.toLowerCase() : t.video.toLowerCase()}</p>
+              <p className="text-center text-sm font-medium capitalize">Генерация {model.type === "image" ? dict.common.image.toLowerCase() : dict.common.video.toLowerCase()}</p>
             </CardContent>
           </Card>
 
@@ -548,13 +546,13 @@ export function ModelConfig() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">{t.modelStatus}</span>
+                <span className="text-sm text-muted-foreground">{dict.dashboard.modelStatus}</span>
                 <Badge variant={
-                  model.status === "active" ? "default" : 
-                  model.status === "maintenance" ? "secondary" : 
-                  "outline"
+                  model.status === "active" ? "default" :
+                    model.status === "maintenance" ? "secondary" :
+                      "outline"
                 }>
-                  {model.status === "active" ? t.active : model.status === "maintenance" ? t.maintenance : t.disabled}
+                  {model.status === "active" ? dict.common.active : model.status === "maintenance" ? dict.common.maintenance : dict.common.disabled}
                 </Badge>
               </div>
               <div className="flex items-center justify-between">
@@ -577,7 +575,7 @@ export function ModelConfig() {
                 <div className="text-4xl font-bold text-primary mb-2">
                   {model.credits}
                 </div>
-                <p className="text-sm text-muted-foreground">{t.modelCredits}</p>
+                <p className="text-sm text-muted-foreground">{dict.dashboard.modelCredits}</p>
               </div>
             </CardContent>
           </Card>
