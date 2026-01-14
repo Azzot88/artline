@@ -11,7 +11,7 @@ import uuid
 import json
 import os
 import asyncio
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 # --- Fixtures ---
 
