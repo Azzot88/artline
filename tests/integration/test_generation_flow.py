@@ -15,7 +15,8 @@ from app.domain.users.models import User
 @pytest.fixture
 def mock_replicate_submit():
     """Mock the Replicate adapter submission."""
-    with patch("app.domain.jobs.runner.submit_replicate_job") as mock:
+    with patch("app.domain.jobs.runner.ReplicateService.submit_prediction") as mock:
+        mock.return_value = "mock_provider_id"
         yield mock
 
 @pytest.fixture

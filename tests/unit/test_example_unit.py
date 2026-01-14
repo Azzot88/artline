@@ -20,6 +20,6 @@ def test_user_model_initialization():
     """
     Test basic model initialization.
     """
-    user = User(email="test@example.com", is_active=True)
+    user = User(email="test@example.com")
     assert user.email == "test@example.com"
     assert user.is_active is True

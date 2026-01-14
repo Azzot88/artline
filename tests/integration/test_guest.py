@@ -8,7 +8,7 @@ from app.core.security import verify_password
 @pytest.mark.asyncio
 async def test_guest_flow(client):
     # 1. Init Guest
-    response = await client.post("/guest/init")
+    response = await client.post("/api/auth/guest/init")
     assert response.status_code == 200
     data = response.json()
     assert "guest_id" in data
@@ -21,7 +21,7 @@ async def test_guest_flow(client):
 @pytest.mark.asyncio
 async def test_guest_migration_signup(client, db_session):
     # 1. Create Guest via API
-    resp = await client.post("/guest/init")
+    resp = await client.post("/api/auth/guest/init")
     guest_id = resp.json()["guest_id"]
     guest_cookie = resp.cookies["guest_id"]
     

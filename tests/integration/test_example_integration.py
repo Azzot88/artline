@@ -11,7 +11,7 @@ async def test_create_user_db(db_session):
     Integration test: Create a user in the DB and retrieve it.
     """
     email = "integration@test.com"
-    user = User(email=email, hashed_password=get_password_hash("pass"), is_active=True)
+    user = User(email=email, hashed_password=get_password_hash("pass"))
     
     db_session.add(user)
     await db_session.commit()

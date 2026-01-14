@@ -32,6 +32,6 @@ def test_aimodel_defaults():
         display_name="Minimal",
         provider="openai"
     )
-    assert model.is_active is True  # Assuming default is True based on model definition
+    assert model.is_active is None # SQLAlchemy default not set until flush
     assert model.likes == 0
     assert model.uses == 0
