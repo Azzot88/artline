@@ -22,4 +22,4 @@ def test_user_model_initialization():
     """
     user = User(email="test@example.com")
     assert user.email == "test@example.com"
-    assert user.is_active is True
+

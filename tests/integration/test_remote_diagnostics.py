@@ -133,7 +133,11 @@ async def test_worker_replicate_handshake(client: AsyncClient, seed_env, db_sess
     print(f"DEBUG: Runner Engine: {runner.sync_engine.url}")
     
     # FORCE COMMIT to ensure Sync Worker can see the job
-    await db_session.commit()
+    # Note: 'client' and 'db_session' might use different connections if not shared correctly in fixtures.
+    # But 'client' creates job in DB. 'db_session' is a separate session.
+    # We need to ensure the client request's transaction is committed (it should be).
+    # We also need to verify the job exists via ID before running worker.
+    pass
 
     # MOCK ReplicateService inside runner.py
     # We trap the 'submit_prediction' call to verify arguments without hitting API
