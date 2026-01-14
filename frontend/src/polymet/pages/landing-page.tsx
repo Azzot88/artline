@@ -2,7 +2,7 @@
 import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Check, Zap, Shield, Globe, Image as ImageIcon, Video, Sparkles, Wand2, Layers, Cpu, BarChart, History, Repeat, Download, Copy, Lock, Maximize, FlaskConical, EyeOff, Folder, Database, Terminal, Crown, Coins, HelpCircle } from "lucide-react"
+import { Check, Zap, Shield, Globe, Image as ImageIcon, Video, Sparkles, Wand2, Layers, Cpu, BarChart, History, Repeat, Download, Copy, Lock, Maximize, FlaskConical, EyeOff, Folder, Database, Terminal, Crown, HelpCircle } from "lucide-react"
 import { useLanguage } from "@/polymet/components/language-provider"
 import { LanguageSwitcher } from "@/polymet/components/language-switcher"
 
@@ -247,7 +247,7 @@ export function LandingPage() {
                     </div>
                 </section>
 
-                {/* 8. Subscriptions (Redesigned - Stricter & Compact) - Now using keys */}
+                {/* 8. Subscriptions (Redesigned - Stricter & Compact) */}
                 <section className="py-16 bg-muted/30">
                     <div className="container px-4 md:px-6 mx-auto">
                         <div className="text-center mb-12">
@@ -338,44 +338,7 @@ export function LandingPage() {
                     </div>
                 </section>
 
-                {/* 8.1. Credit Packs (New/Restored) */}
-                <section className="py-16">
-                    <div className="container px-4 md:px-6 mx-auto">
-                        <div className="text-center mb-12">
-                            <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary/10 text-primary hover:bg-primary/20 mb-4">
-                                PAY AS YOU GO
-                            </div>
-                            <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">{t('landing.credits.title')}</h2>
-                            <p className="text-muted-foreground text-base max-w-2xl mx-auto">
-                                {t('landing.credits.subtitle')}
-                            </p>
-                        </div>
-
-                        <div className="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
-                            {[1, 2, 3].map((i) => (
-                                <Card key={i} className="flex flex-col items-center text-center hover:border-primary/50 transition-all hover:-translate-y-1 duration-300">
-                                    <CardHeader className="pb-2">
-                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-2 mx-auto">
-                                            <Coins className="h-5 w-5" />
-                                        </div>
-                                        <CardTitle className="text-lg">{(t(`landing.credits.pack${i}.title` as any) as string)}</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="pb-4">
-                                        <div className="text-3xl font-bold mb-1">{(t(`landing.credits.pack${i}.price` as any) as string)}</div>
-                                        <p className="text-muted-foreground font-medium">{(t(`landing.credits.pack${i}.amount` as any) as string)}</p>
-                                    </CardContent>
-                                    <CardFooter className="pt-0 w-full">
-                                        <Link to="/register" className="w-full">
-                                            <Button variant="secondary" className="w-full">{t('common.buyMore')}</Button>
-                                        </Link>
-                                    </CardFooter>
-                                </Card>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* 8.2 FAQ (Restored) */}
+                {/* 8.2 FAQ */}
                 <section className="py-16 bg-muted/30">
                     <div className="container px-4 md:px-6 mx-auto max-w-3xl">
                         <div className="text-center mb-12">
@@ -421,16 +384,18 @@ export function LandingPage() {
                             <span>{t('common.brand')}</span>
                         </Link>
                         <div className="text-muted-foreground">
-                            <p>Email: support@artline.ai</p>
+                            <p>Email: {t('landing.footer.email')}</p>
                         </div>
                     </div>
 
                     <div className="md:col-span-2 space-y-4">
                         <h3 className="font-semibold text-foreground">{t('landing.footer.company')}</h3>
                         <div className="text-muted-foreground space-y-1">
-                            <p>LLC "Mirex"</p>
-                            <p>Bishkek, Kyrgyzstan</p>
-                            <p>INN KG 01207202210245</p>
+                            <p>{t('landing.footer.companyName')}</p>
+                            <p>{t('landing.footer.address')}</p>
+                            {(t('landing.footer.inn') as any[]).map((inn, i) => (
+                                <p key={i}>{inn}</p>
+                            ))}
                         </div>
                     </div>
 
