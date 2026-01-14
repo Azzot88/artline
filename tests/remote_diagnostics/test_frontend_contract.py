@@ -20,7 +20,6 @@ async def seed_model(db_session):
     model_id = uuid.uuid4()
     model = AIModel(
         id=model_id,
-        name="test-model-flux",
         display_name="Flux Pro Test",
         provider="replicate",
         model_ref="black-forest-labs/flux-pro",

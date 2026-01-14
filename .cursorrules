@@ -1,0 +1,2 @@
+Never propose running `npm run build` locally.
+Always assume that the build process should happen inside Docker or via `docker compose`.
