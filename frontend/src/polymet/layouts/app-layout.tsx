@@ -3,7 +3,7 @@ import { MenuIcon } from "lucide-react"
 import { AppSidebar } from "@/polymet/components/app-sidebar"
 import { RightSidebar } from "@/polymet/components/right-sidebar"
 import { Button } from "@/components/ui/button"
-import { useTranslations } from "@/polymet/components/language-provider"
+import { useLanguage } from "@/polymet/components/language-provider"
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -12,7 +12,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, showRightSidebar = true }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const t = useTranslations()
+  const { t } = useLanguage()
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -31,7 +31,7 @@ export function AppLayout({ children, showRightSidebar = true }: AppLayoutProps)
           >
             <MenuIcon className="w-5 h-5" />
           </Button>
-          <span className="font-bold text-lg">{t.appTitle}</span>
+          <span className="font-bold text-lg">{t('common.brand')}</span>
         </div>
 
         <div className="px-4 py-6 md:py-8">
