@@ -195,13 +195,9 @@ async def test_worker_replicate_handshake(client: AsyncClient, seed_env, db_sess
         
         # ASSERT
         assert "Submitted: mock_provider_id_123" in result
-        
-        # Verify DB update
-        await db_session.commit() # Force refresh
-        res_db = await db_session.execute(select(Job).where(Job.id == job_id))
-        job = res_db.scalar_one()
-        assert job.status == "running"
-        assert job.provider_job_id == "mock_provider_id_123"
+        # Verify Mock Object update (since we mocked the session)
+        assert mock_job.status == "running"
+        assert mock_job.provider_job_id == "mock_provider_id_123"
 
 @pytest.mark.asyncio
 @pytest.mark.live
