@@ -7,19 +7,19 @@ export interface User {
   email: string                          // Unique email
   username?: string                      // Display username (unique, nullable)
   avatar_url?: string                    // Avatar image URL
-  is_admin: boolean                      // Admin flag
-  
+  is_admin?: boolean                     // Admin flag
+
   // Balance and statistics
   balance: number                        // Current credits balance
   total_generations: number              // Total generations count (cached)
-  
+
   // Settings
   language: LanguageCode                 // Interface language
-  
+
   // Timestamps
   created_at: string                     // ISO 8601 timestamp
   updated_at?: string                    // ISO 8601 timestamp
-  
+
   // Computed fields (not in backend)
   total_credits_spent?: number           // Total credits spent (computed from ledger)
 }
@@ -31,15 +31,15 @@ export interface LedgerEntry {
   amount: number                         // Positive = credit, Negative = debit
   reason: string                         // "generation", "purchase", "refund", etc.
   related_job_id?: string                // FK to jobs.id (if related to generation)
-  
+
   // Payment info (for purchases)
   payment_amount?: number                // Payment amount in real currency
   payment_currency?: string              // "USD", "EUR", "KZT", etc.
-  
+
   // Balance tracking
   balance_before: number                 // Balance before transaction
   balance_after: number                  // Balance after transaction
-  
+
   // Timestamp
   created_at: string                     // ISO 8601 timestamp
 }

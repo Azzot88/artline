@@ -48,8 +48,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     email: data.user.email!,
                     is_active: true,
                     is_superuser: false,
-                    is_admin: false, // We might want to add is_admin to BootstrapResponse!
-                    created_at: ""
+                    is_admin: (data.user as any).is_admin || false, // UserRead now has is_admin
+                    created_at: new Date().toISOString(),
+                    balance: data.auth.balance || 0,
+                    total_generations: 0,
+                    language: "ru"
                 } as User)
                 setIsGuest(false)
             } else {

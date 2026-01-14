@@ -26,6 +26,7 @@ interface NavItem {
   href: string
   icon: React.ComponentType<{ className?: string }>
   badge?: string
+  title?: string
 }
 
 interface AppSidebarProps {
@@ -38,9 +39,8 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
   const t = useTranslations()
   const { user, isLoading: loading, isGuest, logout } = useAuth()
 
-  // Mock user role - in real app, get from auth context
-  // For now assume everyone can see everything or just hide admin for non-admin
-  const isAdmin = false
+  // Use real admin flag from user object
+  const isAdmin = user?.is_admin || false
 
   const isActive = (href: string) => {
     return location.pathname === href || location.pathname.startsWith(href + "/")
@@ -56,6 +56,12 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
       key: "gallery",
       href: "/gallery",
       icon: ImageIcon
+    },
+    {
+      key: "tariffs",
+      href: "/landingpage",
+      icon: CoinsIcon,
+      title: "Тарифы" // Hardcoded title fallback or added to translations? User asked to name it "Тарифы".
     }
   ]
 
@@ -255,10 +261,12 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
 
           {/* Settings & Logout/Login */}
           <div className="space-y-1">
-            <Button variant="ghost" className="w-full justify-start" size="sm">
-              <SettingsIcon className="w-4 h-4 mr-3" />
-              {t.settings}
-            </Button>
+            <Link to={isAdmin ? "/admin" : (isGuest ? "/login" : "/account")}>
+              <Button variant="ghost" className="w-full justify-start" size="sm">
+                <SettingsIcon className="w-4 h-4 mr-3" />
+                {t.settings}
+              </Button>
+            </Link>
 
             {isGuest ? (
               <Link to="/login">

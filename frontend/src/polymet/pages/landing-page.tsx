@@ -52,7 +52,7 @@ export function LandingPage() {
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                            <Link to="/register">
+                            <Link to="/workbench">
                                 <Button size="lg" className="px-8 w-full sm:w-auto text-base">Начать использовать</Button>
                             </Link>
                             <a href="#pricing">
@@ -95,7 +95,7 @@ export function LandingPage() {
                                     <p className="text-sm text-muted-foreground">Создавайте потрясающие изображения за секунды. Фотореализм, иллюстрации, 3D-арт. Поддержка различных форматов и стилей.</p>
                                 </CardContent>
                                 <CardFooter>
-                                    <Link to="/register" className="w-full">
+                                    <Link to="/workbench" className="w-full">
                                         <Button className="w-full group">
                                             Создать изображение <Wand2 className="ml-2 h-4 w-4 group-hover:rotate-12 transition-transform" />
                                         </Button>
@@ -115,7 +115,7 @@ export function LandingPage() {
                                     <p className="text-sm text-muted-foreground">Оживите свои изображения с помощью нейросетей. Контроль длительности и динамики. Превращение статичного арта в захватывающие ролики.</p>
                                 </CardContent>
                                 <CardFooter>
-                                    <Link to="/register" className="w-full">
+                                    <Link to="/workbench" className="w-full">
                                         <Button className="w-full group">
                                             Создать видео <Video className="ml-2 h-4 w-4 group-hover:scale-110 transition-transform" />
                                         </Button>
@@ -264,111 +264,102 @@ export function LandingPage() {
                     </div>
                 </section>
 
-                {/* 8. Subscriptions (Redesigned) */}
-                <section className="py-24 bg-muted/30">
+                {/* 8. Subscriptions (Redesigned - Stricter & Compact) */}
+                <section className="py-16 bg-muted/30">
                     <div className="container px-4 md:px-6 mx-auto">
-                        <div className="text-center mb-16">
-                            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">Выберите свой уровень 🚀</h2>
-                            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                        <div className="text-center mb-12">
+                            <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">Выберите свой уровень 🚀</h2>
+                            <p className="text-muted-foreground text-base max-w-2xl mx-auto">
                                 От комфортного старта до тотального контроля над генерациями.
                             </p>
                         </div>
 
-                        <div className="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+                        <div className="grid lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
                             {/* BASIC */}
-                            <Card className="flex flex-col hover:shadow-xl transition-all duration-300 border-muted-foreground/20">
-                                <CardHeader>
-                                    <div className="text-sm font-medium text-muted-foreground mb-2">Комфорт и контроль</div>
-                                    <CardTitle className="text-2xl">BASIC</CardTitle>
-                                    <div className="mt-4 flex items-baseline gap-1">
-                                        <span className="text-4xl font-bold">490₽</span>
-                                        <span className="text-muted-foreground">/ мес</span>
+                            <Card className="flex flex-col hover:border-primary/50 transition-colors duration-300">
+                                <CardHeader className="py-4">
+                                    <div className="text-xs font-medium text-muted-foreground mb-1">Комфорт и контроль</div>
+                                    <CardTitle className="text-xl">BASIC</CardTitle>
+                                    <div className="mt-2 flex items-baseline gap-1">
+                                        <span className="text-3xl font-bold">490₽</span>
+                                        <span className="text-sm text-muted-foreground">/ мес</span>
                                     </div>
-                                    <CardDescription className="mt-2">200 кредитов</CardDescription>
-                                    <p className="text-sm text-muted-foreground mt-4">
-                                        Для тех, кто устал от ограничений и хочет нормально пользоваться.
-                                    </p>
+                                    <CardDescription className="mt-1 text-xs">200 кредитов</CardDescription>
                                 </CardHeader>
-                                <CardContent className="flex-1">
-                                    <ul className="space-y-3 text-sm">
-                                        <li className="flex gap-3"><Check className="h-5 w-5 text-green-500 shrink-0" /> <span><strong>Без водяных знаков</strong> <br /><span className="text-xs text-muted-foreground">Чистый результат</span></span></li>
-                                        <li className="flex gap-3"><Zap className="h-5 w-5 text-green-500 shrink-0" /> <span><strong>Приоритет генерации</strong> <br /><span className="text-xs text-muted-foreground">Меньше ожидания</span></span></li>
-                                        <li className="flex gap-3"><History className="h-5 w-5 text-green-500 shrink-0" /> <span><strong>История безлимитна</strong> <br /><span className="text-xs text-muted-foreground">Все ходы записаны</span></span></li>
-                                        <li className="flex gap-3"><Repeat className="h-5 w-5 text-green-500 shrink-0" /> <span><strong>Re-run</strong> <br /><span className="text-xs text-muted-foreground">Повтор в один клик</span></span></li>
-                                        <li className="flex gap-3"><Shield className="h-5 w-5 text-green-500 shrink-0" /> <span><strong>Коммерческая лицензия</strong> <br /><span className="text-xs text-muted-foreground">Соцсети, презентации</span></span></li>
+                                <CardContent className="flex-1 py-2">
+                                    <ul className="space-y-2 text-sm">
+                                        <li className="flex gap-2 items-start"><Check className="h-4 w-4 text-green-500 shrink-0 mt-0.5" /> <span><strong>Без водяных знаков</strong> <span className="text-muted-foreground block text-xs">Чистый результат</span></span></li>
+                                        <li className="flex gap-2 items-start"><Zap className="h-4 w-4 text-green-500 shrink-0 mt-0.5" /> <span><strong>Приоритет</strong> <span className="text-muted-foreground block text-xs">Меньше ожидания</span></span></li>
+                                        <li className="flex gap-2 items-start"><History className="h-4 w-4 text-green-500 shrink-0 mt-0.5" /> <span><strong>История</strong> <span className="text-muted-foreground block text-xs">Все ходы записаны</span></span></li>
+                                        <li className="flex gap-2 items-start"><Repeat className="h-4 w-4 text-green-500 shrink-0 mt-0.5" /> <span><strong>Re-run</strong> <span className="text-muted-foreground block text-xs">Повтор в один клик</span></span></li>
+                                        <li className="flex gap-2 items-start"><Shield className="h-4 w-4 text-green-500 shrink-0 mt-0.5" /> <span><strong>Лицензия</strong> <span className="text-muted-foreground block text-xs">Коммерческая</span></span></li>
                                     </ul>
                                 </CardContent>
-                                <CardFooter>
+                                <CardFooter className="py-4">
                                     <Link to="/register" className="w-full">
-                                        <Button variant="outline" className="w-full text-lg h-12">Попробовать Basic</Button>
+                                        <Button variant="outline" className="w-full h-10">Попробовать Basic</Button>
                                     </Link>
                                 </CardFooter>
                             </Card>
 
                             {/* PRO */}
-                            <Card className="flex flex-col relative shadow-2xl scale-105 border-primary bg-background z-10">
-                                <div className="absolute top-0 right-0 p-4">
-                                    <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                                        Хит продаж
+                            <Card className="flex flex-col relative border-primary bg-background shadow-md">
+                                <div className="absolute top-0 right-0 p-3">
+                                    <div className="bg-primary/10 text-primary px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                                        Хит
                                     </div>
                                 </div>
-                                <CardHeader>
-                                    <div className="text-sm font-medium text-primary mb-2">Скорость и деньги</div>
-                                    <CardTitle className="text-3xl text-primary">PRO</CardTitle>
-                                    <div className="mt-4 flex items-baseline gap-1">
-                                        <span className="text-5xl font-bold">1490₽</span>
-                                        <span className="text-muted-foreground">/ мес</span>
+                                <CardHeader className="py-4">
+                                    <div className="text-xs font-medium text-primary mb-1">Скорость и деньги</div>
+                                    <CardTitle className="text-xl text-primary">PRO</CardTitle>
+                                    <div className="mt-2 flex items-baseline gap-1">
+                                        <span className="text-3xl font-bold">1490₽</span>
+                                        <span className="text-sm text-muted-foreground">/ мес</span>
                                     </div>
-                                    <CardDescription className="mt-2 text-primary/80 font-medium">750 кредитов</CardDescription>
-                                    <p className="text-sm text-muted-foreground mt-4">
-                                        Дизайнеры, маркетологи, контент-мейкеры. Инструмент, который окупается.
-                                    </p>
+                                    <CardDescription className="mt-1 text-primary/80 font-medium text-xs">750 кредитов</CardDescription>
                                 </CardHeader>
-                                <CardContent className="flex-1">
-                                    <ul className="space-y-3 text-sm">
-                                        <li className="flex gap-3"><span className="text-primary font-bold text-xs uppercase bg-primary/10 px-2 py-0.5 rounded">Всё из Basic</span></li>
-                                        <li className="flex gap-3"><Download className="h-5 w-5 text-primary shrink-0" /> <span><strong>Экспорт форматов</strong> <br /><span className="text-xs text-muted-foreground">PNG, JPG, WEBP, MP4</span></span></li>
-                                        <li className="flex gap-3"><Copy className="h-5 w-5 text-primary shrink-0" /> <span><strong>Batch-генерация</strong> <br /><span className="text-xs text-muted-foreground">4-8 вариантов сразу</span></span></li>
-                                        <li className="flex gap-3"><Lock className="h-5 w-5 text-primary shrink-0" /> <span><strong>Style Lock / Seed</strong> <br /><span className="text-xs text-muted-foreground">Единый стиль бренда</span></span></li>
-                                        <li className="flex gap-3"><Sparkles className="h-5 w-5 text-primary shrink-0" /> <span><strong>Расширенные модели</strong> <br /><span className="text-xs text-muted-foreground">Чище, стабильнее</span></span></li>
-                                        <li className="flex gap-3"><Maximize className="h-5 w-5 text-primary shrink-0" /> <span><strong>Upscale AI</strong> <br /><span className="text-xs text-muted-foreground">Умное масштабирование</span></span></li>
+                                <CardContent className="flex-1 py-2">
+                                    <ul className="space-y-2 text-sm">
+                                        <li className="flex gap-2"><span className="text-primary font-bold text-[10px] uppercase bg-primary/10 px-1.5 py-0.5 rounded">Всё из Basic</span></li>
+                                        <li className="flex gap-2 items-start"><Download className="h-4 w-4 text-primary shrink-0 mt-0.5" /> <span><strong>Экспорт</strong> <span className="text-muted-foreground block text-xs">PNG, JPG, WEBP, MP4</span></span></li>
+                                        <li className="flex gap-2 items-start"><Copy className="h-4 w-4 text-primary shrink-0 mt-0.5" /> <span><strong>Batch</strong> <span className="text-muted-foreground block text-xs">4-8 вариантов</span></span></li>
+                                        <li className="flex gap-2 items-start"><Lock className="h-4 w-4 text-primary shrink-0 mt-0.5" /> <span><strong>Style Lock</strong> <span className="text-muted-foreground block text-xs">Единый стиль</span></span></li>
+                                        <li className="flex gap-2 items-start"><Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" /> <span><strong>Про-модели</strong> <span className="text-muted-foreground block text-xs">Чище, стабильнее</span></span></li>
+                                        <li className="flex gap-2 items-start"><Maximize className="h-4 w-4 text-primary shrink-0 mt-0.5" /> <span><strong>Upscale</strong> <span className="text-muted-foreground block text-xs">Масштабирование</span></span></li>
                                     </ul>
                                 </CardContent>
-                                <CardFooter>
+                                <CardFooter className="py-4">
                                     <Link to="/register" className="w-full">
-                                        <Button className="w-full text-lg h-12 shadow-lg shadow-primary/20">Выбрать PRO</Button>
+                                        <Button className="w-full h-10 shadow-sm">Выбрать PRO</Button>
                                     </Link>
                                 </CardFooter>
                             </Card>
 
                             {/* STUDIO */}
-                            <Card className="flex flex-col hover:shadow-xl transition-all duration-300 border-muted-foreground/20 bg-slate-50 dark:bg-slate-900/50">
-                                <CardHeader>
-                                    <div className="text-sm font-medium text-purple-600 dark:text-purple-400 mb-2">Статус и власть</div>
-                                    <CardTitle className="text-2xl">STUDIO</CardTitle>
-                                    <div className="mt-4 flex items-baseline gap-1">
-                                        <span className="text-4xl font-bold">4990₽</span>
-                                        <span className="text-muted-foreground">/ мес</span>
+                            <Card className="flex flex-col hover:border-purple-500/50 transition-colors duration-300 bg-slate-50 dark:bg-slate-900/50">
+                                <CardHeader className="py-4">
+                                    <div className="text-xs font-medium text-purple-600 dark:text-purple-400 mb-1">Статус и власть</div>
+                                    <CardTitle className="text-xl">STUDIO</CardTitle>
+                                    <div className="mt-2 flex items-baseline gap-1">
+                                        <span className="text-3xl font-bold">4990₽</span>
+                                        <span className="text-sm text-muted-foreground">/ мес</span>
                                     </div>
-                                    <CardDescription className="mt-2">3000 кредитов</CardDescription>
-                                    <p className="text-sm text-muted-foreground mt-4">
-                                        Студии, агентства, соло-профи. Платформа, а не игрушка.
-                                    </p>
+                                    <CardDescription className="mt-1 text-xs">3000 кредитов</CardDescription>
                                 </CardHeader>
-                                <CardContent className="flex-1">
-                                    <ul className="space-y-3 text-sm">
-                                        <li className="flex gap-3"><span className="text-purple-600 dark:text-purple-400 font-bold text-xs uppercase bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded">Всё из PRO</span></li>
-                                        <li className="flex gap-3"><FlaskConical className="h-5 w-5 text-purple-600 shrink-0" /> <span><strong>Experimental Lab</strong> <br /><span className="text-xs text-muted-foreground">Доступ раньше других</span></span></li>
-                                        <li className="flex gap-3"><EyeOff className="h-5 w-5 text-purple-600 shrink-0" /> <span><strong>Private Generations</strong> <br /><span className="text-xs text-muted-foreground">Полная конфиденциальность</span></span></li>
-                                        <li className="flex gap-3"><Folder className="h-5 w-5 text-purple-600 shrink-0" /> <span><strong>Проекты и Коллекции</strong> <br /><span className="text-xs text-muted-foreground">Порядок в делах</span></span></li>
-                                        <li className="flex gap-3"><Database className="h-5 w-5 text-purple-600 shrink-0" /> <span><strong>Prompt Vault</strong> <br /><span className="text-xs text-muted-foreground">База знаний команды</span></span></li>
-                                        <li className="flex gap-3"><Terminal className="h-5 w-5 text-purple-600 shrink-0" /> <span><strong>API / Automation</strong> <br /><span className="text-xs text-muted-foreground">Интеграции</span></span></li>
-                                        <li className="flex gap-3"><Crown className="h-5 w-5 text-purple-600 shrink-0" /> <span><strong>Studio Profile</strong> <br /><span className="text-xs text-muted-foreground">Именной бейдж</span></span></li>
+                                <CardContent className="flex-1 py-2">
+                                    <ul className="space-y-2 text-sm">
+                                        <li className="flex gap-2"><span className="text-purple-600 dark:text-purple-400 font-bold text-[10px] uppercase bg-purple-100 dark:bg-purple-900/30 px-1.5 py-0.5 rounded">Всё из PRO</span></li>
+                                        <li className="flex gap-2 items-start"><FlaskConical className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" /> <span><strong>Labs</strong> <span className="text-muted-foreground block text-xs">Ранний доступ</span></span></li>
+                                        <li className="flex gap-2 items-start"><EyeOff className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" /> <span><strong>Private</strong> <span className="text-muted-foreground block text-xs">Конфиденциально</span></span></li>
+                                        <li className="flex gap-2 items-start"><Folder className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" /> <span><strong>Проекты</strong> <span className="text-muted-foreground block text-xs">Коллекции</span></span></li>
+                                        <li className="flex gap-2 items-start"><Database className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" /> <span><strong>Vault</strong> <span className="text-muted-foreground block text-xs">База знаний</span></span></li>
+                                        <li className="flex gap-2 items-start"><Terminal className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" /> <span><strong>API</strong> <span className="text-muted-foreground block text-xs">Автоматизация</span></span></li>
+                                        <li className="flex gap-2 items-start"><Crown className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" /> <span><strong>Status</strong> <span className="text-muted-foreground block text-xs">Именной бейдж</span></span></li>
                                     </ul>
                                 </CardContent>
-                                <CardFooter>
+                                <CardFooter className="py-4">
                                     <Link to="/register" className="w-full">
-                                        <Button variant="outline" className="w-full text-lg h-12">Стать STUDIO</Button>
+                                        <Button variant="outline" className="w-full h-10">Стать STUDIO</Button>
                                     </Link>
                                 </CardFooter>
                             </Card>
@@ -401,7 +392,7 @@ export function LandingPage() {
                     <div className="container px-4 md:px-6 mx-auto text-center space-y-6">
                         <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Готовы начать творить?</h2>
                         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">Присоединяйтесь к тысячам креаторов, использующих ИИ Мастерская.</p>
-                        <Link to="/register">
+                        <Link to="/workbench">
                             <Button size="lg" className="px-8 text-lg">Начать использовать</Button>
                         </Link>
                         <div className="text-sm text-muted-foreground space-x-4">
