@@ -60,11 +60,11 @@ async def test_real_replicate_submission_and_webhook_simulation(client: AsyncCli
         
         # Call API
         response = await client.post(
-            "/jobs/new",
-            data={
+            "/api/jobs",
+            json={
                 "kind": "image",
                 "prompt": prompt,
-                "model": "flux" # Default or valid ID
+                "model_id": "a8efc1dd-056c-454c-b26d-fe0a8c0a5bab" # Use a dummy valid UUID or fetch one
             }
         )
         assert response.status_code == 200, f"Submission failed: {response.text}"

@@ -54,13 +54,19 @@ async def test_complete_generation_flow_happy_path(
     # 1. Login & Create Job
     await client.post("/login", data={"email": "admin@test.com", "password": "password"})
     
+    # Create Model first
+    mid = uuid.uuid4()
+    model = AIModel(id=mid, display_name="Flux", provider="replicate", model_ref="flux", is_active=True)
+    db_session.add(model)
+    await db_session.commit()
+    
     # User Balance before (Assuming ample balance or mocked)
     # We rely on 'admin_user' fixture having balance.
     
     create_payload = {
         "kind": "image",
         "prompt": "Cyberpunk cat",
-        "model": "flux" 
+        "model_id": str(mid)
     }
     response = await client.post("/api/jobs", json=create_payload)
     assert response.status_code == 200, "Job creation failed"
