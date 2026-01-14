@@ -17,7 +17,7 @@ async def test_real_replicate_submission_and_webhook_simulation(client: AsyncCli
     """
 
     # 1. Init Guest Session
-    resp = await client.post("/guest/init")
+    resp = await client.post("/api/auth/guest/init")
     assert resp.status_code == 200, "Guest Init Failed"
     
     # Check if Replicate is configured

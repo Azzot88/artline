@@ -6,7 +6,7 @@ from unittest.mock import patch, AsyncMock
 from sqlalchemy import select
 from app.domain.jobs.models import Job
 from app.domain.jobs.runner import process_job
-from app.domain.providers.models import ProviderConfig
+from app.domain.providers.models import ProviderConfig, AIModel
 from app.domain.billing.models import LedgerEntry
 from app.domain.users.models import User
 

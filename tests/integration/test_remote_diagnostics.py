@@ -139,23 +139,60 @@ async def test_worker_replicate_handshake(client: AsyncClient, seed_env, db_sess
     # We also need to verify the job exists via ID before running worker.
     pass
 
-    # MOCK ReplicateService inside runner.py
+    # MOCK ReplicateService AND SessionLocal inside runner.py
     # We trap the 'submit_prediction' call to verify arguments without hitting API
-    with patch("app.domain.jobs.runner.ReplicateService") as MockService:
+    # We also mock SessionLocal to avoid DB isolation issues (Sync Worker vs Async Test)
+    with patch("app.domain.jobs.runner.ReplicateService") as MockService, \
+         patch("app.domain.jobs.runner.SessionLocal") as MockSessionLocal:
+        
+        # Setup Mock Service
         instance = MockService.return_value
         instance.parse_input_string.return_value = ("flux", {"prompt": "Mock Test"}, "Mock Test")
         instance.submit_prediction.return_value = "mock_provider_id_123"
         instance.sanitize_input.return_value = {"prompt": "Mock Test"}
         instance.build_payload.return_value = {"input": {"prompt": "Mock Test"}}
         
+        # Setup Mock DB Session
+        # We construct a mock Job that mimics what we expect from DB
+        mock_job = Job(
+            id=uuid.UUID(job_id),
+            prompt="Mock Test",
+            kind="image",
+            status="queued"
+        )
+        mock_db = MockSessionLocal.return_value
+        # When session.execute(select(Job)...).scalar_one_or_none() is called
+        # We need to construct the chain
+        mock_db.execute.return_value.scalar_one_or_none.return_value = mock_job
+        
+        # Also need ProviderConfig
+        # On second call to execute (for ProviderConfig)
+        # We can use side_effect to return different things
+        from app.domain.providers.models import ProviderConfig
+        mock_config = ProviderConfig(provider_id="replicate", is_active=True, encrypted_api_key=b"gAAAAAB...") # Encrypted dummy
+        
+        def execute_side_effect(stmt):
+            s = str(stmt)
+            if "FROM jobs" in s:
+                m = MagicMock()
+                m.scalar_one_or_none.return_value = mock_job
+                return m
+            if "FROM provider_configs" in s:
+                 m = MagicMock()
+                 m.scalars.return_value.first.return_value = mock_config
+                 return m
+            if "FROM ai_models" in s:
+                 m = MagicMock()
+                 m.scalar_one_or_none.return_value = None # Default logic
+                 return m
+            return MagicMock()
+        
+        mock_db.execute.side_effect = execute_side_effect
+
         # ACT: Run Worker Function Synchronously
         result = process_job(job_id)
         
         # ASSERT
-        if result == "Job not found":
-             # Fallback debug
-             print(f"Job {job_id} was not found in runner DB.")
-             
         assert "Submitted: mock_provider_id_123" in result
         
         # Verify DB update
