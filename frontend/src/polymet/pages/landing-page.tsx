@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Check, Zap, Shield, Globe, Image as ImageIcon, Video, Sparkles, Wand2, Layers, Cpu, BarChart, History, Repeat, Download, Copy, Lock, Maximize, FlaskConical, EyeOff, Folder, Database, Terminal, Crown, HelpCircle } from "lucide-react"
 import { useLanguage } from "@/polymet/components/language-provider"
 import { LanguageSwitcher } from "@/polymet/components/language-switcher"
@@ -23,6 +24,7 @@ export function LandingPage() {
                     <nav className="hidden md:flex gap-6 text-sm font-medium items-center">
                         <a href="#products" className="hover:text-primary transition-colors">{t('landing.products.title')}</a>
                         <a href="#pricing" className="hover:text-primary transition-colors">{t('common.tariffs')}</a>
+                        {/* <a href="#faq" className="hover:text-primary transition-colors">FAQ</a> */}
                         <LanguageSwitcher variant="ghost" />
                     </nav>
                     <div className="flex items-center gap-4">
@@ -338,25 +340,25 @@ export function LandingPage() {
                     </div>
                 </section>
 
-                {/* 8.2 FAQ */}
-                <section className="py-16 bg-muted/30">
-                    <div className="container px-4 md:px-6 mx-auto max-w-3xl">
+                {/* 8.2 FAQ (NEW: Accordion, 2 columns) */}
+                <section id="faq" className="py-16 bg-muted/30">
+                    <div className="container px-4 md:px-6 mx-auto max-w-6xl">
                         <div className="text-center mb-12">
                             <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">{t('landing.faq.title')}</h2>
                         </div>
-                        <div className="space-y-6">
-                            {[1, 2, 3].map((i) => (
-                                <div key={i} className="bg-background rounded-lg p-6 shadow-sm border">
-                                    <div className="flex gap-3 items-start">
-                                        <HelpCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                                        <div>
-                                            <h3 className="font-semibold text-lg mb-2">{(t(`landing.faq.q${i}` as any) as string)}</h3>
-                                            <p className="text-muted-foreground">{(t(`landing.faq.a${i}` as any) as string)}</p>
-                                        </div>
-                                    </div>
-                                </div>
+
+                        <Accordion type="single" collapsible className="w-full grid md:grid-cols-2 gap-x-8 gap-y-2">
+                            {(t('landing.faq.items') as any[]).map((item, i) => (
+                                <AccordionItem key={i} value={`item-${i}`} className="border-b-0 mb-4">
+                                    <AccordionTrigger className="hover:no-underline hover:text-primary text-left text-sm py-3 px-4 bg-background rounded-lg border shadow-sm data-[state=open]:rounded-b-none data-[state=open]:border-b-0 transition-all duration-200">
+                                        {item.q}
+                                    </AccordionTrigger>
+                                    <AccordionContent className="px-4 py-3 bg-background border-x border-b rounded-b-lg text-muted-foreground text-xs leading-relaxed">
+                                        {item.a}
+                                    </AccordionContent>
+                                </AccordionItem>
                             ))}
-                        </div>
+                        </Accordion>
                     </div>
                 </section>
 
