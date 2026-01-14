@@ -23,7 +23,6 @@ export function LandingPage() {
                     <nav className="hidden md:flex gap-6 text-sm font-medium items-center">
                         <a href="#products" className="hover:text-primary transition-colors">{t('landing.products.title')}</a>
                         <a href="#pricing" className="hover:text-primary transition-colors">{t('common.tariffs')}</a>
-                        {/* Language Switcher in Header */}
                         <LanguageSwitcher variant="ghost" />
                     </nav>
                     <div className="flex items-center gap-4">
@@ -130,16 +129,126 @@ export function LandingPage() {
                     </div>
                 </section>
 
-                {/* 5. Use Cases (Simplified for i18n speed, keeping text hardcoded or English for now, ideally keyified but scope limited) */}
-                <section className="py-20 hidden md:block opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-                    <div className="container px-4 md:px-6 mx-auto text-center">
-                        <p className="text-muted-foreground">Trusted by creators worldwide.</p>
+                {/* 5. Use Cases */}
+                <section className="py-20">
+                    <div className="container px-4 md:px-6 mx-auto">
+                        <h2 className="text-3xl font-bold tracking-tight text-center mb-12">{t('landing.useCases.title')}</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {(t('landing.useCases.items') as any[]).map((item, i) => {
+                                const icons = [Sparkles, BarChart, Cpu, Video, Layers];
+                                const Icon = icons[i % icons.length];
+                                return (
+                                    <div key={i} className="flex flex-col items-center text-center p-6 border rounded-xl hover:bg-muted/50 transition-colors">
+                                        <div className="mb-4 p-3 bg-primary/10 rounded-full text-primary"><Icon className="h-6 w-6" /></div>
+                                        <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
+                                        <p className="text-sm text-muted-foreground">{item.desc}</p>
+                                    </div>
+                                )
+                            })}
+                        </div>
                     </div>
                 </section>
 
+                {/* 6. Why US */}
+                <section id="features" className="py-20 bg-muted/30">
+                    <div className="container px-4 md:px-6 mx-auto">
+                        <h2 className="text-3xl font-bold tracking-tight text-center mb-12">{t('landing.whyUs.title')}</h2>
+                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                            {(t('landing.whyUs.items') as any[]).map((item, i) => {
+                                const icons = [Globe, Zap, Shield, Check];
+                                const Icon = icons[i % icons.length];
+                                return (
+                                    <div key={i} className="space-y-4">
+                                        <div className="font-bold text-xl flex items-center gap-2"><Icon className="h-5 w-5 text-primary" /> {item.title}</div>
+                                        <p className="text-muted-foreground">{item.desc}</p>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                </section>
+
+                {/* 7. Pay-as-you-go Pricing */}
+                <section id="pricing" className="py-20">
+                    <div className="container px-4 md:px-6 mx-auto">
+                        <div className="text-center mb-16">
+                            <h2 className="text-3xl font-bold tracking-tight">{t('landing.payAsYouGo.title')}</h2>
+                            <p className="text-muted-foreground mt-4 text-lg">{t('landing.payAsYouGo.subtitle')}</p>
+                        </div>
+
+                        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                            {/* 7.1 Starter */}
+                            <Card className="flex flex-col">
+                                <CardHeader>
+                                    <CardTitle>{t('landing.payAsYouGo.starter.title')}</CardTitle>
+                                    <div className="text-3xl font-bold mt-2">{t('landing.payAsYouGo.starter.price')}</div>
+                                    <CardDescription>{t('landing.payAsYouGo.starter.credits')}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-1 space-y-4">
+                                    <div className="text-sm">{t('landing.payAsYouGo.starter.desc')}</div>
+                                    <ul className="space-y-2 text-sm text-muted-foreground">
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4" /> All basic models</li>
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Image generation</li>
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Credits forever</li>
+                                    </ul>
+                                </CardContent>
+                                <CardFooter>
+                                    <Link to="/register" className="w-full">
+                                        <Button variant="outline" className="w-full">{t('common.buyMore') || "Купить пакет"}</Button>
+                                    </Link>
+                                </CardFooter>
+                            </Card>
+
+                            {/* 7.2 Basic (Popular) */}
+                            <Card className="flex flex-col relative border-primary shadow-lg scale-105">
+                                <div className="absolute -top-4 left-0 right-0 mx-auto w-fit bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">Popular</div>
+                                <CardHeader>
+                                    <CardTitle>{t('landing.payAsYouGo.basic.title')}</CardTitle>
+                                    <div className="text-3xl font-bold mt-2">{t('landing.payAsYouGo.basic.price')}</div>
+                                    <CardDescription>{t('landing.payAsYouGo.basic.credits')} <span className="text-green-500 font-bold">{t('landing.payAsYouGo.basic.bonus')}</span></CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-1 space-y-4">
+                                    <div className="text-sm">{t('landing.payAsYouGo.basic.desc')}</div>
+                                    <ul className="space-y-2 text-sm text-muted-foreground">
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4" /> All Starter features</li>
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Video generation</li>
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Best value</li>
+                                    </ul>
+                                </CardContent>
+                                <CardFooter>
+                                    <Link to="/register" className="w-full">
+                                        <Button className="w-full">{t('common.buyMore') || "Купить пакет"}</Button>
+                                    </Link>
+                                </CardFooter>
+                            </Card>
+
+                            {/* 7.3 Advanced */}
+                            <Card className="flex flex-col">
+                                <CardHeader>
+                                    <CardTitle>{t('landing.payAsYouGo.advanced.title')}</CardTitle>
+                                    <div className="text-3xl font-bold mt-2">{t('landing.payAsYouGo.advanced.price')}</div>
+                                    <CardDescription>{t('landing.payAsYouGo.advanced.credits')} <span className="text-green-500 font-bold">{t('landing.payAsYouGo.advanced.bonus')}</span></CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-1 space-y-4">
+                                    <div className="text-sm">{t('landing.payAsYouGo.advanced.desc')}</div>
+                                    <ul className="space-y-2 text-sm text-muted-foreground">
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Max volume</li>
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4" /> High quality download</li>
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Priority support</li>
+                                    </ul>
+                                </CardContent>
+                                <CardFooter>
+                                    <Link to="/register" className="w-full">
+                                        <Button variant="outline" className="w-full">{t('common.buyMore') || "Купить пакет"}</Button>
+                                    </Link>
+                                </CardFooter>
+                            </Card>
+                        </div>
+                    </div>
+                </section>
 
                 {/* 8. Subscriptions (Redesigned - Stricter & Compact) - Now using keys */}
-                <section id="pricing" className="py-16 bg-muted/30">
+                <section className="py-16 bg-muted/30">
                     <div className="container px-4 md:px-6 mx-auto">
                         <div className="text-center mb-12">
                             <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">{t('landing.subscriptions.title')}</h2>
@@ -225,6 +334,65 @@ export function LandingPage() {
                                     </Link>
                                 </CardFooter>
                             </Card>
+                        </div>
+                    </div>
+                </section>
+
+                {/* 8.1. Credit Packs (New/Restored) */}
+                <section className="py-16">
+                    <div className="container px-4 md:px-6 mx-auto">
+                        <div className="text-center mb-12">
+                            <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary/10 text-primary hover:bg-primary/20 mb-4">
+                                PAY AS YOU GO
+                            </div>
+                            <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">{t('landing.credits.title')}</h2>
+                            <p className="text-muted-foreground text-base max-w-2xl mx-auto">
+                                {t('landing.credits.subtitle')}
+                            </p>
+                        </div>
+
+                        <div className="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                            {[1, 2, 3].map((i) => (
+                                <Card key={i} className="flex flex-col items-center text-center hover:border-primary/50 transition-all hover:-translate-y-1 duration-300">
+                                    <CardHeader className="pb-2">
+                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-2 mx-auto">
+                                            <Coins className="h-5 w-5" />
+                                        </div>
+                                        <CardTitle className="text-lg">{(t(`landing.credits.pack${i}.title` as any) as string)}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="pb-4">
+                                        <div className="text-3xl font-bold mb-1">{(t(`landing.credits.pack${i}.price` as any) as string)}</div>
+                                        <p className="text-muted-foreground font-medium">{(t(`landing.credits.pack${i}.amount` as any) as string)}</p>
+                                    </CardContent>
+                                    <CardFooter className="pt-0 w-full">
+                                        <Link to="/register" className="w-full">
+                                            <Button variant="secondary" className="w-full">{t('common.buyMore')}</Button>
+                                        </Link>
+                                    </CardFooter>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* 8.2 FAQ (Restored) */}
+                <section className="py-16 bg-muted/30">
+                    <div className="container px-4 md:px-6 mx-auto max-w-3xl">
+                        <div className="text-center mb-12">
+                            <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">{t('landing.faq.title')}</h2>
+                        </div>
+                        <div className="space-y-6">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="bg-background rounded-lg p-6 shadow-sm border">
+                                    <div className="flex gap-3 items-start">
+                                        <HelpCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                                        <div>
+                                            <h3 className="font-semibold text-lg mb-2">{(t(`landing.faq.q${i}` as any) as string)}</h3>
+                                            <p className="text-muted-foreground">{(t(`landing.faq.a${i}` as any) as string)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </section>
