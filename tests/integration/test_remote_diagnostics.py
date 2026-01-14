@@ -143,7 +143,8 @@ async def test_worker_replicate_handshake(client: AsyncClient, seed_env, db_sess
     # We trap the 'submit_prediction' call to verify arguments without hitting API
     # We also mock SessionLocal to avoid DB isolation issues (Sync Worker vs Async Test)
     with patch("app.domain.jobs.runner.ReplicateService") as MockService, \
-         patch("app.domain.jobs.runner.SessionLocal") as MockSessionLocal:
+         patch("app.domain.jobs.runner.SessionLocal") as MockSessionLocal, \
+         patch("app.domain.jobs.runner.decrypt_key", return_value="mock-api-key"):
         
         # Setup Mock Service
         instance = MockService.return_value
