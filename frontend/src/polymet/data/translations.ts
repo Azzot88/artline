@@ -216,10 +216,11 @@ export const translations = {
                     start: "Я принимаю условия ",
                     termsLink: "Пользовательского соглашения",
                     middle: " и даю согласие на ",
-                    privacyLink: "обработку персональных данных"
+                    privacyLink: "обработку персональных данных",
+                    end: "."
                 }
             },
-            email: "Email",
+            email: "Электронная почта",
             password: "Пароль",
             loading: "Загрузка...",
             errors: {
@@ -434,7 +435,7 @@ export const translations = {
                     end: " келісім беремін"
                 }
             },
-            email: "Email",
+            email: "Электрондық пошта",
             password: "Құпия сөз",
             loading: "Жүктелуде...",
             errors: {
@@ -648,7 +649,7 @@ export const translations = {
                     end: " макулдугумду берем"
                 }
             },
-            email: "Email",
+            email: "Электрондук почта",
             password: "Сыр сөз",
             loading: "Жүктөлүүдө...",
             errors: {
