@@ -211,7 +211,13 @@ export const translations = {
                 title: "Регистрация",
                 subtitle: "Создайте аккаунт чтобы начать",
                 submit: "Зарегистрироваться",
-                hasAccount: "Уже есть аккаунт?"
+                hasAccount: "Уже есть аккаунт?",
+                agreement: {
+                    start: "Я принимаю условия ",
+                    termsLink: "Пользовательского соглашения",
+                    middle: " и даю согласие на ",
+                    privacyLink: "обработку персональных данных"
+                }
             },
             email: "Email",
             password: "Пароль",
@@ -419,7 +425,14 @@ export const translations = {
                 title: "Тіркелу",
                 subtitle: "Бастау үшін аккаунт жасаңыз",
                 submit: "Тіркелу",
-                hasAccount: "Аккаунтыңыз бар ма?"
+                hasAccount: "Аккаунтыңыз бар ма?",
+                agreement: {
+                    start: "Мен ",
+                    termsLink: "Пайдаланушы келісімінің",
+                    middle: " шарттарын қабылдаймын және ",
+                    privacyLink: "дербес деректерді өңдеуге",
+                    end: " келісім беремін"
+                }
             },
             email: "Email",
             password: "Құпия сөз",
@@ -626,7 +639,14 @@ export const translations = {
                 title: "Катталуу",
                 subtitle: "Баштоо үчүн аккаунт түзүңүз",
                 submit: "Катталуу",
-                hasAccount: "Аккаунтуңуз барбы?"
+                hasAccount: "Аккаунтуңуз барбы?",
+                agreement: {
+                    start: "Мен ",
+                    termsLink: "Колдонуучу макулдашуусунун",
+                    middle: " шарттарын кабыл алам жана ",
+                    privacyLink: "жеке маалыматтарды иштетүүгө",
+                    end: " макулдугумду берем"
+                }
             },
             email: "Email",
             password: "Сыр сөз",

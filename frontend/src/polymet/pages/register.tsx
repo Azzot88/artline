@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { useLanguage } from "@/polymet/components/language-provider"
 import { LanguageSwitcher } from "@/polymet/components/language-switcher"
+import { Checkbox } from "@/components/ui/checkbox"
 
 export function Register() {
     const navigate = useNavigate()
@@ -17,9 +18,13 @@ export function Register() {
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
+    const [agreed, setAgreed] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        if (!agreed) {
+            return
+        }
         setError("")
         setLoading(true)
 
@@ -73,10 +78,35 @@ export function Register() {
                                     required
                                 />
                             </div>
+
+                            <div className="flex items-start space-x-2 mt-2">
+                                <Checkbox
+                                    id="terms"
+                                    checked={agreed}
+                                    onCheckedChange={(checked) => setAgreed(checked as boolean)}
+                                />
+                                <div className="grid gap-1.5 leading-none">
+                                    <label
+                                        htmlFor="terms"
+                                        className="text-xs text-muted-foreground leading-snug cursor-pointer select-none"
+                                    >
+                                        {t('auth.register.agreement.start')}
+                                        <Link to="/documents#terms" target="_blank" className="text-primary hover:underline font-medium">
+                                            {t('auth.register.agreement.termsLink')}
+                                        </Link>
+                                        {t('auth.register.agreement.middle')}
+                                        <Link to="/documents#privacy" target="_blank" className="text-primary hover:underline font-medium">
+                                            {t('auth.register.agreement.privacyLink')}
+                                        </Link>
+                                        {t('auth.register.agreement.end')}
+                                    </label>
+                                </div>
+                            </div>
+
                             {error && <p className="text-sm text-destructive">{error}</p>}
                         </div>
 
-                        <Button className="w-full mt-6" type="submit" disabled={loading}>
+                        <Button className="w-full mt-6" type="submit" disabled={loading || !agreed}>
                             {loading ? t('auth.loading') : t('auth.register.submit')}
                         </Button>
                     </form>
