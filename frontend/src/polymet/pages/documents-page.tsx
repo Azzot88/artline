@@ -45,9 +45,18 @@ export default function DocumentsPage() {
                                 <CardTitle>{t('documents.tabs.terms')}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4 text-sm text-muted-foreground">
-                                {(t('documents.content.terms') as string[]).map((paragraph, index) => (
-                                    <p key={index}>{paragraph}</p>
-                                ))}
+                                {(t('documents.content.terms') as string[]).map((paragraph, index) => {
+                                    const match = paragraph.match(/^(\d+\.\s+[^.]+)\.(.*)$/);
+                                    if (match) {
+                                        return (
+                                            <p key={index}>
+                                                <span className="font-semibold text-foreground">{match[1]}.</span>
+                                                {match[2]}
+                                            </p>
+                                        );
+                                    }
+                                    return <p key={index}>{paragraph}</p>;
+                                })}
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -58,9 +67,18 @@ export default function DocumentsPage() {
                                 <CardTitle>{t('documents.tabs.privacy')}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4 text-sm text-muted-foreground">
-                                {(t('documents.content.privacy') as string[]).map((paragraph, index) => (
-                                    <p key={index}>{paragraph}</p>
-                                ))}
+                                {(t('documents.content.privacy') as string[]).map((paragraph, index) => {
+                                    const match = paragraph.match(/^(\d+\.\s+[^.]+)\.(.*)$/);
+                                    if (match) {
+                                        return (
+                                            <p key={index}>
+                                                <span className="font-semibold text-foreground">{match[1]}.</span>
+                                                {match[2]}
+                                            </p>
+                                        );
+                                    }
+                                    return <p key={index}>{paragraph}</p>;
+                                })}
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -71,11 +89,15 @@ export default function DocumentsPage() {
                                 <CardTitle>{t('documents.tabs.about')}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4 text-sm text-muted-foreground">
-                                {(t('documents.content.about') as string[]).map((paragraph, index) => (
-                                    <p key={index} className={index === 0 ? "font-medium text-foreground text-base" : ""}>
-                                        {paragraph}
-                                    </p>
-                                ))}
+                                {(t('documents.content.about') as string[]).map((paragraph, index) => {
+                                    const isHeader = paragraph.length < 50 && !paragraph.includes('.') && !paragraph.includes(':');
+                                    const isLabel = paragraph.endsWith(':');
+                                    return (
+                                        <p key={index} className={isHeader || isLabel ? "font-semibold text-foreground pt-2" : ""}>
+                                            {paragraph}
+                                        </p>
+                                    )
+                                })}
                             </CardContent>
                         </Card>
                     </TabsContent>
