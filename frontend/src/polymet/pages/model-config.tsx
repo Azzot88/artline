@@ -1,30 +1,16 @@
 import { useState, useEffect } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
 import { apiService } from "@/polymet/data/api-service"
-import { AIModel } from "@/polymet/data/models-data" // Keep this type for now or switch to api-types
-import {
-  getModelParameters,
-  getModelParameterConfigs,
-  getModelCostSignals
-} from "@/polymet/data/model-parameters-data"
+import { AIModel } from "@/polymet/data/models-data"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/components/ui/use-toast"
 import {
   ArrowLeftIcon,
   SaveIcon,
-  TestTubeIcon,
-  CoinsIcon,
-  ImageIcon,
-  VideoIcon,
-  AlertCircleIcon,
-  ClockIcon
 } from "lucide-react"
 import {
   Select,
@@ -33,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ParameterConfigEditor, ParameterConfig } from "@/polymet/components/parameter-config-editor"
 
 export function ModelConfig() {
   const { modelId } = useParams()
@@ -46,19 +32,28 @@ export function ModelConfig() {
 
   // Form state
   const [displayName, setDisplayName] = useState("")
-  const [description, setDescription] = useState("")
   const [credits, setCredits] = useState("5")
   const [isActive, setIsActive] = useState(false)
 
   // Advanced Config state
   const [modelRef, setModelRef] = useState("")
   const [capabilities, setCapabilities] = useState<any>(null)
-  const [uiConfig, setUiConfig] = useState<any>({})
-  const [fetchingSchema, setFetchingSchema] = useState(false)
 
-  // Advanced config from params (mocked for now as we transition)
-  const parameters = modelId ? getModelParameters(modelId) : []
-  const costSignals = modelId ? getModelCostSignals(modelId) : null
+  // Unified Config State
+  type UIConfigState = {
+    hidden_inputs: string[]
+    defaults: Record<string, any>
+    constraints: Record<string, any>
+    custom_labels: Record<string, string>
+  }
+  const [uiConfig, setUiConfig] = useState<UIConfigState>({
+    hidden_inputs: [],
+    defaults: {},
+    constraints: {},
+    custom_labels: {}
+  })
+
+  const [fetchingSchema, setFetchingSchema] = useState(false)
 
   useEffect(() => {
     if (!modelId) return
@@ -68,22 +63,26 @@ export function ModelConfig() {
   async function loadModel(id: string) {
     try {
       setLoading(true)
-      setLoading(true)
       const res = await apiService.getAdminModel(id)
 
       const m = (res as any).model || res
       setModel(m)
-      setModel(m)
 
       // Init form
       setDisplayName(m.display_name || "")
-      setDescription(m.description || "")
       setCredits(m.credits_per_generation?.toString() || m.credits?.toString() || "5")
       setIsActive(m.is_active)
       setModelRef(m.model_ref || "")
-      setUiConfig(m.ui_config || {})
 
-      // If we have normalized caps, load them (future proofing)
+      // Load UI config with fallbacks
+      const savedConfig = m.ui_config || {}
+      setUiConfig({
+        hidden_inputs: savedConfig.hidden_inputs || [],
+        defaults: savedConfig.defaults || {},
+        constraints: savedConfig.constraints || {},
+        custom_labels: savedConfig.custom_labels || {}
+      })
+
       if (m.normalized_caps_json) {
         setCapabilities(m.normalized_caps_json)
       }
@@ -124,11 +123,9 @@ export function ModelConfig() {
     setFetchingSchema(true)
     try {
       const res = await apiService.fetchModelSchema(modelRef)
-      // res contains { raw_response, normalized_caps }
       setCapabilities(res.normalized_caps)
       toast({ title: "Schema fetched successfully" })
 
-      // Auto-populate display name if empty
       if (!displayName && res.normalized_caps.title) {
         setDisplayName(res.normalized_caps.title)
       }
@@ -149,6 +146,63 @@ export function ModelConfig() {
     } catch (e) {
       toast({ title: "Failed to delete", variant: "destructive" })
     }
+  }
+
+  // Helper to extract config for a specific parameter
+  function getParamConfig(paramName: string): ParameterConfig {
+    return {
+      hidden: uiConfig.hidden_inputs.includes(paramName),
+      default: uiConfig.defaults[paramName],
+      min: uiConfig.constraints[paramName]?.min,
+      max: uiConfig.constraints[paramName]?.max,
+      allowed_values: uiConfig.constraints[paramName]?.allowed_values,
+      custom_label: uiConfig.custom_labels[paramName]
+    }
+  }
+
+  // Helper to update config for a specific parameter
+  function updateParamConfig(paramName: string, newConfig: ParameterConfig) {
+    setUiConfig(prev => {
+      const next = { ...prev }
+
+      // HIDDEN
+      if (newConfig.hidden) {
+        if (!next.hidden_inputs.includes(paramName)) next.hidden_inputs = [...next.hidden_inputs, paramName]
+      } else {
+        next.hidden_inputs = next.hidden_inputs.filter(n => n !== paramName)
+      }
+
+      // DEFAULTS
+      if (newConfig.default !== undefined) {
+        next.defaults = { ...next.defaults, [paramName]: newConfig.default }
+      } else {
+        const { [paramName]: _, ...rest } = next.defaults
+        next.defaults = rest
+      }
+
+      // CUSTOM LABELS
+      if (newConfig.custom_label) {
+        next.custom_labels = { ...next.custom_labels, [paramName]: newConfig.custom_label }
+      } else {
+        const { [paramName]: _, ...rest } = next.custom_labels
+        next.custom_labels = rest
+      }
+
+      // CONSTRAINTS (Nested)
+      const constraints: any = {}
+      if (newConfig.min !== undefined) constraints.min = newConfig.min
+      if (newConfig.max !== undefined) constraints.max = newConfig.max
+      if (newConfig.allowed_values !== undefined) constraints.allowed_values = newConfig.allowed_values
+
+      if (Object.keys(constraints).length > 0) {
+        next.constraints = { ...next.constraints, [paramName]: constraints }
+      } else {
+        const { [paramName]: _, ...rest } = next.constraints
+        next.constraints = rest
+      }
+
+      return next
+    })
   }
 
   if (loading) return <div className="p-8">Loading...</div>
@@ -193,13 +247,56 @@ export function ModelConfig() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Configuration */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Replicate Configuration */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Model Parameters</CardTitle>
+              <CardDescription>Fetch schema from Replicate to configure inputs</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex gap-4 items-end">
+                <div className="flex-1 space-y-2">
+                  <Label>Model Ref (owner/name)</Label>
+                  <Input value={modelRef} onChange={e => setModelRef(e.target.value)} placeholder="stability-ai/sdxl" />
+                </div>
+                <Button onClick={handleFetchSchema} disabled={fetchingSchema} variant="secondary">
+                  {fetchingSchema ? "Fetching..." : "Fetch Schema"}
+                </Button>
+              </div>
+
+              {capabilities && (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-semibold text-sm">Detected Inputs ({capabilities.inputs.length})</h4>
+                    <Badge variant="outline">Schema Loaded</Badge>
+                  </div>
+
+                  {/* Parameter Editors List */}
+                  <div className="space-y-2">
+                    {capabilities.inputs.map((input: any) => (
+                      <ParameterConfigEditor
+                        key={input.name}
+                        parameter={input}
+                        config={getParamConfig(input.name)}
+                        onChange={(newConfig) => updateParamConfig(input.name, newConfig)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column - Basic Info */}
+        <div className="space-y-6">
           {/* Basic Information */}
           <Card>
             <CardHeader>
               <CardTitle>Basic Configuration</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
                   <Label>Display Name</Label>
                   <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
@@ -216,26 +313,24 @@ export function ModelConfig() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Cost (Credits per run)</Label>
-                <Input type="number" value={credits} onChange={(e) => setCredits(e.target.value)} />
+                <div className="space-y-2">
+                  <Label>Cost (Credits per run)</Label>
+                  <Input type="number" value={credits} onChange={(e) => setCredits(e.target.value)} />
+                </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Actions */}
-          <div className="flex gap-2">
-            <Button size="lg" onClick={handleSave} disabled={saving}>
-              <SaveIcon className="w-4 h-4 mr-2" />
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
-        </div>
+          <Card>
+            <CardContent className="p-4">
+              <Button size="lg" className="w-full" onClick={handleSave} disabled={saving}>
+                <SaveIcon className="w-4 h-4 mr-2" />
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+            </CardContent>
+          </Card>
 
-        {/* Right Column - Info */}
-        <div className="space-y-6">
           <Card>
             <CardHeader><CardTitle className="text-sm">Info</CardTitle></CardHeader>
             <CardContent>
@@ -243,74 +338,6 @@ export function ModelConfig() {
                 <p><strong>ID:</strong> {model.id}</p>
                 <p><strong>Created:</strong> {model.created_at ? new Date(model.created_at).toLocaleDateString() : "-"}</p>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Replicate Configuration */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Model Parameters</CardTitle>
-              <CardDescription>Fetch schema from Replicate to configure inputs</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex gap-4 items-end">
-                <div className="flex-1 space-y-2">
-                  <Label>Model Ref (owner/name)</Label>
-                  <Input value={modelRef} onChange={e => setModelRef(e.target.value)} placeholder="stability-ai/sdxl" />
-                </div>
-                <Button onClick={handleFetchSchema} disabled={fetchingSchema} variant="secondary">
-                  {fetchingSchema ? "Fetching..." : "Fetch"}
-                </Button>
-              </div>
-
-              {capabilities && (
-                <div className="space-y-4 border rounded-md p-4 bg-muted/20">
-                  <div className="flex justify-between items-center">
-                    <h4 className="font-semibold text-sm">Detected Inputs ({capabilities.inputs.length})</h4>
-                    <Badge variant="outline">Schema Loaded</Badge>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-2 max-h-[400px] overflow-y-auto">
-                    {capabilities.inputs.map((input: any) => {
-                      const isVisible = uiConfig?.hidden_inputs ? !uiConfig.hidden_inputs.includes(input.name) : true
-
-                      return (
-                        <div key={input.name} className="flex items-center justify-between p-2 hover:bg-muted rounded text-sm group">
-                          <div className="flex items-center gap-3">
-                            <Switch
-                              checked={isVisible}
-                              onCheckedChange={(checked) => {
-                                const currentHidden = uiConfig?.hidden_inputs || []
-                                let newHidden
-
-                                if (!checked) {
-                                  // Hide it
-                                  newHidden = [...currentHidden, input.name]
-                                } else {
-                                  // Show it (remove from hidden)
-                                  newHidden = currentHidden.filter((n: string) => n !== input.name)
-                                }
-
-                                setUiConfig({
-                                  ...uiConfig,
-                                  hidden_inputs: newHidden
-                                })
-                              }}
-                            />
-                            <div>
-                              <div className="font-medium">{input.name}</div>
-                              <div className="text-xs text-muted-foreground">{input.label} ({input.type})</div>
-                            </div>
-                          </div>
-                          <Badge variant="secondary" className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
-                            {input.default !== undefined ? `Default: ${input.default}` : "No default"}
-                          </Badge>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
