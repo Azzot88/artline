@@ -387,9 +387,7 @@ async def list_admin_users(
         output.append(UserWithBalance(
             id=u.id,
             email=u.email,
-            is_active=u.is_active,
-            is_superuser=u.is_superuser,
-            is_admin=u.is_admin, # Added field to User model? Assuming yes or handled by getattr
+            is_admin=u.is_admin,
             balance=balance,
             created_at=u.created_at
         ))
