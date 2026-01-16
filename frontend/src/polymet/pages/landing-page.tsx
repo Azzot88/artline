@@ -68,13 +68,13 @@ export function LandingPage() {
 
                         <div className="pt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto text-sm text-muted-foreground">
                             <div className="flex items-center justify-center gap-2">
-                                <Check className="h-4 w-4 text-green-500" /> 15+ AI Models
+                                <Check className="h-4 w-4 text-green-500" /> {t('landing.features.models')}
                             </div>
                             <div className="flex items-center justify-center gap-2">
-                                <Check className="h-4 w-4 text-green-500" /> Pay-as-you-go
+                                <Check className="h-4 w-4 text-green-500" /> {t('landing.features.payg')}
                             </div>
                             <div className="flex items-center justify-center gap-2">
-                                <Check className="h-4 w-4 text-green-500" /> 24/7 Uptime
+                                <Check className="h-4 w-4 text-green-500" /> {t('landing.features.uptime')}
                             </div>
                         </div>
                     </div>
@@ -189,21 +189,21 @@ export function LandingPage() {
                                 <CardContent className="flex-1 space-y-4">
                                     <div className="text-sm">{t('landing.payAsYouGo.starter.desc')}</div>
                                     <ul className="space-y-2 text-sm text-muted-foreground">
-                                        <li className="flex items-center gap-2"><Check className="h-4 w-4" /> All basic models</li>
-                                        <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Image generation</li>
-                                        <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Credits forever</li>
+                                        {(t('landing.payAsYouGo.starter.features') as string[]).map((f, i) => (
+                                            <li key={i} className="flex items-center gap-2"><Check className="h-4 w-4" /> {f}</li>
+                                        ))}
                                     </ul>
                                 </CardContent>
                                 <CardFooter>
                                     <Link to="/register" className="w-full">
-                                        <Button variant="outline" className="w-full">{t('common.buyMore') || "Купить пакет"}</Button>
+                                        <Button variant="outline" className="w-full">{t('common.buyMore')}</Button>
                                     </Link>
                                 </CardFooter>
                             </Card>
 
                             {/* 7.2 Basic (Popular) */}
                             <Card className="flex flex-col relative border-primary shadow-lg scale-105">
-                                <div className="absolute -top-4 left-0 right-0 mx-auto w-fit bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">Popular</div>
+                                <div className="absolute -top-4 left-0 right-0 mx-auto w-fit bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">{t('landing.payAsYouGo.popular')}</div>
                                 <CardHeader>
                                     <CardTitle>{t('landing.payAsYouGo.basic.title')}</CardTitle>
                                     <div className="text-3xl font-bold mt-2">{t('landing.payAsYouGo.basic.price')}</div>
@@ -212,14 +212,14 @@ export function LandingPage() {
                                 <CardContent className="flex-1 space-y-4">
                                     <div className="text-sm">{t('landing.payAsYouGo.basic.desc')}</div>
                                     <ul className="space-y-2 text-sm text-muted-foreground">
-                                        <li className="flex items-center gap-2"><Check className="h-4 w-4" /> All Starter features</li>
-                                        <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Video generation</li>
-                                        <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Best value</li>
+                                        {(t('landing.payAsYouGo.basic.features') as string[]).map((f, i) => (
+                                            <li key={i} className="flex items-center gap-2"><Check className="h-4 w-4" /> {f}</li>
+                                        ))}
                                     </ul>
                                 </CardContent>
                                 <CardFooter>
                                     <Link to="/register" className="w-full">
-                                        <Button className="w-full">{t('common.buyMore') || "Купить пакет"}</Button>
+                                        <Button className="w-full">{t('common.buyMore')}</Button>
                                     </Link>
                                 </CardFooter>
                             </Card>
@@ -234,14 +234,14 @@ export function LandingPage() {
                                 <CardContent className="flex-1 space-y-4">
                                     <div className="text-sm">{t('landing.payAsYouGo.advanced.desc')}</div>
                                     <ul className="space-y-2 text-sm text-muted-foreground">
-                                        <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Max volume</li>
-                                        <li className="flex items-center gap-2"><Check className="h-4 w-4" /> High quality download</li>
-                                        <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Priority support</li>
+                                        {(t('landing.payAsYouGo.advanced.features') as string[]).map((f, i) => (
+                                            <li key={i} className="flex items-center gap-2"><Check className="h-4 w-4" /> {f}</li>
+                                        ))}
                                     </ul>
                                 </CardContent>
                                 <CardFooter>
                                     <Link to="/register" className="w-full">
-                                        <Button variant="outline" className="w-full">{t('common.buyMore') || "Купить пакет"}</Button>
+                                        <Button variant="outline" className="w-full">{t('common.buyMore')}</Button>
                                     </Link>
                                 </CardFooter>
                             </Card>
@@ -368,6 +368,7 @@ export function LandingPage() {
                     <div className="container px-4 md:px-6 mx-auto text-center space-y-6">
                         <h2 className="text-3xl md:text-4xl font-bold tracking-tight">{t('landing.finalCta.title')}</h2>
                         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{t('landing.finalCta.subtitle')}</p>
+                        <div />
                         <Link to="/workbench">
                             <Button size="lg" className="px-8 text-lg">{t('landing.finalCta.button')}</Button>
                         </Link>
