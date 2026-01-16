@@ -1,5 +1,8 @@
-import { useState } from "react"
-import { providers, aiModels } from "@/polymet/data/models-data"
+import { useState, useEffect } from "react"
+import { apiService } from "@/polymet/data/api-service"
+import type { AdminStats } from "@/polymet/data/api-types"
+import type { AIModel, Provider } from "@/polymet/data/models-data"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,7 +18,8 @@ import {
   SettingsIcon,
   PlusIcon,
   SearchIcon,
-  MoreVerticalIcon
+  MoreVerticalIcon,
+  RefreshCwIcon
 } from "lucide-react"
 import { Link } from "react-router-dom"
 import {
@@ -30,18 +34,68 @@ export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("")
   const { t } = useLanguage()
 
+  // Real Data State
+  const [stats, setStats] = useState<AdminStats | null>(null)
+  const [models, setModels] = useState<AIModel[]>([])
+  const [providers, setProviders] = useState<Provider[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchData = async () => {
+    setLoading(true)
+    try {
+      const [statsData, modelsData, providersData] = await Promise.all([
+        apiService.getAdminStats(),
+        apiService.getAdminModels(),
+        apiService.getProviders()
+      ])
+
+      setStats(statsData)
+      setModels(modelsData)
+
+      // Enrich Providers for UI
+      const enrichedProviders: Provider[] = providersData.map(p => {
+        // Calculate stats from models
+        const providerModels = modelsData.filter(m => m.provider.toLowerCase().includes(p.provider_id.toLowerCase()))
+        const totalGens = providerModels.reduce((sum, m) => sum + (m.total_generations || 0), 0)
+
+        return {
+          provider_id: p.provider_id,
+          name: p.provider_id.charAt(0).toUpperCase() + p.provider_id.slice(1), // Simple capitalization
+          status: p.is_active ? "active" : "inactive",
+          models_count: providerModels.length,
+          total_generations: totalGens,
+          logo: "https://github.com/polymet-ai.png" // Placeholder
+        }
+      })
+      setProviders(enrichedProviders)
+
+    } catch (error) {
+      console.error("Failed to fetch dashboard data:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
   // Calculate stats
-  const totalModels = aiModels.length
-  const activeModels = aiModels.filter(m => m.status === "active").length
+  const totalModels = models.length
+  const activeModels = models.filter(m => m.is_active).length // Backend uses is_active
   const totalProviders = providers.length
   const activeProviders = providers.filter(p => p.status === "active").length
-  const totalGenerations = providers.reduce((sum, p) => sum + p.totalGenerations, 0)
+  const totalGenerations = stats?.total_jobs || 0
 
   // Filter models
-  const filteredModels = aiModels.filter(model =>
-    model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const filteredModels = models.filter(model =>
+    (model.display_name || model.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
     model.provider.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  if (loading) {
+    return <div className="p-8 text-center">Loading Dashboard...</div>
+  }
 
   return (
     <div className="space-y-6">
@@ -55,9 +109,14 @@ export function Dashboard() {
             {t('dashboard.subtitle')}
           </p>
         </div>
-        <Badge variant="outline" className="text-xs px-3 py-1">
-          {t('navigation.admin')}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" onClick={fetchData}>
+            <RefreshCwIcon className="w-4 h-4" />
+          </Button>
+          <Badge variant="outline" className="text-xs px-3 py-1">
+            {t('navigation.admin')}
+          </Badge>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -96,7 +155,7 @@ export function Dashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{totalGenerations.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              +12% за последний месяц
+              Jobs processed
             </p>
           </CardContent>
         </Card>
@@ -107,9 +166,9 @@ export function Dashboard() {
             <UsersIcon className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,234</div>
+            <div className="text-2xl font-bold">{stats?.total_users || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              +8% за последний месяц
+              Total registered
             </p>
           </CardContent>
         </Card>
@@ -142,6 +201,11 @@ export function Dashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
+            {filteredModels.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                No models found. Add one to get started.
+              </div>
+            )}
             {filteredModels.map((model) => (
               <div key={model.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
                 <div className="flex items-center gap-4 flex-1">
@@ -156,16 +220,14 @@ export function Dashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold truncate">{model.name}</h3>
+                      <h3 className="font-semibold truncate">{model.display_name || model.name}</h3>
                       <Badge
                         variant={
-                          model.status === "active" ? "default" :
-                            model.status === "maintenance" ? "secondary" :
-                              "outline"
+                          model.is_active ? "default" : "outline" // Backend uses is_active boolean
                         }
                         className="flex-shrink-0"
                       >
-                        {model.status === "active" ? t('common.active') : model.status === "maintenance" ? t('common.maintenance') : t('common.disabled')}
+                        {model.is_active ? t('common.active') : t('common.disabled')}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -173,10 +235,14 @@ export function Dashboard() {
                       <span>•</span>
                       <span className="flex items-center gap-1">
                         <CoinsIcon className="w-3 h-3" />
-                        {model.credits} {t('account.credits')}
+                        {model.credits_per_generation || model.credits} {t('account.credits')}
                       </span>
-                      <span>•</span>
-                      <span>{model.maxResolution}</span>
+                      {model.resolutions && model.resolutions.length > 0 && (
+                        <>
+                          <span>•</span>
+                          <span>{model.resolutions[model.resolutions.length - 1]}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -225,13 +291,18 @@ export function Dashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            {providers.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                No providers found.
+              </div>
+            )}
             {providers.map((provider) => (
-              <div key={provider.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
+              <div key={provider.provider_id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
                 <div className="flex items-center gap-4">
                   <img
                     src={provider.logo}
                     alt={provider.name}
-                    className="w-12 h-12 rounded-lg"
+                    className="w-12 h-12 rounded-lg bg-muted"
                   />
                   <div>
                     <div className="flex items-center gap-2 mb-1">
@@ -241,9 +312,9 @@ export function Dashboard() {
                       </Badge>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{provider.modelsCount} {t('dashboard.models').toLowerCase()}</span>
+                      <span>{provider.models_count || 0} {t('dashboard.models').toLowerCase()}</span>
                       <span>•</span>
-                      <span>{provider.totalGenerations.toLocaleString()} {t('dashboard.totalGenerations').toLowerCase()}</span>
+                      <span>{(provider.total_generations || 0).toLocaleString()} {t('dashboard.totalGenerations').toLowerCase()}</span>
                     </div>
                   </div>
                 </div>
