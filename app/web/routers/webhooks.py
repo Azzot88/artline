@@ -89,7 +89,7 @@ async def replicate_webhook(
                                         Key=key,
                                         Body=content,
                                         ContentType=f"image/{ext}" if ext != "mp4" else "video/mp4",
-                                        ACL='public-read' # Optional: if bucket is public
+
                                     )
                                     return f"https://{bucket}.s3.{settings.AWS_REGION}.amazonaws.com/{key}"
                                 except Exception as e:

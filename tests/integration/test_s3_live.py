@@ -45,7 +45,7 @@ def test_s3_write_access():
             Key=test_filename,
             Body=test_content,
             ContentType="text/plain",
-            ACL='public-read' # Optional, depends on bucket policy
+
         )
         
         # 3. Verify (Head Object)

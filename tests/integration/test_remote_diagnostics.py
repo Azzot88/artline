@@ -241,7 +241,7 @@ async def test_LIVE_replicate_generation(client: AsyncClient, seed_env, db_sessi
     print("Waiting for generation...")
     for _ in range(30): # Wait up to 60s
         await asyncio.sleep(2)
-        await db_session.expire_all() # Force refresh from DB (handle external worker updates)
+        db_session.expire_all() # Force refresh from DB (handle external worker updates)
         
         # Check status via API
         # We use GET /api/jobs/{job_id} which returns current DB state
