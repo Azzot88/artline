@@ -68,17 +68,11 @@ export function ModelConfig() {
   async function loadModel(id: string) {
     try {
       setLoading(true)
-      const res = await apiService.getModel(id)
-      // The API returns { model: ... } or just the model depending on endpoint. 
-      // apiService.getModel returns GetModelResponse { model: AIModel }
-      // Wait, apiService.getModel calls /models/{id}, which returns AIModel directly based on my router implementation?
-      // Let's check router... router returns `m` (AIModelRead).
-      // apiService.getModel definition in api-types says { model: AIModel }. 
-      // Actually my backend returns just the model object. The api-service types might be slightly off or specific to an envelope.
-      // I'll assume it returns the model directly or I'll inspect. 
-      // SAFEST: check if res.model exists, otherwise use res.
+      setLoading(true)
+      const res = await apiService.getAdminModel(id)
 
       const m = (res as any).model || res
+      setModel(m)
       setModel(m)
 
       // Init form

@@ -182,6 +182,10 @@ export const apiService = {
     return api.post<import("@/polymet/data/models-data").AIModel>("/admin/models", data)
   },
 
+  async getAdminModel(id: string) {
+    return api.get<import("@/polymet/data/models-data").AIModel>(`/admin/models/${id}`)
+  },
+
   async updateModel(id: string, data: import("./api-types").AIModelUpdateRequest) {
     return api.put<import("@/polymet/data/models-data").AIModel>(`/admin/models/${id}`, data)
   },
