@@ -14,6 +14,7 @@ export const translations = {
             register: "Регистрация",
             language: "Язык",
             backToMain: "На главную",
+            buyMore: "Купить больше",
             save: "Сохранить",
             cancel: "Отмена",
             edit: "Редактировать",
