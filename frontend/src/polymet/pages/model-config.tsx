@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ParameterConfigEditor, ParameterConfig } from "@/polymet/components/parameter-config-editor"
+import { ParameterConfigEditor, ExposureConfig } from "@/polymet/components/parameter-config-editor"
 
 export function ModelConfig() {
   const { modelId } = useParams()

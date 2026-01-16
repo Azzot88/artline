@@ -77,11 +77,17 @@ class ReplicateService:
             return caps
 
         schema = latest_version.get("openapi_schema", {})
-        input_schema = {}
+        
+        # Extract properties and required list
+        input_component = {}
         if "components" in schema and "schemas" in schema["components"]:
-             input_schema = schema["components"]["schemas"].get("Input", {}).get("properties", {})
+             input_component = schema["components"]["schemas"].get("Input", {})
         elif "properties" in schema:
-             input_schema = schema["properties"]
+             # Fallback for older schemas
+             input_component = schema
+             
+        input_schema = input_component.get("properties", {})
+        required_fields = input_component.get("required", [])
              
         normalized_inputs = []
         
@@ -90,7 +96,7 @@ class ReplicateService:
                 "name": key,
                 "label": prop.get("title", key.replace("_", " ").title()),
                 "type": self._map_type(prop),
-                "required": False, 
+                "required": key in required_fields, 
                 "default": prop.get("default"),
                 "help": prop.get("description", ""),
                 "hidden": False
@@ -98,14 +104,21 @@ class ReplicateService:
             
             if "minimum" in prop: field["min"] = prop["minimum"]
             if "maximum" in prop: field["max"] = prop["maximum"]
+            
+            # Step / MultipleOf
+            if "multipleOf" in prop: field["step"] = prop["multipleOf"]
+            
+            # Enum options
             if "enum" in prop:
                 field["type"] = "select"
                 field["options"] = prop["enum"]
                 
+            # Special Handling
             if key == "aspect_ratio": field["type"] = "select"
             if key == "image" or key == "input_image": field["type"] = "image"
                 
             normalized_inputs.append(field)
+            
             if "default" in prop:
                 caps["defaults"][key] = prop["default"]
 

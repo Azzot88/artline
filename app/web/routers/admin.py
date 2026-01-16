@@ -291,6 +291,23 @@ async def fetch_model_schema_endpoint(
         
         # Fetch capabilities
         result = service.fetch_model_capabilities(req.model_ref)
+        
+        # Persist to DB if model exists
+        # We try to find the model by ref to update its schema cache
+        stmt = select(AIModel).where(AIModel.model_ref == req.model_ref)
+        existing_models = (await db.execute(stmt)).scalars().all()
+        
+        if existing_models:
+            for m in existing_models:
+                m.raw_schema_json = result.get("raw_response")
+                m.normalized_caps_json = result.get("normalized_caps")
+                # Also update version_id if available
+                latest = result.get("raw_response", {}).get("latest_version", {})
+                if latest and "id" in latest:
+                    m.version_id = latest["id"]
+                    
+            await db.commit()
+            
         return result
         
     except Exception as e:
