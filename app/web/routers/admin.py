@@ -191,15 +191,15 @@ async def create_model(
 ):
     new_model = AIModel(
         id=uuid.uuid4(),
-        name=req.name,
+        # name field does not exist in DB model
         display_name=req.display_name,
         provider=req.provider,
         model_ref=req.model_ref,
         version_id=req.version_id,
         type=req.type,
-        credits=req.credits,
+        credits_per_generation=req.credits_per_generation,
         is_active=req.is_active,
-        is_pro=req.is_pro,
+        # is_pro field does not exist in DB model
         cover_image_url=req.cover_image_url,
         capabilities=req.capabilities,
         # Initialize empty configs

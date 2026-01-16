@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
 from typing import Optional
 from datetime import datetime
 import uuid
@@ -117,51 +117,54 @@ class ProviderUpdate(BaseModel):
 # AI Model Schemas
 class AIModelRead(BaseModel):
     id: uuid.UUID
-    name: str # internal slug
+    # Return display_name as name for frontend compatibility
+    name: str = Field(validation_alias="display_name")
+    
     display_name: str
     provider: str
     model_ref: str # replicate ref
     version_id: Optional[str] = None
     
     type: str # image/video
-    credits: int
+    credits_per_generation: int
     is_active: bool
-    is_pro: bool
     
     cover_image_url: Optional[str] = None
     
     # Advanced
-    capabilities: list[str] = []
+    capabilities: Optional[list[str]] = []
     ui_config: Optional[dict] = None
     
     created_at: datetime
-    updated_at: datetime
+    updated_at: Optional[datetime] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 class AIModelCreate(BaseModel):
-    name: str 
+    # 'name' in request is mapped to display_name (or just use display_name)
+    # Frontend sends 'name' usually? No, frontend likely sends display_name if we designed it well.
+    # But let's support both or standardized.
     display_name: str
+    
     provider: str
     model_ref: str
     version_id: Optional[str] = None
     type: str = "image"
-    credits: int = 5
+    credits_per_generation: int = 5
     is_active: bool = True
-    is_pro: bool = False
+    
     cover_image_url: Optional[str] = None
     capabilities: list[str] = []
-    # ui_config, cost_config etc can be added later or via update
 
 class AIModelUpdate(BaseModel):
     display_name: Optional[str] = None
     model_ref: Optional[str] = None
     version_id: Optional[str] = None
-    credits: Optional[int] = None
+    credits_per_generation: Optional[int] = None
     is_active: Optional[bool] = None
-    is_pro: Optional[bool] = None
+    
     cover_image_url: Optional[str] = None
     capabilities: Optional[list[str]] = None
     ui_config: Optional[dict] = None
-    normalized_caps_json: Optional[dict] = None # For syncing schema
+    normalized_caps_json: Optional[dict] = None 
     cost_config_json: Optional[dict] = None
