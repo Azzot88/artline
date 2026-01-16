@@ -33,7 +33,7 @@ export default function DocumentsPage() {
                 <h1 className="text-3xl font-bold mb-8 text-center">{t('documents.title')}</h1>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 mb-8">
+                    <TabsList className="grid w-full grid-cols-1 h-auto md:grid-cols-3 mb-8">
                         <TabsTrigger value="terms">{t('documents.tabs.terms')}</TabsTrigger>
                         <TabsTrigger value="privacy">{t('documents.tabs.privacy')}</TabsTrigger>
                         <TabsTrigger value="about">{t('documents.tabs.about')}</TabsTrigger>
