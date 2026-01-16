@@ -271,3 +271,27 @@ async def delete_model(
     await db.delete(m)
     await db.commit()
     return {"ok": True}
+
+# ============================================================================
+# REMOTE SCHEMA FETCHING (New)
+# ============================================================================
+
+from app.domain.providers.replicate_service import get_replicate_client
+from app.schemas import ModelSchemaRequest
+
+@router.post("/fetch-model-schema")
+async def fetch_model_schema_endpoint(
+    req: ModelSchemaRequest,
+    user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        # Use existing service helper to get client (handles config/decryption)
+        service = await get_replicate_client(db)
+        
+        # Fetch capabilities
+        result = service.fetch_model_capabilities(req.model_ref)
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

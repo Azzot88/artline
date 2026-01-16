@@ -50,6 +50,12 @@ export function ModelConfig() {
   const [credits, setCredits] = useState("5")
   const [isActive, setIsActive] = useState(false)
 
+  // Advanced Config state
+  const [modelRef, setModelRef] = useState("")
+  const [capabilities, setCapabilities] = useState<any>(null)
+  const [uiConfig, setUiConfig] = useState<any>({})
+  const [fetchingSchema, setFetchingSchema] = useState(false)
+
   // Advanced config from params (mocked for now as we transition)
   const parameters = modelId ? getModelParameters(modelId) : []
   const costSignals = modelId ? getModelCostSignals(modelId) : null
@@ -77,9 +83,16 @@ export function ModelConfig() {
 
       // Init form
       setDisplayName(m.display_name || "")
-      setDescription(m.description || "") // Description might not be in backend model yet? AIModelRead doesn't have description.
-      setCredits(m.credits?.toString() || "5")
+      setDescription(m.description || "")
+      setCredits(m.credits_per_generation?.toString() || m.credits?.toString() || "5")
       setIsActive(m.is_active)
+      setModelRef(m.model_ref || "")
+      setUiConfig(m.ui_config || {})
+
+      // If we have normalized caps, load them (future proofing)
+      if (m.normalized_caps_json) {
+        setCapabilities(m.normalized_caps_json)
+      }
 
     } catch (e) {
       console.error(e)
@@ -96,14 +109,40 @@ export function ModelConfig() {
       await apiService.updateModel(modelId, {
         display_name: displayName,
         credits: parseInt(credits),
-        is_active: isActive
-        // Description is not on backend yet
+        is_active: isActive,
+        model_ref: modelRef,
+        ui_config: uiConfig,
+        normalized_caps_json: capabilities
       })
       toast({ title: "Changes saved" })
     } catch (e) {
       toast({ title: "Failed to save", variant: "destructive" })
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleFetchSchema() {
+    if (!modelRef) {
+      toast({ title: "Enter a Model Ref first", variant: "destructive" })
+      return
+    }
+    setFetchingSchema(true)
+    try {
+      const res = await apiService.fetchModelSchema(modelRef)
+      // res contains { raw_response, normalized_caps }
+      setCapabilities(res.normalized_caps)
+      toast({ title: "Schema fetched successfully" })
+
+      // Auto-populate display name if empty
+      if (!displayName && res.normalized_caps.title) {
+        setDisplayName(res.normalized_caps.title)
+      }
+    } catch (e: any) {
+      console.error(e)
+      toast({ title: "Failed to fetch schema", description: e.message || "Unknown error", variant: "destructive" })
+    } finally {
+      setFetchingSchema(false)
     }
   }
 
@@ -148,7 +187,7 @@ export function ModelConfig() {
               {model.display_name}
             </h1>
             <p className="text-muted-foreground">
-              {model.provider} / {model.model_ref}
+              {model.provider} / {modelRef}
             </p>
           </div>
         </div>
@@ -212,8 +251,75 @@ export function ModelConfig() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Replicate Configuration */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Model Parameters</CardTitle>
+              <CardDescription>Fetch schema from Replicate to configure inputs</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex gap-4 items-end">
+                <div className="flex-1 space-y-2">
+                  <Label>Model Ref (owner/name)</Label>
+                  <Input value={modelRef} onChange={e => setModelRef(e.target.value)} placeholder="stability-ai/sdxl" />
+                </div>
+                <Button onClick={handleFetchSchema} disabled={fetchingSchema} variant="secondary">
+                  {fetchingSchema ? "Fetching..." : "Fetch"}
+                </Button>
+              </div>
+
+              {capabilities && (
+                <div className="space-y-4 border rounded-md p-4 bg-muted/20">
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-semibold text-sm">Detected Inputs ({capabilities.inputs.length})</h4>
+                    <Badge variant="outline">Schema Loaded</Badge>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 max-h-[400px] overflow-y-auto">
+                    {capabilities.inputs.map((input: any) => {
+                      const isVisible = uiConfig?.hidden_inputs ? !uiConfig.hidden_inputs.includes(input.name) : true
+
+                      return (
+                        <div key={input.name} className="flex items-center justify-between p-2 hover:bg-muted rounded text-sm group">
+                          <div className="flex items-center gap-3">
+                            <Switch
+                              checked={isVisible}
+                              onCheckedChange={(checked) => {
+                                const currentHidden = uiConfig?.hidden_inputs || []
+                                let newHidden
+
+                                if (!checked) {
+                                  // Hide it
+                                  newHidden = [...currentHidden, input.name]
+                                } else {
+                                  // Show it (remove from hidden)
+                                  newHidden = currentHidden.filter((n: string) => n !== input.name)
+                                }
+
+                                setUiConfig({
+                                  ...uiConfig,
+                                  hidden_inputs: newHidden
+                                })
+                              }}
+                            />
+                            <div>
+                              <div className="font-medium">{input.name}</div>
+                              <div className="text-xs text-muted-foreground">{input.label} ({input.type})</div>
+                            </div>
+                          </div>
+                          <Badge variant="secondary" className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                            {input.default !== undefined ? `Default: ${input.default}` : "No default"}
+                          </Badge>
+                        </div>
+                      )
+                    })}
+                  </div>
+            )}
+                </CardContent>
+        </Card>
         </div>
       </div>
-    </div>
+    </div >
   )
 }

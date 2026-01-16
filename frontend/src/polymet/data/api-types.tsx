@@ -230,3 +230,7 @@ export interface AIModelUpdateRequest {
   normalized_caps_json?: Record<string, any>
   cost_config_json?: Record<string, any>
 }
+
+export interface ModelSchemaRequest {
+  model_ref: string
+}

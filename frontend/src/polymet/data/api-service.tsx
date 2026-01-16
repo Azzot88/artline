@@ -189,6 +189,10 @@ export const apiService = {
   async deleteModel(id: string) {
     return api.delete(`/admin/models/${id}`)
   },
+
+  async fetchModelSchema(modelRef: string) {
+    return api.post<any>("/admin/fetch-model-schema", { model_ref: modelRef })
+  },
 }
 
 

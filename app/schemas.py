@@ -168,3 +168,6 @@ class AIModelUpdate(BaseModel):
     ui_config: Optional[dict] = None
     normalized_caps_json: Optional[dict] = None 
     cost_config_json: Optional[dict] = None
+
+class ModelSchemaRequest(BaseModel):
+    model_ref: str # owner/name or owner/name:version
