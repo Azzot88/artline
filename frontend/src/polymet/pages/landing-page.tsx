@@ -269,7 +269,7 @@ export function LandingPage() {
                                     <CardTitle className="text-xl">{t('landing.subscriptions.basic.title')}</CardTitle>
                                     <div className="mt-2 flex items-baseline gap-1">
                                         <span className="text-3xl font-bold">{t('landing.subscriptions.basic.price')}</span>
-                                        <span className="text-sm text-muted-foreground">/ mon</span>
+                                        <span className="text-sm text-muted-foreground">{t('landing.subscriptions.period')}</span>
                                     </div>
                                     <CardDescription className="mt-1 text-xs">{t('landing.subscriptions.basic.desc')}</CardDescription>
                                 </CardHeader>
@@ -301,7 +301,7 @@ export function LandingPage() {
                                     <CardTitle className="text-xl text-primary">{t('landing.subscriptions.pro.title')}</CardTitle>
                                     <div className="mt-2 flex items-baseline gap-1">
                                         <span className="text-3xl font-bold">{t('landing.subscriptions.pro.price')}</span>
-                                        <span className="text-sm text-muted-foreground">/ mon</span>
+                                        <span className="text-sm text-muted-foreground">{t('landing.subscriptions.period')}</span>
                                     </div>
                                     <CardDescription className="mt-1 text-primary/80 font-medium text-xs">{t('landing.subscriptions.pro.desc')}</CardDescription>
                                 </CardHeader>
@@ -328,7 +328,7 @@ export function LandingPage() {
                                     <CardTitle className="text-xl">{t('landing.subscriptions.studio.title')}</CardTitle>
                                     <div className="mt-2 flex items-baseline gap-1">
                                         <span className="text-3xl font-bold">{t('landing.subscriptions.studio.price')}</span>
-                                        <span className="text-sm text-muted-foreground">/ mon</span>
+                                        <span className="text-sm text-muted-foreground">{t('landing.subscriptions.period')}</span>
                                     </div>
                                     <CardDescription className="mt-1 text-xs">{t('landing.subscriptions.studio.desc')}</CardDescription>
                                 </CardHeader>

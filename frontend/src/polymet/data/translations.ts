@@ -121,6 +121,7 @@ export const translations = {
             subscriptions: {
                 title: "Уровни доступа",
                 subtitle: "От комфортного старта до тотального контроля над генерациями.",
+                period: "/ мес",
                 basic: {
                     title: "Начальный",
                     price: "490₽",
@@ -381,6 +382,7 @@ export const translations = {
             subscriptions: {
                 title: "Қолжетімділік деңгейлері",
                 subtitle: "Ыңғайлы бастамадан генерацияны толық бақылауға дейін.",
+                period: "/ ай",
                 basic: {
                     title: "Бастапқы",
                     price: "490₽",
@@ -642,6 +644,7 @@ export const translations = {
             subscriptions: {
                 title: "Жеткиликтүүлүк деңгээлдери",
                 subtitle: "Ыңгайлуу баштоодон генерацияны толук көзөмөлдөөгө чейин.",
+                period: "/ ай",
                 basic: {
                     title: "Баштапкы",
                     price: "490₽",
