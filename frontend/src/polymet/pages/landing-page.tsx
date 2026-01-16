@@ -123,7 +123,7 @@ export function LandingPage() {
                                         </CardContent>
                                         <CardFooter>
                                             <Link to={product.link} className="w-full">
-                                                <Button className="w-full group" variant={i === 1 ? "secondary" : "default"}>
+                                                <Button className="w-full group">
                                                     {product.cta} <BtnIcon className="ml-2 h-4 w-4 group-hover:scale-110 transition-transform" />
                                                 </Button>
                                             </Link>
