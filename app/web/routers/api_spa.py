@@ -13,7 +13,7 @@ from app.core.deps import get_current_user_optional, get_current_user
 from app.core.security import verify_password, create_access_token, get_password_hash
 from app.core.i18n import get_t
 from app.models import User, Job, AIModel, ProviderConfig, LedgerEntry
-from app.schemas import UserContext, JobRead, JobRequestSPA, UserRead, UserCreate
+from app.schemas import UserContext, JobRead, JobRequestSPA, UserRead, UserCreate, AdminStats, UserWithBalance, CreditGrantRequest
 from app.domain.billing.service import get_user_balance, add_ledger_entry
 from app.domain.jobs.service import create_job, get_user_jobs, get_public_jobs
 from app.domain.jobs.runner import process_job
@@ -34,18 +34,7 @@ class GuestInitResponse(BaseModel):
     guest_id: str
     balance: int
 
-class AdminStats(BaseModel):
-    total_users: int
-    total_jobs: int
-    active_jobs: int
-    total_credits: int
 
-class UserWithBalance(UserRead):
-    balance: int
-    is_admin: bool
-
-class CreditGrantRequest(BaseModel):
-    amount: int
 
 
 @router.post("/auth/login")

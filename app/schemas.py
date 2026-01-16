@@ -61,6 +61,22 @@ class JobRead(BaseModel):
 class BalanceRead(BaseModel):
     amount: int
 
+
+# Admin Schemas
+class AdminStats(BaseModel):
+    total_users: int
+    total_jobs: int
+    active_jobs: int
+    total_credits: int
+
+class UserWithBalance(UserRead):
+    balance: int
+    is_admin: bool
+
+class CreditGrantRequest(BaseModel):
+    amount: int
+
+
 # SPA Schemas
 class UserContext(BaseModel):
     user: Optional[UserRead] = None
