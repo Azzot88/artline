@@ -311,6 +311,7 @@ export const translations = {
             register: "Тіркелу",
             language: "Тіл",
             backToMain: "Басты бетке",
+            buyMore: "Көбірек сатып алу",
         },
         workbench: {
             appTitle: "AI Шеберханасы",
@@ -552,6 +553,7 @@ export const translations = {
             register: "Катталуу",
             language: "Тил",
             backToMain: "Башкы бетке",
+            buyMore: "Көбүрөөк сатып алуу",
         },
         workbench: {
             appTitle: "AI Устаканасы",
