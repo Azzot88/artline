@@ -23,47 +23,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async function refreshUser() {
         try {
             const data = await apiService.bootstrap()
-            if (data.user.id && !data.user.is_guest) {
-                // We have a real user, but bootstrap currently returns partial data?
-                // Let's assume user object is fully populated or we just store what we have.
-                // Wait, bootstrap returns { user: {id, email, is_guest}, auth: {mode, balance} }
-                // Ideally we fetch full user profile if needed, or update bootstrap to return it?
-                // api_spa.py's /me returns UserContext which has UserRead.
-                // Let's rely on api-types which says user: {id, email, ...}
 
-                // Wait, api-types says:
-                /*
-                export interface BootstrapResponse {
-                    user: {
-                        id: string | null
-                        email: string | null
-                        is_guest: boolean
-                    }
-                // */
-                // We might need a proper User object. For now let's construct it or fetch it?
-                // Actually `LoginResponse` returns a full `User`.
-                // Let's trust that we are logged in.
+            // data matches UserContext: { user: UserRead|null, is_guest: bool, balance: int, guest_id: string|null }
+            if (data.user && !data.is_guest) {
+                // User is logged in
                 setUser({
-                    id: data.user.id!,
-                    email: data.user.email!,
-                    is_active: true,
-                    is_superuser: false,
-                    is_admin: (data.user as any).is_admin || false, // UserRead now has is_admin
-                    created_at: new Date().toISOString(),
-                    balance: data.auth.balance || 0,
-                    total_generations: 0,
-                    language: "ru"
+                    ...data.user,
+                    is_admin: !!data.user.is_admin,
+                    balance: data.balance // Ensure balance is sync
                 } as User)
                 setIsGuest(false)
             } else {
+                // Guest mode
                 setUser(null)
                 setIsGuest(true)
-                // Ensure guest session
-                if (!data.auth.mode) {
+
+                // If guest_id is missing/null but we expected guest, apiService.guestInit() might be needed?
+                // Backend usually ensures guest_id is set if is_guest is true.
+                if (!data.guest_id) {
                     await apiService.guestInit()
                 }
             }
-            setBalance(data.auth.balance)
+            setBalance(data.balance)
         } catch (e) {
             console.error("Auth bootstrap failed", e)
         } finally {

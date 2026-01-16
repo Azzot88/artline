@@ -38,18 +38,10 @@ export interface Job {
 // ============================================================================
 
 export interface BootstrapResponse {
-  user: {
-    id: string | null
-    email: string | null
-    is_guest: boolean
-  }
-  auth: {
-    mode: "user" | "guest"
-    balance: number
-  }
-  features: {
-    can_toggle_public: boolean
-  }
+  user: User | null
+  is_guest: boolean
+  balance: number
+  guest_id: string | null
 }
 
 // ============================================================================
