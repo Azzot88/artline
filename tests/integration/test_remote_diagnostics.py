@@ -201,103 +201,126 @@ async def test_worker_replicate_handshake(client: AsyncClient, seed_env, db_sess
 
 @pytest.mark.asyncio
 @pytest.mark.live
-async def test_LIVE_replicate_generation(client: AsyncClient, seed_env, db_session: AsyncSession):
+async def test_LIVE_replicate_generation(client: AsyncClient, seed_env):
     """
     CRITICAL: LIVE INTEGRATION TEST
     Requires REPLICATE_API_TOKEN in env.
-    1. Submits REAL job to Replicate (Flux Schnell).
-    2. Waits for completion (Polling).
-    3. Verifies 'result_url' is populated.
+    
+    NOTE: This test manages its OWN database connection/session to ensure
+    transaction isolation does not hide data from the external Celery worker emulator.
+    The 'db_session' fixture uses a transaction that won't be visible to the worker's separate connection.
     """
     if not os.getenv("REPLICATE_API_TOKEN"):
         pytest.skip("REPLICATE_API_TOKEN not set")
 
-    # 1. Create Job
-    res_me = await client.get("/api/me")
-    client.cookies.set("guest_id", res_me.json()["guest_id"])
-    
-    payload = {
-        "kind": "image",
-        "model_id": seed_env["model_id"],
-        "prompt": "Orange cat in space suit, highly detailed, 8k",
-        "params": {}
-    }
-    res = await client.post("/api/jobs", json=payload)
-    job_id = res.json()["id"]
-    
-    # FORCE COMMIT so Sync Worker can see it
-    await db_session.commit()
+    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+    import uuid
+    from app.core.config import settings
 
-    # 2. Run Worker (REAL, no mocks)
-    # This will hit Replicate API
+    # 1. Setup Independent Session
+    engine = create_async_engine(settings.SQLALCHEMY_DATABASE_URI)
+    Session = async_sessionmaker(engine, expire_on_commit=False)
+    
+    async with Session() as session:
+        # 1.1 Ensure Provider/Model Exist (since seed_env might be hidden in fixture transaction)
+        # Check Provider
+        res = await session.execute(select(ProviderConfig).where(ProviderConfig.provider_id == "replicate"))
+        if not res.scalar_one_or_none():
+            config = ProviderConfig(
+                provider_id="replicate",
+                is_active=True,
+                encrypted_api_key=encrypt_key(os.getenv("REPLICATE_API_TOKEN"))
+            )
+            session.add(config)
+            
+        # Check Model
+        model_uuid = uuid.UUID(seed_env["model_id"])
+        res_m = await session.execute(select(AIModel).where(AIModel.id == model_uuid))
+        if not res_m.scalar_one_or_none():
+             # Create duplicate model for this test session context if needed
+             # Or just trust seed_env ID but we need to ensure it's in DB.
+             # Actually, if seed_env fixture failed to commit to DB, we need to create it.
+             # Let's create a dedicated test model to be safe.
+             model_uuid = uuid.uuid4()
+             model = AIModel(
+                id=model_uuid,
+                display_name="Live Test Flux",
+                provider="replicate",
+                model_ref="black-forest-labs/flux-schnell",
+                is_active=True,
+                credits_per_generation=1,
+                normalized_caps_json={"inputs": [{"name": "prompt", "type": "string"}]}
+             )
+             session.add(model)
+        
+        # 1.2 Create User & Job
+        # We need a user because process_job might check credits/permissions (though runner seems lax on user check)
+        # We'll create a guest job.
+        guest_id = uuid.uuid4()
+        
+        job_id = uuid.uuid4()
+        job = Job(
+            id=job_id,
+            guest_id=guest_id,
+            owner_type="guest",
+            kind="image",
+            prompt=f"[{model_uuid}] {{}} | Orange cat in space suit {uuid.uuid4()}",
+            status="queued",
+            cost_credits=1,
+            progress=0
+        )
+        session.add(job)
+        await session.commit()
+        print(f"DEBUG: Created Job {job_id} in dedicated session. Committed.")
+
+    # 2. Run Worker (REAL)
+    # The worker opens its own connection. It should see the committed job.
     print(f"Submitting Job {job_id} to Replicate...")
     try:
-        process_job(job_id)
+        process_job(str(job_id))
     except Exception as e:
+        # Cleanup
+        async with Session() as session:
+             await session.execute(delete(Job).where(Job.id == job_id))
+             await session.commit()
         pytest.fail(f"Worker failed: {e}")
-        
-    # 3. Poll for Completion (Manual Sync Simulation)
-    # We can use the /jobs/{id}/sync endpoint or just check DB
+
+    # 3. Poll for Completion
     print("Waiting for generation...")
-    for _ in range(30): # Wait up to 60s
-        await asyncio.sleep(2)
-        db_session.expire_all() # Force refresh from DB (handle external worker updates)
-        
-        # Check status via API
-        # We use GET /api/jobs/{job_id} which returns current DB state
-        # Since process_job (the worker) updates the DB upon completion/webhook (simulated or real),
-        # this endpoint should reflect the status.
-        # NOTE: In a real Replicate integration, Replicate sends a webhook.
-        # Local dev environment often can't receive webhooks from the internet.
-        # HOWEVER, process_job() in synchronous mode (used in testing if Celery is mocked OR if calling function directly)
-        # might not wait for completion if it returns early.
-        # But process_job calls ReplicateService.submit_prediction.
-        # If that functions returns a prediction object, we might have the status.
-        # BUT, ReplicateService usually returns just ID.
-        #
-        # If we are testing LIVE Replicate, we rely on Replicate sending a Webhook to US.
-        # BUT we are in a container or local net. Replicate CANNOT hit us.
-        # IMPLICATION: The Job will stay in 'processing' indefinitely unless we Poll from here.
-        #
-        # Does our backend support active polling?
-        # The 'process_job' function *submits* only.
-        # We don't have a background poller.
-        #
-        # SO: This test will fail unless we actively Poll Replicate from the test itself 
-        # and update the DB, OR if we had a Poller service.
-        #
-        # Workaround for Test:
-        # We can manually poll Replicate API using the provider_job_id (if we had it).
-        # But we only have local job_id.
-        
-        # Let's check status first.
-        res_status = await client.get(f"/api/jobs/{job_id}")
-        if res_status.status_code != 200:
-            print(f"Failed to get job status: {res_status.status_code}")
-            continue
-            
-        data = res_status.json()
-        status = data["status"]
-        print(f"Current Job Status: {status}")
-        
-        if status == "succeeded":
-             assert data["result_url"] is not None
-             return
-        elif status == "failed":
-             pytest.fail(f"Job Failed: {data.get('error_message')}")
-        
-        # IF status is still 'queued' or 'processing' (aka 'running'), we might be stuck 
-        # because no one is updating the DB (no webhook received).
-        # We can try to simulate the webhook by polling Replicate ourselves?
-        # OR better: The test should fail if Replicate can't reach us.
-        # But wait, `process_job` in `runner.py` for 'replicate' provider:
-        # It just submits.
-        
-        # OPTION: Just verify it reached 'running' state and has a provider_id.
-        # That confirms we successfully talked to Replicate.
-        if status == "running" and data.get("provider_job_id"):
-             print("Job is running on Replicate. (Skipping full completion wait as no Webhook tunnel)")
-             return "passed_submission" 
+    final_status = None
+    
+    try:
+        for _ in range(30): # Wait up to 60s
+            await asyncio.sleep(2)
+            async with Session() as poll_session:
+                res = await poll_session.execute(select(Job).where(Job.id == job_id))
+                updated_job = res.scalar_one_or_none()
+                
+                if not updated_job:
+                    print("DEBUG: Job disappeared?!")
+                    continue
+                    
+                status = updated_job.status
+                print(f"Current Job Status: {status}")
+                
+                if status == "succeeded":
+                     assert updated_job.result_url is not None
+                     final_status = "succeeded"
+                     return
+                elif status == "failed":
+                     pytest.fail(f"Job Failed: {updated_job.error_message}")
+                elif status == "running" and updated_job.provider_job_id:
+                     print("Job is running on Replicate. (Success for submission)")
+                     final_status = "running"
+                     return
+
+        if not final_status:
+             pytest.fail("Timeout waiting for job state change")
              
-    # If we exit loop
-    pytest.fail("Timeout waiting for job state change or completion")
+    finally:
+        # Cleanup
+        async with Session() as session:
+             print(f"Cleaning up Job {job_id}")
+             await session.execute(delete(Job).where(Job.id == job_id))
+             await session.commit()
+        await engine.dispose()
