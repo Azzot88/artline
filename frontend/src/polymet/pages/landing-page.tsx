@@ -1,14 +1,17 @@
-
 import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Check, Zap, Shield, Globe, Image as ImageIcon, Video, Sparkles, Wand2, Layers, Cpu, BarChart, History, Repeat, Download, Copy, Lock, Maximize, FlaskConical, EyeOff, Folder, Database, Terminal, Crown, HelpCircle } from "lucide-react"
+import { Play, Check, Image as ImageIcon, ImageOff, Zap, History, RotateCcw, FileCheck, Download, Layers, Palette, Cpu, Scan, FlaskConical, Lock, FolderKanban, Vault, Plug, Star, Video, Sparkles, Wand2, BarChart, Globe, Shield } from "lucide-react";
 import { useLanguage } from "@/polymet/components/language-provider"
 import { LanguageSwitcher } from "@/polymet/components/language-switcher"
 
 export function LandingPage() {
     const { t } = useLanguage()
+
+    const basicIcons = [ImageOff, Zap, History, RotateCcw, FileCheck];
+    const proIcons = [Download, Layers, Palette, Cpu, Scan];
+    const studioIcons = [FlaskConical, Lock, FolderKanban, Vault, Plug, Star];
 
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
@@ -272,9 +275,12 @@ export function LandingPage() {
                                 </CardHeader>
                                 <CardContent className="flex-1 py-2">
                                     <ul className="space-y-2 text-sm">
-                                        {(t('landing.subscriptions.basic.features') as string[]).map((f, i) => (
-                                            <li key={i} className="flex gap-2 items-start"><Check className="h-4 w-4 text-green-500 shrink-0 mt-0.5" /> <span>{f}</span></li>
-                                        ))}
+                                        {(t('landing.subscriptions.basic.features') as string[]).map((f, i) => {
+                                            const Icon = basicIcons[i] || Check;
+                                            return (
+                                                <li key={i} className="flex gap-2 items-start"><Icon className="h-4 w-4 text-primary shrink-0 mt-0.5" /> <span>{f}</span></li>
+                                            );
+                                        })}
                                     </ul>
                                 </CardContent>
                                 <CardFooter className="py-4">
@@ -301,9 +307,12 @@ export function LandingPage() {
                                 </CardHeader>
                                 <CardContent className="flex-1 py-2">
                                     <ul className="space-y-2 text-sm">
-                                        {(t('landing.subscriptions.pro.features') as string[]).map((f, i) => (
-                                            <li key={i} className="flex gap-2 items-start"><Check className="h-4 w-4 text-primary shrink-0 mt-0.5" /> <span>{f}</span></li>
-                                        ))}
+                                        {(t('landing.subscriptions.pro.features') as string[]).map((f, i) => {
+                                            const Icon = proIcons[i] || Check;
+                                            return (
+                                                <li key={i} className="flex gap-2 items-start"><Icon className="h-4 w-4 text-primary shrink-0 mt-0.5" /> <span>{f}</span></li>
+                                            );
+                                        })}
                                     </ul>
                                 </CardContent>
                                 <CardFooter className="py-4">
@@ -325,9 +334,12 @@ export function LandingPage() {
                                 </CardHeader>
                                 <CardContent className="flex-1 py-2">
                                     <ul className="space-y-2 text-sm">
-                                        {(t('landing.subscriptions.studio.features') as string[]).map((f, i) => (
-                                            <li key={i} className="flex gap-2 items-start"><Check className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" /> <span>{f}</span></li>
-                                        ))}
+                                        {(t('landing.subscriptions.studio.features') as string[]).map((f, i) => {
+                                            const Icon = studioIcons[i] || Check;
+                                            return (
+                                                <li key={i} className="flex gap-2 items-start"><Icon className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" /> <span>{f}</span></li>
+                                            );
+                                        })}
                                     </ul>
                                 </CardContent>
                                 <CardFooter className="py-4">
