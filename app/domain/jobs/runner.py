@@ -25,6 +25,11 @@ def process_job(self, job_id: str):
         job = session.execute(select(Job).where(Job.id == job_id)).scalar_one_or_none()
         if not job: 
             print("DEBUG: Job NOT FOUND in DB!")
+            # Debug: Dump all jobs to see what IS there
+            all_jobs = session.execute(select(Job.id, Job.status, Job.prompt)).all()
+            print(f"DEBUG: Dump of Jobs in DB ({len(all_jobs)} found):")
+            for j in all_jobs:
+                print(f" -- {j.id} | {j.status} | {j.prompt}")
             return "Job not found"
         print(f"DEBUG: Job found: {job.id}, Status: {job.status}")
 
@@ -51,11 +56,57 @@ def process_job(self, job_id: str):
             
         service = ReplicateService(api_key=api_key)
 
-        # ... (skip middle parts) ...
+        # 2. Parse User Input (Coordinator delegates to Service)
+        model_identifier, raw_params, prompt_text = service.parse_input_string(job.prompt or "")
+        logger.info(f"Job {job.id}: Model={model_identifier}, PromptLen={len(prompt_text)}")
+
+        # 3. Resolve Model (DB Logic)
+        ai_model = None
+        replicate_model_ref = "black-forest-labs/flux-schnell" # Default
+        
+        try:
+            model_uuid = uuid.UUID(model_identifier)
+            ai_model = session.execute(select(AIModel).where(AIModel.id == model_uuid)).scalar_one_or_none()
+        except ValueError:
+            pass # Use default or legacy logic
+            
+        if ai_model:
+            replicate_model_ref = ai_model.model_ref 
+            if ai_model.version_id:
+                 replicate_model_ref += f":{ai_model.version_id}"
+            
+            # Merge Defaults from AIModel Config
+            if ai_model.ui_config:
+                 for k, conf in ai_model.ui_config.items():
+                      if k not in raw_params and "default" in conf:
+                           raw_params[k] = conf["default"]
+        
+        elif model_identifier == "flux-pro":
+             replicate_model_ref = "black-forest-labs/flux-1.1-pro"
+
+        # 4. Build Strict Payload
+        raw_params["prompt"] = prompt_text
+        allowed_inputs = []
+        if ai_model and ai_model.normalized_caps_json:
+             allowed_inputs = ai_model.normalized_caps_json.get("inputs", [])
+             
+        if allowed_inputs:
+             payload = service.build_payload(raw_params, allowed_inputs)
+             # Safety: Ensure prompt exists if allowed_inputs was somehow missing it or empty
+             if "prompt" not in payload and "prompt" in raw_params:
+                  payload["prompt"] = raw_params["prompt"] 
+        else:
+             logger.info("Using permissive sanitization (No schema)")
+             payload = service.sanitize_input(raw_params)
 
         # 5. Execute
         webhook_host = settings.WEBHOOK_HOST or 'https://api.artline.dev'
-        # ...
+        if not webhook_host.startswith("https://") and not "api.artline.dev" in webhook_host:
+             # If using raw IP (http), Replicate will reject (422).
+             # We disable webhook in this case and rely on polling/manual sync.
+             webhook_url = None
+        else:
+             webhook_url = f"{webhook_host}/webhooks/replicate"
         
         try:
             print(f"DEBUG: Submitting prediction to Ref: {replicate_model_ref}")
