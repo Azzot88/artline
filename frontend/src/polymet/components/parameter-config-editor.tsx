@@ -5,7 +5,6 @@ import { Switch } from "@/components/ui/switch"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { ChevronDown, ChevronRight, Settings2 } from "lucide-react"
 
 export interface ParameterConfig {
@@ -64,11 +63,9 @@ export function ParameterConfigEditor({ parameter, config, onChange }: Parameter
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <CollapsibleTrigger asChild>
-                        <button onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen) }} className="p-1 hover:bg-muted rounded">
-                            {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                        </button>
-                    </CollapsibleTrigger>
+                    <button onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen) }} className="p-1 hover:bg-muted rounded">
+                        {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    </button>
                 </div>
             </div>
 
