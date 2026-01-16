@@ -2,7 +2,7 @@ import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Play, Check, Image as ImageIcon, ImageOff, Zap, History, RotateCcw, FileCheck, Download, Layers, Palette, Cpu, Scan, FlaskConical, Lock, FolderKanban, Vault, Plug, Star, Video, Sparkles, Wand2, BarChart, Globe, Shield } from "lucide-react";
+import { Play, PlayCircle, Check, Image as ImageIcon, ImageOff, Zap, History, RotateCcw, FileCheck, Download, Layers, Palette, Cpu, Scan, FlaskConical, Lock, FolderKanban, Vault, Plug, Star, Video, Film, Sparkles, Wand2, BarChart, Globe, Shield, Music, AudioWaveform } from "lucide-react";
 import { useLanguage } from "@/polymet/components/language-provider"
 import { LanguageSwitcher } from "@/polymet/components/language-switcher"
 
@@ -90,46 +90,47 @@ export function LandingPage() {
                             <h2 className="text-3xl font-bold tracking-tight">{t('landing.products.title')}</h2>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                            <Card className="hover:shadow-lg transition-shadow bg-background/50 border-primary/10">
-                                <CardHeader>
-                                    <div className="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 flex items-center justify-center mb-4">
-                                        <ImageIcon className="h-6 w-6" />
-                                    </div>
-                                    <CardTitle>{t('landing.products.imageGen')}</CardTitle>
-                                    <CardDescription>{t('landing.products.imageDesc')}</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-2">
-                                    <p className="text-sm text-muted-foreground">VEO 3, Nano Banana, Flux, SDXL...</p>
-                                </CardContent>
-                                <CardFooter>
-                                    <Link to="/workbench" className="w-full">
-                                        <Button className="w-full group">
-                                            {t('common.createImage')} <Wand2 className="ml-2 h-4 w-4 group-hover:rotate-12 transition-transform" />
-                                        </Button>
-                                    </Link>
-                                </CardFooter>
-                            </Card>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {(t('landing.products.items') as any[]).map((product, i) => {
+                                // Icons Mapping
+                                // 0 (Image): Card=ImageIcon, Button=Wand2
+                                // 1 (Video): Card=Video, Button=PlayCircle
+                                // 2 (Music): Card=Music, Button=AudioWaveform
 
-                            <Card className="hover:shadow-lg transition-shadow bg-background/50 border-primary/10">
-                                <CardHeader>
-                                    <div className="w-12 h-12 rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 flex items-center justify-center mb-4">
-                                        <Video className="h-6 w-6" />
-                                    </div>
-                                    <CardTitle>{t('landing.products.videoGen')}</CardTitle>
-                                    <CardDescription>{t('landing.products.videoDesc')}</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-2">
-                                    <p className="text-sm text-muted-foreground">Kling, Runway, Luma...</p>
-                                </CardContent>
-                                <CardFooter>
-                                    <Link to="/workbench" className="w-full">
-                                        <Button className="w-full group">
-                                            {t('common.createVideo')} <Video className="ml-2 h-4 w-4 group-hover:scale-110 transition-transform" />
-                                        </Button>
-                                    </Link>
-                                </CardFooter>
-                            </Card>
+                                const cardIconMap = [ImageIcon, Video, Music];
+                                const btnIconMap = [Wand2, PlayCircle, AudioWaveform];
+
+                                const CardIcon = cardIconMap[i] || ImageIcon;
+                                const BtnIcon = btnIconMap[i] || Wand2;
+
+                                return (
+                                    <Card key={i} className="flex flex-col hover:border-primary/50 transition-colors">
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center gap-2 text-xl">
+                                                <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                                                    <CardIcon className="h-6 w-6" />
+                                                </div>
+                                                {product.title}
+                                            </CardTitle>
+                                            <CardDescription className="text-sm line-clamp-3 min-h-[40px]">
+                                                {product.desc}
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="flex-1 space-y-2">
+                                            <p className="text-xs text-muted-foreground font-medium bg-muted/50 p-2 rounded">
+                                                {product.models}
+                                            </p>
+                                        </CardContent>
+                                        <CardFooter>
+                                            <Link to={product.link} className="w-full">
+                                                <Button className="w-full group" variant={i === 1 ? "secondary" : "default"}>
+                                                    {product.cta} <BtnIcon className="ml-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+                                                </Button>
+                                            </Link>
+                                        </CardFooter>
+                                    </Card>
+                                );
+                            })}
                         </div>
                     </div>
                 </section>
