@@ -149,6 +149,46 @@ export const apiService = {
   async grantCredits(userId: string, amount: number) {
     return api.post(`/admin/users/${userId}/credits`, { amount })
   },
+
+  // ==========================================================================
+  // Admin Config (Providers)
+  // ==========================================================================
+
+  async getProviders() {
+    return api.get<import("./api-types").ProviderConfig[]>("/admin/providers")
+  },
+
+  async createProvider(data: import("./api-types").ProviderCreateRequest) {
+    return api.post<import("./api-types").ProviderConfig>("/admin/providers", data)
+  },
+
+  async updateProvider(id: string, data: import("./api-types").ProviderUpdateRequest) {
+    return api.put<import("./api-types").ProviderConfig>(`/admin/providers/${id}`, data)
+  },
+
+  async deleteProvider(id: string) {
+    return api.delete(`/admin/providers/${id}`)
+  },
+
+  // ==========================================================================
+  // Admin Config (Models)
+  // ==========================================================================
+
+  async getAdminModels() {
+    return api.get<import("@/polymet/data/models-data").AIModel[]>("/admin/models")
+  },
+
+  async createModel(data: import("./api-types").AIModelCreateRequest) {
+    return api.post<import("@/polymet/data/models-data").AIModel>("/admin/models", data)
+  },
+
+  async updateModel(id: string, data: import("./api-types").AIModelUpdateRequest) {
+    return api.put<import("@/polymet/data/models-data").AIModel>(`/admin/models/${id}`, data)
+  },
+
+  async deleteModel(id: string) {
+    return api.delete(`/admin/models/${id}`)
+  },
 }
 
 

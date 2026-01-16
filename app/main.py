@@ -14,11 +14,12 @@ app.include_router(webhooks_stripe.router, prefix="/stripe", tags=["stripe"])
 app.include_router(webhooks_main.router, prefix="/webhooks", tags=["webhooks"])
 app.include_router(i18n.router, tags=["i18n"])
 
-from app.web.routers import api_spa
+from app.web.routers import api_spa, admin
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
 app.include_router(api_spa.router, prefix="/api", tags=["spa"])
+app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 
 @app.exception_handler(Exception)
 async def api_exception_handler(request: Request, exc: Exception):

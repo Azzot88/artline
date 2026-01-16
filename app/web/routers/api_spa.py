@@ -251,6 +251,7 @@ async def create_spa_job(
     
     if error:
         code = "insufficient_credits" if "credits" in error else "validation_error"
+        print(f"DEBUG: Job Creation Failed: {code} - {error}", flush=True)
         raise HTTPException(status_code=400, detail={"code": code, "message": error})
         
     process_job.delay(job.id)
@@ -341,78 +342,7 @@ async def list_models(db: AsyncSession = Depends(get_db)):
     return data
     return data
 
-# ============================================================================
-# ADMIN ENDPOINTS
-# ============================================================================
 
-async def get_admin_user(user: User = Depends(get_current_user)):
-    if not user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
-        )
-    return user
-
-@router.get("/admin/stats", response_model=AdminStats)
-async def get_admin_stats(
-    user: User = Depends(get_admin_user),
-    db: AsyncSession = Depends(get_db)
-):
-    total_users = (await db.execute(select(func.count(User.id)))).scalar() or 0
-    total_jobs = (await db.execute(select(func.count(Job.id)))).scalar() or 0
-    active_jobs = (await db.execute(select(func.count(Job.id)).where(Job.status == "running"))).scalar() or 0
-    total_credits = (await db.execute(select(func.sum(LedgerEntry.amount)))).scalar() or 0
-    
-    return AdminStats(
-        total_users=total_users,
-        total_jobs=total_jobs,
-        active_jobs=active_jobs,
-        total_credits=total_credits or 0
-    )
-
-@router.get("/admin/users", response_model=List[UserWithBalance])
-async def list_admin_users(
-    user: User = Depends(get_admin_user),
-    db: AsyncSession = Depends(get_db),
-    limit: int = 50,
-    offset: int = 0
-):
-    res = await db.execute(select(User).order_by(User.created_at.desc()).limit(limit).offset(offset))
-    users = res.scalars().all()
-    
-    output = []
-    for u in users:
-        balance = await get_user_balance(db, u.id)
-        # Manually constructing response to avoid strict User validation issues if any
-        output.append(UserWithBalance(
-            id=u.id,
-            email=u.email,
-            is_admin=u.is_admin,
-            balance=balance,
-            created_at=u.created_at
-        ))
-    return output
-
-@router.post("/admin/users/{user_id}/credits")
-async def grant_credits(
-    user_id: str,
-    req: CreditGrantRequest,
-    current_admin: User = Depends(get_admin_user),
-    db: AsyncSession = Depends(get_db)
-):
-    try:
-        uid = uuid.UUID(user_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid user ID")
-        
-    await add_ledger_entry(
-        db,
-        uid,
-        req.amount,
-        reason="admin_grant",
-        external_id=f"admin_grant_by_{current_admin.id}_{uuid.uuid4()}"
-    )
-    return {"ok": True}
 
 @router.put("/users/me")
 async def update_profile(

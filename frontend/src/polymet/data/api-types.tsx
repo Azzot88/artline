@@ -183,6 +183,58 @@ export function isJobSucceeded(job: Job): job is Job & { result_url: string } {
   return job.status === "succeeded" && job.result_url !== null
 }
 
+
 export function isJobFailed(job: Job): job is Job & { error_message: string } {
   return job.status === "failed" && job.error_message !== null
+}
+
+// ============================================================================
+// Admin Config Types
+// ============================================================================
+
+export interface ProviderConfig {
+  provider_id: string
+  env_vars: Record<string, string> | null
+  is_active: boolean
+  created_at: string
+}
+
+export interface ProviderCreateRequest {
+  provider_id: string
+  api_key: string
+  env_vars?: Record<string, string>
+}
+
+export interface ProviderUpdateRequest {
+  api_key?: string
+  env_vars?: Record<string, string>
+  is_active?: boolean
+}
+
+export interface AIModelCreateRequest {
+  name: string
+  display_name: string
+  provider: string
+  model_ref: string
+  version_id?: string
+  type: "image" | "video"
+  credits: number
+  is_active?: boolean
+  is_pro?: boolean
+  cover_image_url?: string
+  capabilities?: string[]
+}
+
+export interface AIModelUpdateRequest {
+  display_name?: string
+  model_ref?: string
+  version_id?: string
+  credits?: number
+  is_active?: boolean
+  is_pro?: boolean
+  cover_image_url?: string
+  capabilities?: string[]
+  ui_config?: Record<string, any>
+  normalized_caps_json?: Record<string, any>
+  cost_config_json?: Record<string, any>
 }
