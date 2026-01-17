@@ -19,23 +19,39 @@ export function CommunityGallery() {
         console.log("[Gallery Debug] Raw Data:", data)
         if (Array.isArray(data)) {
           // Map and slice
-          const mapped = data.slice(0, 6).map((job: any) => ({
-            id: job.id,
-            image: job.result_url || job.image || "https://placehold.co/600x400?text=Processing",
-            prompt: job.prompt,
-            model: job.model_id || "flux-pro",
-            provider: "replicate",
-            aspectRatio: job.format === "portrait" ? "2:3" : job.format === "landscape" ? "3:2" : "1:1",
-            credits: job.credits_spent || 1,
-            likes: job.likes || 0,
-            views: job.views || 0,
-            author: {
-              name: "User",
-              avatar: "https://github.com/shadcn.png"
-            },
-            timestamp: job.created_at,
-            isVideo: job.kind === "video"
-          }))
+          const mapped = data.slice(0, 6).map((job: any) => {
+            // Basic Aspect Ratio Logic
+            let width = 1024;
+            let height = 1024;
+            if (job.format === "portrait") { width = 768; height = 1024; }
+            if (job.format === "landscape") { width = 1024; height = 768; }
+
+            return {
+              id: job.id,
+              // Fields for GenerationCard
+              url: job.result_url,
+              image: job.result_url,
+
+              prompt: job.prompt,
+              model: job.model_id || "Flux",
+              provider: "replicate",
+
+              credits: job.credits_spent || 1,
+              likes: job.likes || 0,
+              views: job.views || 0,
+
+              // User Info
+              userName: "User",
+              userAvatar: "https://github.com/shadcn.png",
+
+              // Data
+              width: width,
+              height: height,
+              type: job.kind, // Card uses .type
+              kind: job.kind,
+              timestamp: job.created_at
+            }
+          })
           console.log("[Gallery Debug] Mapped Data:", mapped)
           setGenerations(mapped)
         }
