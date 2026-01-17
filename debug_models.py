@@ -1,11 +1,11 @@
 import asyncio
 import json
 from sqlalchemy import select
-from app.core.db import async_session_factory
+from app.core.db import AsyncSessionLocal
 from app.models import AIModel
 
 async def check_models():
-    async with async_session_factory() as db:
+    async with AsyncSessionLocal() as db:
         result = await db.execute(select(AIModel))
         models = result.scalars().all()
         
