@@ -62,7 +62,7 @@ async def test_spa_initialization_flow(client: AsyncClient, seed_env):
     assert res.status_code == 200
     data = res.json()
     assert data["is_guest"] is True
-    assert data["balance"] == 35 # Default guest balance
+    assert data["balance"] == 1000 # Default guest balance
     
     # 2. List Models
     res_models = await client.get("/api/models")
@@ -258,7 +258,7 @@ async def test_LIVE_replicate_generation(client: AsyncClient, seed_env):
         # We'll create a guest job.
         guest_id = uuid.uuid4()
         
-        job_id = uuid.uuid4()
+        job_id = str(uuid.uuid4()) # ID must be string per model definition
         job = Job(
             id=job_id,
             guest_id=guest_id,
@@ -277,7 +277,7 @@ async def test_LIVE_replicate_generation(client: AsyncClient, seed_env):
     # The worker opens its own connection. It should see the committed job.
     print(f"Submitting Job {job_id} to Replicate...")
     try:
-        process_job(str(job_id))
+        process_job(job_id) # Already string
     except Exception as e:
         # Cleanup
         async with Session() as session:

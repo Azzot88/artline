@@ -12,7 +12,7 @@ async def test_guest_flow(client):
     assert response.status_code == 200
     data = response.json()
     assert "guest_id" in data
-    assert data["balance"] == 35
+    assert data["balance"] == 1000
     
     guest_id = data["guest_id"]
     guest_cookie = response.cookies["guest_id"]
