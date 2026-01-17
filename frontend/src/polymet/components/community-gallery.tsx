@@ -25,13 +25,22 @@ export function CommunityGallery() {
             if (job.format === "portrait") { width = 768; height = 1024; }
             if (job.format === "landscape") { width = 1024; height = 768; }
 
+            // Clean prompt: Remove [uuid] params | prefix
+            let cleanPrompt = job.prompt;
+            if (cleanPrompt.includes("|")) {
+              cleanPrompt = cleanPrompt.split("|").pop().trim();
+            } else if (cleanPrompt.startsWith("[")) {
+              // Fallback if no pipe but has brackets
+              cleanPrompt = cleanPrompt.replace(/\[.*?\]\s*/, "").trim();
+            }
+
             return {
               id: job.id,
               // Fields for GenerationCard
               url: job.result_url,
               image: job.result_url,
 
-              prompt: job.prompt,
+              prompt: cleanPrompt,
               model: job.model_id || "Flux",
               provider: "replicate",
 

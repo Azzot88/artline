@@ -106,6 +106,7 @@ async def replicate_webhook(request: Request, db: AsyncSession = Depends(get_db)
                                     Key=key,
                                     Body=content,
                                     ContentType=f"image/{ext}" if ext != "mp4" else "video/mp4",
+                                    ACL='public-read'
                                 )
                                 return f"https://{bucket}.s3.{settings.AWS_REGION}.amazonaws.com/{key}"
 
