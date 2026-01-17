@@ -11,7 +11,9 @@ import {
   XIcon,
   TrendingUpIcon,
   CreditCardIcon,
-  Brain
+  CreditCardIcon,
+  Brain,
+  CheckCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -59,6 +61,12 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
       href: "/landingpage",
       icon: CreditCardIcon,
       title: "common.tariffs"
+    },
+    {
+      key: "library",
+      href: "/library",
+      icon: ImageIcon,
+      title: "common.library"
     }
   ]
 
@@ -74,6 +82,12 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
       href: "/model-config",
       icon: SlidersIcon,
       title: "Models"
+    },
+    {
+      key: "review",
+      href: "/admin/review",
+      icon: CheckCircle, // Reusing icon, need to import if not present
+      title: "Review"
     }
   ]
 

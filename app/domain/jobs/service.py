@@ -74,7 +74,7 @@ async def create_job(
         status="queued",
         progress=0,
         owner_type="guest" if is_guest else "user",
-        is_public=True # Default to public per user request
+        is_public=False # Default to PRIVATE per new logic (Library only)
     )
     
     if is_guest:
@@ -140,7 +140,7 @@ async def get_curated_jobs(db: AsyncSession, limit: int = 6):
 async def get_public_jobs(db: AsyncSession, limit: int = 50, offset: int = 0):
     stmt = (
         select(Job)
-        .where(Job.is_public == True)
+        .where(Job.is_curated == True) # ONLY Curated/Approved jobs show in Community Gallery
         .where(Job.status == 'succeeded') 
         .where(Job.result_url.isnot(None))
         .order_by(Job.created_at.desc())

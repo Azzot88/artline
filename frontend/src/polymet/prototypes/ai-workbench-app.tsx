@@ -7,6 +7,7 @@ import { AppLayout } from "@/polymet/layouts/app-layout"
 
 // Pages
 import { Workbench } from "@/polymet/pages/workbench"
+import { Library } from "@/polymet/pages/library"
 import { Gallery } from "@/polymet/pages/gallery"
 import { Account } from "@/polymet/pages/account"
 import { Dashboard } from "@/polymet/pages/dashboard"
@@ -15,6 +16,7 @@ import { InstanceDetail } from "@/polymet/pages/instance-detail"
 import { Login } from "@/polymet/pages/login"
 import { Register } from "@/polymet/pages/register"
 import { AdminPanel } from "@/polymet/pages/admin-panel"
+import { AdminReview } from "@/polymet/pages/admin-review"
 import { UserProfile } from "@/polymet/pages/user-profile"
 import { LandingPage } from "@/polymet/pages/landing-page"
 import DocumentsPage from "@/polymet/pages/documents-page"
@@ -34,6 +36,7 @@ export default function AIWorkbenchApp() {
             <Route path="/landingpage" element={<LandingPage />} />
             <Route path="/documents" element={<DocumentsPage />} />
             <Route path="/workbench" element={<AppLayout><Workbench /></AppLayout>} />
+            <Route path="/library" element={<AppLayout><Library /></AppLayout>} />
             <Route path="/gallery" element={<AppLayout><Gallery /></AppLayout>} />
 
             {/* Protected Routes */}
@@ -49,6 +52,7 @@ export default function AIWorkbenchApp() {
             {/* Admin Routes */}
             <Route element={<AdminRoute />}>
               <Route path="/admin" element={<AppLayout><AdminPanel /></AppLayout>} />
+              <Route path="/admin/review" element={<AppLayout><AdminReview /></AppLayout>} />
             </Route>
 
           </Routes>
