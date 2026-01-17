@@ -159,6 +159,7 @@ async def spa_guest_init(
 @router.get("/me", response_model=UserContext)
 async def get_me(
     request: Request,
+    response: Response,
     user: User | object | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db)
 ):
@@ -176,15 +177,32 @@ async def get_me(
         )
     
     # Guest Handling
-    guest_id_cookie = request.cookies.get("guest_id")
-    gid = None
-    if guest_id_cookie:
-        try:
-            gid = uuid.UUID(guest_id_cookie)
-        except ValueError:
-            pass
-            
-    guest = await get_or_create_guest(db, gid)
+    # If 'user' is already a GuestProfile object (from dependency), reuse it
+    guest = None
+    if isinstance(user, object) and not isinstance(user, User) and hasattr(user, 'id'):
+         guest = user
+    
+    if not guest:
+        # Fallback or explicity create if dependency returned None (e.g. no cookie)
+        guest_id_cookie = request.cookies.get("guest_id")
+        gid = None
+        if guest_id_cookie:
+            try:
+                gid = uuid.UUID(guest_id_cookie)
+            except ValueError:
+                pass
+                
+        guest = await get_or_create_guest(db, gid)
+    
+    # Always refresh/set cookie
+    response.set_cookie(
+        key="guest_id",
+        value=str(guest.id),
+        max_age=31536000,
+        httponly=True,
+        samesite="lax",
+        secure=False 
+    )
     
     return UserContext(
         user=None,
@@ -225,6 +243,7 @@ async def admin_review_jobs(
 @router.post("/jobs", response_model=JobRead)
 async def create_spa_job(
     req: JobRequestSPA,
+    response: Response,
     user: User | object | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db)
 ):
@@ -234,6 +253,20 @@ async def create_spa_job(
         # But wait, middleware sets cookie. So request from browser ALWAYS has guest_id.
         # If curl without cookie -> User is None.
         raise HTTPException(status_code=401, detail="Authentication required (Cookie)")
+
+    # Guest Cookie Persistence: 
+    # If a new guest was created during dependency resolution (invalid cookie etc), 
+    # we MUST update the client's cookie.
+    if not isinstance(user, User):
+         # It's a guest
+         response.set_cookie(
+            key="guest_id",
+            value=str(user.id),
+            max_age=31536000,
+            httponly=True,
+            samesite="lax",
+            secure=False 
+         )
 
     # 1. Validate Model
     try:
@@ -271,12 +304,20 @@ async def get_job_status(
     if isinstance(user, User):
         stmt = stmt.where(Job.user_id == user.id)
     else:
+        # Debug Guest Access
+        print(f"DEBUG: Guest Check. Job={job_id}, GuestID={user.id}, Type={type(user)}", flush=True)
         stmt = stmt.where(Job.guest_id == user.id)
         
     result = await db.execute(stmt)
     job = result.scalar_one_or_none()
     
     if not job:
+        print(f"DEBUG: Job Not Found or Permission Denied. JobID={job_id}", flush=True)
+        # Debug: Check if job exists at all?
+        j_check = await db.execute(select(Job.guest_id).where(Job.id == job_id))
+        j_real = j_check.scalar_one_or_none()
+        print(f"DEBUG: Real Job GuestID={j_real} vs UserID={user.id}", flush=True)
+        
         raise HTTPException(status_code=404, detail="Job not found")
 
     # Sync Logic: If job is running and is Replicate, maybe fetch live logs?
