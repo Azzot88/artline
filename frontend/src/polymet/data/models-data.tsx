@@ -9,28 +9,36 @@ export interface AIModel {
   description: string                    // Model description
   provider: string                       // Provider name (e.g., "OpenAI", "Stability AI")
   model_ref: string                      // Provider's model ID
-  
+
   // Status and configuration
   is_active: boolean                     // Backend uses 'is_active' instead of status enum
-  ui_config?: Record<string, any>        // JSON config for UI (default values, etc.)
+  ui_config?: {                          // JSON config for UI
+    parameters?: Record<string, {
+      enabled: boolean
+      default?: any
+      allowed_values?: any[]
+      allowed_range?: { min?: number, max?: number, step?: number }
+      custom_label?: string
+    }>
+  }
   cover_image_url?: string               // Model cover image
-  
+
   // Capabilities
   modes?: string[]                       // Available modes (JSON in backend)
   resolutions?: string[]                 // Available resolutions (JSON in backend)
   capabilities: string[]                 // ["text-to-image", "image-to-image", "video"]
-  
+
   // Pricing
   credits_per_generation: number         // Cost per generation
-  
+
   // Statistics (cached)
   total_generations: number              // Total generations with this model
   average_rating?: number                // Average user rating
-  
+
   // Timestamps
   created_at?: string                    // ISO 8601 timestamp
   updated_at?: string                    // ISO 8601 timestamp
-  
+
   // Legacy/computed fields for backward compatibility
   name?: string                          // Alias for display_name
   type?: ModelKind                       // Computed from capabilities
@@ -46,14 +54,14 @@ export interface Provider {
   // Core fields
   provider_id: string                    // Backend uses 'provider_id' (e.g., "replicate")
   encrypted_api_key?: string             // Encrypted API key (admin only)
-  
+
   // Computed/aggregated fields (not in backend table)
   name?: string                          // Display name
   logo?: string                          // Logo URL
   status?: "active" | "inactive"         // Computed from models
   models_count?: number                  // Count of models
   total_generations?: number             // Total generations
-  
+
   // Legacy fields for backward compatibility
   id?: string                            // Alias for provider_id
   modelsCount?: number                   // Alias for models_count
@@ -329,7 +337,7 @@ export const aiModels: AIModel[] = [
 
 // Helper functions
 export function getModelsByProvider(providerId: string): AIModel[] {
-  return aiModels.filter(model => 
+  return aiModels.filter(model =>
     model.provider.toLowerCase().replace(/\s+/g, '') === providerId
   )
 }
@@ -347,7 +355,7 @@ export function getActiveModels(): AIModel[] {
 }
 
 export function getModelsByKind(kind: ModelKind): AIModel[] {
-  return aiModels.filter(model => 
+  return aiModels.filter(model =>
     model.type === kind || model.capabilities.some(cap => cap.includes(kind))
   )
 }
