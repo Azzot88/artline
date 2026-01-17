@@ -37,6 +37,7 @@ class JobRead(BaseModel):
     status: str
     progress: int
     result_url: Optional[str] = None
+    logs: Optional[str] = None
     
     # Metadata
     input_type: str = "text"

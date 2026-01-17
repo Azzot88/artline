@@ -303,19 +303,24 @@ class ReplicateService:
 
         return payload
 
-    def get_prediction(self, provider_job_id: str):
+    async def get_prediction(self, provider_job_id: str):
         """Fetch status of a prediction."""
-        client = get_replicate_client(self.api_key)
-        pred = client.predictions.get(provider_job_id)
+        url = f"{self.BASE_URL}/predictions/{provider_job_id}"
         
-        # Return dict with status/output
-        return {
-            "id": pred.id,
-            "status": pred.status,
-            "output": pred.output,
-            "error": pred.error,
-            "logs": pred.logs
-        }
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(url, headers=self.headers)
+            if resp.status_code != 200:
+                logger.error(f"Failed to get prediction {provider_job_id}: {resp.status_code}")
+                return None
+                
+            data = resp.json()
+            return {
+                "id": data.get("id"),
+                "status": data.get("status"),
+                "output": data.get("output"),
+                "error": data.get("error"),
+                "logs": data.get("logs")
+            }
 
     def parse_input_string(self, raw_text: str) -> tuple[str, Dict[str, Any], str]:
         """

@@ -14,6 +14,7 @@ import { useLanguage } from "@/polymet/components/language-provider"
 import { useModels } from "@/hooks/use-models" // New Hook
 import { api } from "@/lib/api" // API Client
 import { toast } from "sonner" // Toast
+import { GenerationOverlay } from "@/polymet/components/generation-overlay" // Import Overlay
 
 import {
   getEnabledParameters,
@@ -123,6 +124,46 @@ export function Workbench() {
     })
   }
 
+  // Polling State
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [currentJobStatus, setCurrentJobStatus] = useState<string>("idle") // idle, queued, processing, succeeded, failed
+  const [currentJobLogs, setCurrentJobLogs] = useState<string>("")
+
+  const pollJobStatus = async (jobId: string) => {
+    let attempts = 0
+    const maxAttempts = 60 // 2 minutes approx
+
+    const interval = setInterval(async () => {
+      attempts++
+      if (attempts > maxAttempts) {
+        clearInterval(interval)
+        setIsGenerating(false)
+        setCurrentJobStatus("failed")
+        toast.error("Generation timed out")
+        return
+      }
+
+      try {
+        const job: any = await api.get(`/jobs/${jobId}`)
+        setCurrentJobStatus(job.status)
+        if (job.logs) setCurrentJobLogs(job.logs)
+
+        if (job.status === 'succeeded') {
+          clearInterval(interval)
+          setIsGenerating(false)
+          toast.success(t('workbench.toasts.jobStarted')) // Actually finished now
+          // Optionally refresh gallery here?
+        } else if (job.status === 'failed') {
+          clearInterval(interval)
+          setIsGenerating(false)
+          toast.error("Generation failed", { description: job.error_message })
+        }
+      } catch (e) {
+        console.error("Poll error", e)
+      }
+    }, 2000)
+  }
+
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       toast.error(t('workbench.toasts.enterPrompt'))
@@ -130,6 +171,9 @@ export function Workbench() {
     }
 
     setLoading(true)
+    setIsGenerating(true)
+    setCurrentJobStatus("queued")
+    setCurrentJobLogs("")
 
     try {
       const payload = {
@@ -139,14 +183,15 @@ export function Workbench() {
         params: parameterValues
       }
 
-      const res = await api.post<any>("/jobs", payload)
-      toast.success(t('workbench.toasts.jobStarted'), { description: t('workbench.toasts.jobStartedDesc') })
+      const res: any = await api.post<any>("/jobs", payload)
+      // Start polling
+      pollJobStatus(res.id)
 
-      // Reset or redirect?
-      // Typically stay on workbench or go to dashboard
     } catch (err: any) {
       console.error(err)
       toast.error(t('workbench.toasts.genFailed'), { description: err.message || t('workbench.toasts.unknownError') })
+      setIsGenerating(false)
+      setCurrentJobStatus("idle")
     } finally {
       setLoading(false)
     }
@@ -157,6 +202,7 @@ export function Workbench() {
     if (inputType === "image" && !file) return true
     if (!model) return true
     if (modelsLoading) return true
+    if (isGenerating) return true
 
     // Check required parameters
     const requiredParams = allParameters.filter(p => p.required)
@@ -204,6 +250,14 @@ export function Workbench() {
         <CardContent className="p-0">
           {/* Large Main Textarea Area */}
           <div className="relative">
+
+            {/* OVERLAY */}
+            <GenerationOverlay
+              isVisible={isGenerating}
+              status={currentJobStatus}
+              logs={currentJobLogs}
+            />
+
             {/* Top Controls Bar - Input Type Toggle */}
             <div className="absolute top-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-b border-border p-4 z-10">
               <div className="flex flex-wrap items-center gap-4">
@@ -333,7 +387,7 @@ export function Workbench() {
                     credits={modelCredits}
                     onClick={handleGenerate}
                     disabled={isGenerateDisabled()}
-                    loading={loading}
+                    loading={loading && !isGenerating} // Only show old spinner if not using overlay? or keep both? overlay implies loading.
                   />
                 </div>
               </div>

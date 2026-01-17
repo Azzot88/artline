@@ -279,15 +279,35 @@ async def get_job_status(
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    # Sync Logic Reuse?
-    # If job is processing, we might want to trigger sync if not already done recently?
-    # For now, rely on worker updating DB. 
-    # Or reuse the sync logic if provider calls are cheap? 
-    # Current sync logic uses Replicate API. 
-    # Let's keep it passively reading DB for high performance polling, 
-    # assuming webhook/worker updates DB.
-    # If job is stuck in 'processing' for too long, maybe we sync? 
-    # Leave for later optimization.
+    # Sync Logic: If job is running and is Replicate, maybe fetch live logs?
+    if job.status == "running" and job.provider == "replicate" and job.provider_job_id:
+         # We limit this to once every few seconds? 
+         # Or rely on frontend polling rate (2s) which is fine.
+         # Ideally we should cache this result for 1-2s in Redis to avoid spamming Replicate if multiple tabs open.
+         # For now, direct call (MVP).
+         try:
+             # We need ReplicateService
+             # Re-use dependency injection or manual init?
+             # get_replicate_client needs db session.
+             from app.domain.providers.replicate_service import get_replicate_client
+             service = await get_replicate_client(db)
+             
+             pred = await service.get_prediction(job.provider_job_id)
+             if pred:
+                 # Update logs and progress
+                 job.logs = pred.get("logs")
+                 
+                 # Optional: Auto-detect completion if webhook failed?
+                 if pred["status"] == "succeeded" and job.status != "succeeded":
+                     # We could finish it here, but let's stick to logs only for safe read-only
+                     pass
+                     
+                 # Update DB with logs so they persist
+                 # (Optional: might be heavy on write DB if logs are huge? Text is fine).
+                 await db.commit()
+         except Exception as e:
+             # Ignore transient errors during polling
+             pass
     
     return job
 

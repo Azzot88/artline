@@ -63,10 +63,15 @@ async def replicate_webhook(request: Request, db: AsyncSession = Depends(get_db)
         job.status = "succeeded"
         job.progress = 100
         
-        # Replicate output varies. Usually list of URLs for images.
+        # Replicate output varies. usually list of URLs for images.
         # For video, might be string or list.
         # We take the first item if list.
         download_url = None
+        
+        # Save logs if present
+        if "logs" in payload:
+             job.logs = str(payload["logs"])
+
         if isinstance(output, list) and len(output) > 0:
             download_url = output[0]
         elif isinstance(output, str):
