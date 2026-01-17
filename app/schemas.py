@@ -138,7 +138,7 @@ class AIModelRead(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True, protected_namespaces=())
 
 class AIModelCreate(BaseModel):
     # 'name' in request is mapped to display_name (or just use display_name)
@@ -156,6 +156,8 @@ class AIModelCreate(BaseModel):
     cover_image_url: Optional[str] = None
     capabilities: list[str] = []
 
+    model_config = ConfigDict(protected_namespaces=())
+
 class AIModelUpdate(BaseModel):
     display_name: Optional[str] = None
     model_ref: Optional[str] = None
@@ -169,5 +171,9 @@ class AIModelUpdate(BaseModel):
     normalized_caps_json: Optional[dict] = None 
     cost_config_json: Optional[dict] = None
 
+    model_config = ConfigDict(protected_namespaces=())
+
 class ModelSchemaRequest(BaseModel):
     model_ref: str # owner/name or owner/name:version
+
+    model_config = ConfigDict(protected_namespaces=())
