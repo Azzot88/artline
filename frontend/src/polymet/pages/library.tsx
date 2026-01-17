@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { GenerationCard } from "@/polymet/components/generation-card"
+import { GenerationDetailsDialog } from "@/polymet/components/generation-details-dialog"
 import { SparklesIcon, Loader2, ImageIcon } from "lucide-react"
 import { useLanguage } from "@/polymet/components/language-provider"
 import { api } from "@/lib/api"
@@ -70,6 +71,14 @@ export function Library() {
         fetchMyJobs()
     }, [])
 
+    const [selectedGeneration, setSelectedGeneration] = useState<Generation | null>(null)
+    const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+    const handleCardClick = (gen: Generation) => {
+        setSelectedGeneration(gen)
+        setIsDialogOpen(true)
+    }
+
     return (
         <div className="container mx-auto p-6 space-y-6">
             <div className="flex items-center gap-3">
@@ -97,12 +106,22 @@ export function Library() {
                     </p>
                 </div>
             ) : (
-                <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+                <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4 px-1">
                     {generations.map((gen) => (
-                        <GenerationCard key={gen.id} generation={gen} />
+                        <GenerationCard
+                            key={gen.id}
+                            generation={gen}
+                            onClick={handleCardClick}
+                        />
                     ))}
                 </div>
             )}
+
+            <GenerationDetailsDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                generation={selectedGeneration}
+            />
         </div>
     )
 }
