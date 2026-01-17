@@ -46,6 +46,11 @@ export const translations = {
             myGenerations: "Мои генерации",
             noGenerations: "Генерации не найдены",
         },
+        libraryWidget: {
+            title: "Мои генерации",
+            viewAll: "Смотреть все",
+            empty: "Нет генераций"
+        },
         dashboard: {
             title: "Дашборд",
             subtitle: "Управление AI провайдерами и моделями",
@@ -377,6 +382,11 @@ export const translations = {
                 genFailed: "Генерация қатесі",
                 unknownError: "Белгісіз қате"
             },
+            libraryWidget: {
+                title: "Менің генерацияларым",
+                viewAll: "Барлығын көру",
+                empty: "Генерациялар жоқ"
+            },
             loading: "Модельдер жүктелуде...",
             errorLoading: "Модельдерді жүктеу қатесі",
             errorLoadingDesc: "Сервердің жұмыс істеп тұрғанын және авторланғаныңызды тексеріңіз.",
@@ -661,6 +671,11 @@ export const translations = {
                 jobStartedDesc: "Прогрессти галереядан көзөмөлдөй аласыз.",
                 genFailed: "Генерация катасы",
                 unknownError: "Белгисиз ката"
+            },
+            libraryWidget: {
+                title: "Менин генерацияларым",
+                viewAll: "Баарын көрүү",
+                empty: "Генерациялар жок"
             },
             loading: "Моделдер жүктөлүүдө...",
             errorLoading: "Моделдерди жүктөө катасы",
