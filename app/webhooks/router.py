@@ -32,11 +32,15 @@ async def replicate_webhook(request: Request, db: AsyncSession = Depends(get_db)
     error = payload.get("error")
 
     logger.info(f"Webhook received for {provider_job_id}: {status_}")
+    print(f"[Generation Flow] Webhook: Received {provider_job_id} | Status: {status_}", flush=True)
 
     # Find Job
     # We search by provider_job_id
     q = await db.execute(select(Job).where(Job.provider_job_id == provider_job_id))
     job = q.scalar_one_or_none()
+    
+    if job:
+         print(f"[Generation Flow] Webhook: Matched to Job {job.id}", flush=True)
 
     if not job:
         # Might be a job from another environment or deleted

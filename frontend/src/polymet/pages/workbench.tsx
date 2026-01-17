@@ -139,7 +139,9 @@ export function Workbench() {
         params: parameterValues
       }
 
+      console.log("[Generation Flow] Frontend: Sending payload", payload)
       const res = await api.post<any>("/jobs", payload)
+      console.log("[Generation Flow] Frontend: API Response", res)
       toast.success(t('workbench.toasts.jobStarted'), { description: t('workbench.toasts.jobStartedDesc') })
 
       // Reset or redirect?

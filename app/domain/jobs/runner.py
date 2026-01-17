@@ -31,7 +31,7 @@ def process_job(self, job_id: str):
             for j in all_jobs:
                 print(f" -- {j.id} | {j.status} | {j.prompt}")
             return "Job not found"
-        print(f"DEBUG: Job found: {job.id}, Status: {job.status}")
+        print(f"[Generation Flow] Worker: Processing Job {job.id}, Status: {job.status}", flush=True)
 
         provider_cfg = session.execute(
             select(ProviderConfig).where(ProviderConfig.provider_id == 'replicate', ProviderConfig.is_active == True)
@@ -109,13 +109,13 @@ def process_job(self, job_id: str):
              webhook_url = f"{webhook_host}/webhooks/replicate"
         
         try:
-            print(f"DEBUG: Submitting prediction to Ref: {replicate_model_ref}")
+            print(f"[Generation Flow] Worker: Submitting to Ref: {replicate_model_ref} | Payload: {json.dumps(payload)}", flush=True)
             provider_job_id = service.submit_prediction(
                 model_ref=replicate_model_ref,
                 input_data=payload,
                 webhook_url=webhook_url
             )
-            print(f"DEBUG: Submitted successfully. Provider ID: {provider_job_id}")
+            print(f"[Generation Flow] Worker: Submitted successfully. Provider ID: {provider_job_id}", flush=True)
             
             job.status = "running"
             job.provider_job_id = provider_job_id

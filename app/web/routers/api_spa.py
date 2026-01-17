@@ -243,6 +243,7 @@ async def create_spa_job(
         print(f"DEBUG: Job Creation Failed: {code} - {error}", flush=True)
         raise HTTPException(status_code=400, detail={"code": code, "message": error})
         
+    print(f"[Generation Flow] API: Job Created {job.id} for User {user.id if hasattr(user, 'id') else 'guest'}. Model: {req.model_id}", flush=True)
     process_job.delay(job.id)
     return job
 
