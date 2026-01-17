@@ -41,19 +41,11 @@ export function ModelConfig() {
 
   // Unified Config State
   type UIConfigState = {
-    hidden_inputs: string[]
-    defaults: Record<string, any>
-    constraints: Record<string, any>
-    custom_labels: Record<string, string>
+    parameters: Record<string, ExposureConfig>
   }
   const [uiConfig, setUiConfig] = useState<UIConfigState>({
-    hidden_inputs: [],
-    defaults: {},
-    constraints: {},
-    custom_labels: {}
+    parameters: {}
   })
-
-  const [fetchingSchema, setFetchingSchema] = useState(false)
 
   useEffect(() => {
     if (!modelId) return
@@ -74,14 +66,17 @@ export function ModelConfig() {
       setIsActive(m.is_active)
       setModelRef(m.model_ref || "")
 
-      // Load UI config with fallbacks
+      // Load UI config with new structure support
+      // Fallback for old structure if needed (though we are moving to new)
       const savedConfig = m.ui_config || {}
-      setUiConfig({
-        hidden_inputs: savedConfig.hidden_inputs || [],
-        defaults: savedConfig.defaults || {},
-        constraints: savedConfig.constraints || {},
-        custom_labels: savedConfig.custom_labels || {}
-      })
+
+      if (savedConfig.parameters) {
+        setUiConfig({ parameters: savedConfig.parameters })
+      } else {
+        // Attempt migration from old structure if present (optional)
+        // For now, just init empty
+        setUiConfig({ parameters: {} })
+      }
 
       if (m.normalized_caps_json) {
         setCapabilities(m.normalized_caps_json)
@@ -104,7 +99,7 @@ export function ModelConfig() {
         credits: parseInt(credits),
         is_active: isActive,
         model_ref: modelRef,
-        ui_config: uiConfig,
+        ui_config: uiConfig, // Save the whole structure
         normalized_caps_json: capabilities
       })
       toast({ title: "Changes saved" })
@@ -149,60 +144,21 @@ export function ModelConfig() {
   }
 
   // Helper to extract config for a specific parameter
-  function getParamConfig(paramName: string): ParameterConfig {
-    return {
-      hidden: uiConfig.hidden_inputs.includes(paramName),
-      default: uiConfig.defaults[paramName],
-      min: uiConfig.constraints[paramName]?.min,
-      max: uiConfig.constraints[paramName]?.max,
-      allowed_values: uiConfig.constraints[paramName]?.allowed_values,
-      custom_label: uiConfig.custom_labels[paramName]
+  function getParamConfig(paramName: string): ExposureConfig {
+    return uiConfig.parameters[paramName] || {
+      enabled: true, // Default to true if not present
     }
   }
 
   // Helper to update config for a specific parameter
-  function updateParamConfig(paramName: string, newConfig: ParameterConfig) {
-    setUiConfig(prev => {
-      const next = { ...prev }
-
-      // HIDDEN
-      if (newConfig.hidden) {
-        if (!next.hidden_inputs.includes(paramName)) next.hidden_inputs = [...next.hidden_inputs, paramName]
-      } else {
-        next.hidden_inputs = next.hidden_inputs.filter(n => n !== paramName)
+  function updateParamConfig(paramName: string, newConfig: ExposureConfig) {
+    setUiConfig(prev => ({
+      ...prev,
+      parameters: {
+        ...prev.parameters,
+        [paramName]: newConfig
       }
-
-      // DEFAULTS
-      if (newConfig.default !== undefined) {
-        next.defaults = { ...next.defaults, [paramName]: newConfig.default }
-      } else {
-        const { [paramName]: _, ...rest } = next.defaults
-        next.defaults = rest
-      }
-
-      // CUSTOM LABELS
-      if (newConfig.custom_label) {
-        next.custom_labels = { ...next.custom_labels, [paramName]: newConfig.custom_label }
-      } else {
-        const { [paramName]: _, ...rest } = next.custom_labels
-        next.custom_labels = rest
-      }
-
-      // CONSTRAINTS (Nested)
-      const constraints: any = {}
-      if (newConfig.min !== undefined) constraints.min = newConfig.min
-      if (newConfig.max !== undefined) constraints.max = newConfig.max
-      if (newConfig.allowed_values !== undefined) constraints.allowed_values = newConfig.allowed_values
-
-      if (Object.keys(constraints).length > 0) {
-        next.constraints = { ...next.constraints, [paramName]: constraints }
-      } else {
-        const { [paramName]: _, ...rest } = next.constraints
-        next.constraints = rest
-      }
-
-      return next
-    })
+    }))
   }
 
   if (loading) return <div className="p-8">Loading...</div>
