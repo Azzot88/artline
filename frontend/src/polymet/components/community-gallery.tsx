@@ -16,7 +16,6 @@ export function CommunityGallery() {
       try {
         setLoading(true)
         const data = await api.get<Generation[]>("/gallery")
-        console.log("[Gallery Debug] Raw Data:", data)
         if (Array.isArray(data)) {
           // Map and slice
           const mapped = data.slice(0, 6).map((job: any) => {
@@ -52,7 +51,6 @@ export function CommunityGallery() {
               timestamp: job.created_at
             }
           })
-          console.log("[Gallery Debug] Mapped Data:", mapped)
           setGenerations(mapped)
         }
       } catch (e) {

@@ -38,7 +38,6 @@ async def replicate_webhook(request: Request, db: AsyncSession = Depends(get_db)
     error = payload.get("error")
 
     logger.info(f"Webhook received for {provider_job_id}: {status_}")
-    print(f"[Generation Flow] Webhook: Received {provider_job_id} | Status: {status_}", flush=True)
 
     # Find Job
     # We search by provider_job_id
@@ -46,7 +45,8 @@ async def replicate_webhook(request: Request, db: AsyncSession = Depends(get_db)
     job = q.scalar_one_or_none()
     
     if job:
-         print(f"[Generation Flow] Webhook: Matched to Job {job.id}", flush=True)
+         # print(f"[Generation Flow] Webhook: Matched to Job {job.id}", flush=True)
+         pass
 
     if not job:
         # Might be a job from another environment or deleted
@@ -92,7 +92,7 @@ async def replicate_webhook(request: Request, db: AsyncSession = Depends(get_db)
                                 ext = "jpg"
                                 
                             filename = f"generations/{job.id}.{ext}"
-                            print(f"[Generation Flow] Webhook: Uploading to S3 -> {filename}", flush=True)
+                            # print(f"[Generation Flow] Webhook: Uploading to S3 -> {filename}", flush=True)
                             
                             def upload_s3(content, bucket, key):
                                 s3 = boto3.client(
@@ -119,17 +119,17 @@ async def replicate_webhook(request: Request, db: AsyncSession = Depends(get_db)
                             )
                             
                             job.result_url = s3_url
-                            print(f"[Generation Flow] Webhook: S3 Upload Success: {s3_url}", flush=True)
+                            logger.info(f"Uploaded asset to S3: {s3_url}")
                         else:
                             logger.warning("AWS S3 credentials missing. Using remote URL.")
                             job.result_url = download_url
                             
                     else:
-                        print(f"[Generation Flow] Webhook: Failed to download asset: {resp.status_code}", flush=True)
+                        logger.error(f"Failed to download asset: {resp.status_code}")
                         job.result_url = download_url # Fallback to remote
                         
             except Exception as e:
-                print(f"[Generation Flow] Webhook: S3 Upload Exception: {e}", flush=True)
+                logger.error(f"S3 Upload Exception: {e}")
                 job.result_url = download_url # Fallback
         
         await db.commit()
