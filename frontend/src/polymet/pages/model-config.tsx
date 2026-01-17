@@ -56,6 +56,7 @@ export function ModelConfig() {
     try {
       setLoading(true)
       const res = await apiService.getAdminModel(id)
+      console.log("Loaded Model Data:", res)
 
       const m = (res as any).model || res
       setModel(m)
@@ -66,21 +67,25 @@ export function ModelConfig() {
       setIsActive(m.is_active)
       setModelRef(m.model_ref || "")
 
-      // Load UI config with new structure support
-      // Fallback for old structure if needed (though we are moving to new)
-      const savedConfig = m.ui_config || {}
+      // Load UI config with defensive parsing
+      let savedConfig = m.ui_config || {}
+      if (typeof savedConfig === 'string') {
+        try { savedConfig = JSON.parse(savedConfig) } catch (e) { console.error("Failed to parse ui_config", e); savedConfig = {} }
+      }
 
       if (savedConfig.parameters) {
         setUiConfig({ parameters: savedConfig.parameters })
       } else {
-        // Attempt migration from old structure if present (optional)
-        // For now, just init empty
         setUiConfig({ parameters: {} })
       }
 
-      if (m.normalized_caps_json) {
-        setCapabilities(m.normalized_caps_json)
+      // Load Capabilities with defensive parsing
+      let caps = m.normalized_caps_json
+      if (typeof caps === 'string') {
+        try { caps = JSON.parse(caps) } catch (e) { console.error("Failed to parse normalized_caps_json", e); caps = null }
       }
+
+      setCapabilities(caps || { inputs: [] })
 
     } catch (e) {
       console.error(e)
@@ -229,7 +234,7 @@ export function ModelConfig() {
 
                   {/* Parameter Editors List */}
                   <div className="space-y-2">
-                    {capabilities.inputs.map((input: any) => (
+                    {Array.isArray(capabilities.inputs) && capabilities.inputs.map((input: any) => (
                       <ParameterConfigEditor
                         key={input.name}
                         parameter={input}
