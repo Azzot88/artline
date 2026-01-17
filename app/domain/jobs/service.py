@@ -149,3 +149,21 @@ async def get_public_jobs(db: AsyncSession, limit: int = 50, offset: int = 0):
     )
     result = await db.execute(stmt)
     return result.scalars().all()
+
+async def get_review_jobs(db: AsyncSession, limit: int = 50, offset: int = 0):
+    """
+    Fetch jobs that are submitted for review (is_public=True) 
+    but NOT yet curated (is_curated=False).
+    """
+    stmt = (
+        select(Job)
+        .where(Job.is_public == True)
+        .where(Job.is_curated == False)
+        .where(Job.status == 'succeeded') 
+        .where(Job.result_url.isnot(None))
+        .order_by(Job.created_at.asc()) # Oldest first for review queue
+        .limit(limit)
+        .offset(offset)
+    )
+    result = await db.execute(stmt)
+    return result.scalars().all()
