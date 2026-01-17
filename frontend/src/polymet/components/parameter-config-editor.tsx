@@ -7,13 +7,15 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ChevronDown, ChevronRight, Settings2 } from "lucide-react"
 
-export interface ParameterConfig {
-    hidden: boolean
+export interface ExposureConfig {
+    enabled: boolean
     default?: any
-    min?: number
-    max?: number
-    step?: number
-    allowed_values?: any[] // for enums
+    allowed_values?: any[] // for enums or strict lists
+    allowed_range?: {
+        min?: number
+        max?: number
+        step?: number
+    }
     custom_label?: string
 }
 
@@ -28,33 +30,48 @@ interface ParameterConfigEditorProps {
         options?: any[] // Enum options from provider
         help?: string
     }
-    config: ParameterConfig
-    onChange: (newConfig: ParameterConfig) => void
+    config: ExposureConfig
+    onChange: (newConfig: ExposureConfig) => void
 }
 
 export function ParameterConfigEditor({ parameter, config, onChange }: ParameterConfigEditorProps) {
     const [isOpen, setIsOpen] = useState(false)
 
-    const isHidden = config.hidden
+    // Derived state for UI convenience
+    const isEnabled = config.enabled
     const customLabel = config.custom_label || ""
     const defaultValue = config.default !== undefined ? config.default : parameter.default
+    const range = config.allowed_range || {}
 
-    const handleUpdate = (updates: Partial<ParameterConfig>) => {
+    const handleUpdate = (updates: Partial<ExposureConfig>) => {
         onChange({ ...config, ...updates })
     }
 
+    const handleRangeUpdate = (rangeUpdates: { min?: number, max?: number, step?: number }) => {
+        const newRange = { ...config.allowed_range, ...rangeUpdates }
+        // Clean up empty keys
+        if (newRange.min === undefined) delete newRange.min
+        if (newRange.max === undefined) delete newRange.max
+        if (newRange.step === undefined) delete newRange.step
+
+        onChange({
+            ...config,
+            allowed_range: Object.keys(newRange).length > 0 ? newRange : undefined
+        })
+    }
+
     return (
-        <Card className="mb-2 border-l-4" style={{ borderLeftColor: isHidden ? "transparent" : "hsl(var(--primary))" }}>
+        <Card className="mb-2 border-l-4" style={{ borderLeftColor: isEnabled ? "hsl(var(--primary))" : "transparent" }}>
             <div className="p-3 flex items-center gap-3">
                 {/* Visibility Toggle */}
                 <Switch
-                    checked={!isHidden}
-                    onCheckedChange={(checked) => handleUpdate({ hidden: !checked })}
+                    checked={isEnabled}
+                    onCheckedChange={(checked) => handleUpdate({ enabled: checked })}
                 />
 
                 <div className="flex-1 grid gap-1 cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
                     <div className="flex items-center gap-2">
-                        <span className={`font-medium ${isHidden ? "text-muted-foreground line-through" : ""}`}>
+                        <span className={`font-medium ${!isEnabled ? "text-muted-foreground line-through" : ""}`}>
                             {parameter.name}
                         </span>
                         {customLabel && <Badge variant="outline" className="text-xs">{customLabel}</Badge>}
@@ -77,7 +94,7 @@ export function ParameterConfigEditor({ parameter, config, onChange }: Parameter
                             <div className="space-y-1">
                                 <Label className="text-xs">Custom Label</Label>
                                 <Input
-                                    size={30} // React type compliant
+                                    size={30}
                                     className="h-8"
                                     value={customLabel}
                                     onChange={(e) => handleUpdate({ custom_label: e.target.value })}
@@ -123,14 +140,14 @@ export function ParameterConfigEditor({ parameter, config, onChange }: Parameter
 
                         {/* Numeric Constraints */}
                         {(parameter.type === "integer" || parameter.type === "number" || parameter.type === "float") && (
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-3 gap-4">
                                 <div className="space-y-1">
                                     <Label className="text-xs">Min ({parameter.min ?? "-"})</Label>
                                     <Input
                                         type="number"
                                         className="h-8"
-                                        value={config.min ?? ""}
-                                        onChange={(e) => handleUpdate({ min: e.target.value === "" ? undefined : Number(e.target.value) })}
+                                        value={range.min ?? ""}
+                                        onChange={(e) => handleRangeUpdate({ min: e.target.value === "" ? undefined : Number(e.target.value) })}
                                         placeholder={parameter.min?.toString()}
                                     />
                                 </div>
@@ -139,9 +156,18 @@ export function ParameterConfigEditor({ parameter, config, onChange }: Parameter
                                     <Input
                                         type="number"
                                         className="h-8"
-                                        value={config.max ?? ""}
-                                        onChange={(e) => handleUpdate({ max: e.target.value === "" ? undefined : Number(e.target.value) })}
+                                        value={range.max ?? ""}
+                                        onChange={(e) => handleRangeUpdate({ max: e.target.value === "" ? undefined : Number(e.target.value) })}
                                         placeholder={parameter.max?.toString()}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs">Step</Label>
+                                    <Input
+                                        type="number"
+                                        className="h-8"
+                                        value={range.step ?? ""}
+                                        onChange={(e) => handleRangeUpdate({ step: e.target.value === "" ? undefined : Number(e.target.value) })}
                                     />
                                 </div>
                             </div>
