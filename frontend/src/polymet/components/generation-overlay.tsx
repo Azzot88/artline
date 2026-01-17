@@ -1,26 +1,25 @@
-```typescript
 import { Loader2, SparklesIcon } from "lucide-react"
 import { motion } from "framer-motion"
 
 interface GenerationOverlayProps {
-  isVisible: boolean
-  status: string // 'queued', 'processing', 'succeeded', 'failed'
-  progress?: number
-  logs?: string
+    isVisible: boolean
+    status: string // 'queued', 'processing', 'succeeded', 'failed'
+    progress?: number
+    logs?: string
 }
 
 export function GenerationOverlay({ isVisible, status, progress, logs }: GenerationOverlayProps) {
-  if (!isVisible) return null
+    if (!isVisible) return null
 
-  // extract last meaningful log line
-  const getLastLog = (text?: string) => {
-      if (!text) return null
-      const lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0)
-      if (lines.length === 0) return null
-      return lines[lines.length - 1]
-  }
+    // extract last meaningful log line
+    const getLastLog = (text?: string) => {
+        if (!text) return null
+        const lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0)
+        if (lines.length === 0) return null
+        return lines[lines.length - 1]
+    }
 
-  const logStatus = getLastLog(logs)
+    const logStatus = getLastLog(logs)
 
 
     return (
@@ -41,8 +40,8 @@ export function GenerationOverlay({ isVisible, status, progress, logs }: Generat
                         Generating...
                     </h3>
                     <p className="text-sm text-muted-foreground animate-pulse text-center max-w-[250px] truncate">
-                {logStatus || (status === 'queued' ? "Waiting for GPU..." : "Creating your masterpiece...")}
-            </p>
+                        {logStatus || (status === 'queued' ? "Waiting for GPU..." : "Creating your masterpiece...")}
+                    </p>
                 </div>
 
                 {/* Progress Bar (Fake or Real) */}
