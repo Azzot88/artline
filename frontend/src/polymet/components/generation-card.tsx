@@ -43,14 +43,27 @@ export function GenerationCard({ generation, onClick }: GenerationCardProps) {
       className="break-inside-avoid overflow-hidden group cursor-pointer hover:shadow-lg transition-all border border-border/60 hover:border-primary/50"
       onClick={handleClick}
     >
-      {/* Image */}
+      {/* Media */}
       <div className="relative bg-muted overflow-hidden">
-        <img
-          src={generation.url}
-          alt={generation.prompt}
-          className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
-          style={{ aspectRatio: `${generation.width}/${generation.height}` }}
-        />
+        {generation.type === "video" ? (
+          <video
+            src={generation.url}
+            className="w-full h-auto object-cover"
+            style={{ aspectRatio: `${generation.width}/${generation.height}` }}
+            muted
+            loop
+            playsInline
+            onMouseEnter={(e) => e.currentTarget.play()}
+            onMouseLeave={(e) => e.currentTarget.pause()}
+          />
+        ) : (
+          <img
+            src={generation.url}
+            alt={generation.prompt}
+            className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
+            style={{ aspectRatio: `${generation.width}/${generation.height}` }}
+          />
+        )}
 
         {/* Hover Overlay */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">

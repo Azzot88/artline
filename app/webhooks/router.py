@@ -84,8 +84,9 @@ async def replicate_webhook(request: Request, db: AsyncSession = Depends(get_db)
                         # 2. Upload to S3
                         if settings.AWS_ACCESS_KEY_ID and settings.AWS_BUCKET_NAME:
                             ext = "png" # Default
-                            if job.kind == "video":
+                            if job.kind == "video" or ".mp4" in download_url:
                                 ext = "mp4"
+                                job.kind = "video" # Auto-correct kind if detected
                             elif ".webp" in download_url:
                                 ext = "webp"
                             elif ".jpg" in download_url:
