@@ -258,6 +258,12 @@ async def test_LIVE_replicate_generation(client: AsyncClient, seed_env):
         # We'll create a guest job.
         guest_id = uuid.uuid4()
         
+        # Create Guest Profile first (Satisfy FK)
+        from app.models import GuestProfile
+        guest_profile = GuestProfile(id=guest_id, balance=1000)
+        session.add(guest_profile)
+        await session.flush() # Ensure it exists before job refers to it
+
         job_id = str(uuid.uuid4()) # ID must be string per model definition
         job = Job(
             id=job_id,
