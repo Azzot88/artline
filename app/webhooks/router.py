@@ -9,6 +9,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+
+import httpx
+import boto3
+import asyncio
+from app.core.config import settings
 
 @router.post("/replicate")
 async def replicate_webhook(request: Request, db: AsyncSession = Depends(get_db)):
@@ -60,10 +66,71 @@ async def replicate_webhook(request: Request, db: AsyncSession = Depends(get_db)
         # Replicate output varies. Usually list of URLs for images.
         # For video, might be string or list.
         # We take the first item if list.
+        download_url = None
         if isinstance(output, list) and len(output) > 0:
-            job.result_url = output[0]
+            download_url = output[0]
         elif isinstance(output, str):
-            job.result_url = output
+            download_url = output
+
+        if download_url:
+            try:
+                # 1. Download Content
+                async with httpx.AsyncClient() as client:
+                    resp = await client.get(download_url, follow_redirects=True, timeout=60.0)
+                    
+                    if resp.status_code == 200:
+                        file_content = resp.content
+                        
+                        # 2. Upload to S3
+                        if settings.AWS_ACCESS_KEY_ID and settings.AWS_BUCKET_NAME:
+                            ext = "png" # Default
+                            if job.kind == "video":
+                                ext = "mp4"
+                            elif ".webp" in download_url:
+                                ext = "webp"
+                            elif ".jpg" in download_url:
+                                ext = "jpg"
+                                
+                            filename = f"generations/{job.id}.{ext}"
+                            print(f"[Generation Flow] Webhook: Uploading to S3 -> {filename}", flush=True)
+                            
+                            def upload_s3(content, bucket, key):
+                                s3 = boto3.client(
+                                    's3',
+                                    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                                    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                                    region_name=settings.AWS_REGION
+                                )
+                                s3.put_object(
+                                    Bucket=bucket,
+                                    Key=key,
+                                    Body=content,
+                                    ContentType=f"image/{ext}" if ext != "mp4" else "video/mp4",
+                                )
+                                return f"https://{bucket}.s3.{settings.AWS_REGION}.amazonaws.com/{key}"
+
+                            loop = asyncio.get_event_loop()
+                            s3_url = await loop.run_in_executor(
+                                None, 
+                                upload_s3, 
+                                file_content, 
+                                settings.AWS_BUCKET_NAME, 
+                                filename
+                            )
+                            
+                            job.result_url = s3_url
+                            print(f"[Generation Flow] Webhook: S3 Upload Success: {s3_url}", flush=True)
+                        else:
+                            logger.warning("AWS S3 credentials missing. Using remote URL.")
+                            job.result_url = download_url
+                            
+                    else:
+                        print(f"[Generation Flow] Webhook: Failed to download asset: {resp.status_code}", flush=True)
+                        job.result_url = download_url # Fallback to remote
+                        
+            except Exception as e:
+                print(f"[Generation Flow] Webhook: S3 Upload Exception: {e}", flush=True)
+                job.result_url = download_url # Fallback
         
         await db.commit()
     
