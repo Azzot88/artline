@@ -20,11 +20,19 @@ export function Library() {
 
                 if (Array.isArray(data)) {
                     const mapped = data.map((job: any) => {
-                        // Basic Aspect Ratio Logic
+                        // Strict Dimension Logic based on Backend 'format'
+                        // Default to square
                         let width = 1024;
                         let height = 1024;
-                        if (job.format === "portrait") { width = 768; height = 1024; }
-                        if (job.format === "landscape") { width = 1024; height = 768; }
+
+                        // Override based on format field
+                        if (job.format === "portrait") {
+                            width = 576;
+                            height = 1024;
+                        } else if (job.format === "landscape") {
+                            width = 1024;
+                            height = 576;
+                        }
 
                         // Clean prompt
                         let cleanPrompt = job.prompt || "";
