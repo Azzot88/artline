@@ -34,11 +34,22 @@ export function LibraryWidget({ refreshTrigger, newGeneration }: LibraryWidgetPr
                     // data.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
                     const mapped = data.map((job: any) => {
-                        // Basic Aspect Ratio Logic
+                        // Strict Dimension Logic based on Backend 'format'
+                        // Default to square
                         let width = 1024;
                         let height = 1024;
-                        if (job.format === "portrait") { width = 768; height = 1024; }
-                        if (job.format === "landscape") { width = 1024; height = 768; }
+
+                        // Override based on format field (which we now populate correctly in backend)
+                        if (job.format === "portrait") {
+                            // 9:16 ratio approx
+                            width = 576;
+                            height = 1024;
+                        } else if (job.format === "landscape") {
+                            // 16:9 ratio approx
+                            width = 1024;
+                            height = 576;
+                        }
+                        // If square, leave as 1024x1024
 
                         // Clean prompt
                         let cleanPrompt = job.prompt || "";

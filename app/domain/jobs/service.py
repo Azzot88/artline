@@ -91,6 +91,26 @@ async def create_job(
     if params:
         try:
             params_str = json.dumps(params or {})
+            
+            # Extract metadata for columns
+            ar = params.get("aspect_ratio", "1:1")
+            
+            # Map common ARs to format enum
+            if ar in ["9:16", "9:21", "2:3", "3:4", "4:5"]:
+                job.format = "portrait"
+            elif ar in ["16:9", "21:9", "3:2", "4:3", "5:4"]:
+                job.format = "landscape"
+            else:
+                job.format = "square"
+                
+            # Resolution (if available)
+            if "width" in params and "height" in params:
+                 # This is rare for Flux/Replicate inputs which use AR, but good to have
+                 pass
+            
+            # Megapixels via 'megapixels'? Flux uses '1' or '0.25' sometimes
+            # Just default to 1080 for now unless we see explicit data
+            
         except:
              pass
     
