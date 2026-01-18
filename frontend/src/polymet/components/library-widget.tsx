@@ -60,6 +60,8 @@ export function LibraryWidget({ refreshTrigger, newGeneration }: LibraryWidgetPr
                             image: job.result_url || job.image,
                             prompt: cleanPrompt,
                             model: job.model_id || "Flux",
+                            model_name: job.model_name,
+                            duration: job.duration,
                             provider: "replicate",
                             credits: job.credits_spent || 1,
                             likes: job.likes || 0,

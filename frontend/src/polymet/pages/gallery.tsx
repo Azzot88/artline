@@ -26,21 +26,39 @@ export function Gallery() {
         // For now trusting the shape or simple mapping
         const mapped = data.map((job: any) => ({
           id: job.id,
-          image: job.result_url || job.image || "https://placehold.co/600x400?text=Processing", // Fallback
-          prompt: job.prompt,
-          model: job.model_id || "flux-pro", // Fallback
+          // Required Generation fields
+          kind: job.kind || "image",
+          status: job.status || "succeeded",
+          // Content
+          url: job.result_url || job.image || "https://placehold.co/600x400?text=Processing",
+          image: job.result_url || job.image, // Legacy support
+          prompt: job.prompt || "",
+
+          model_name: job.model_id || "Flux",
+          model_id: job.model_id,
           provider: "replicate",
-          aspectRatio: job.format === "portrait" ? "2:3" : job.format === "landscape" ? "3:2" : "1:1",
-          credits: job.credits_spent || 1,
+
+          // Dimensions
+          width: job.width || (job.format === "portrait" ? 768 : job.format === "landscape" ? 1024 : 1024),
+          height: job.height || (job.format === "portrait" ? 1024 : job.format === "landscape" ? 768 : 1024),
+
+          // Stats
+          credits_spent: job.credits_spent || 1,
           likes: job.likes || 0,
           views: job.views || 0,
-          author: {
-            name: "User", // user.username
-            avatar: "https://github.com/shadcn.png"
-          },
-          timestamp: job.created_at,
-          isVideo: job.kind === "video"
-        }))
+          is_public: true,
+          is_curated: false,
+
+          // User
+          user_name: "User",
+          user_avatar: "https://github.com/shadcn.png",
+
+          // Tech details
+          input_type: "text",
+          format: job.format || "square",
+          resolution: "1080",
+          created_at: job.created_at || new Date().toISOString()
+        } as Generation))
         setGenerations(mapped)
       }
     } catch (err) {

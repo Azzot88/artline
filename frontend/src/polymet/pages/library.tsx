@@ -47,6 +47,8 @@ export function Library() {
 
                             prompt: cleanPrompt,
                             model: job.model_id || "Flux",
+                            model_name: job.model_name,
+                            duration: job.duration,
                             provider: "replicate",
 
                             credits: job.credits_spent || 1,

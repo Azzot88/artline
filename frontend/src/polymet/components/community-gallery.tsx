@@ -36,29 +36,34 @@ export function CommunityGallery() {
 
             return {
               id: job.id,
-              // Fields for GenerationCard
+              kind: job.kind || "image",
+              status: job.status || "succeeded",
+
               url: job.result_url,
               image: job.result_url,
 
               prompt: cleanPrompt,
-              model: job.model_id || "Flux",
+              model_name: job.model_id || "Flux",
+              model_id: job.model_id,
               provider: "replicate",
 
-              credits: job.credits_spent || 1,
+              credits_spent: job.credits_spent || 1,
               likes: job.likes || 0,
               views: job.views || 0,
+              is_public: true,
+              is_curated: false,
 
-              // User Info
-              userName: "User",
-              userAvatar: "https://github.com/shadcn.png",
+              user_name: "User",
+              user_avatar: "https://github.com/shadcn.png",
 
-              // Data
               width: width,
               height: height,
-              type: job.kind, // Card uses .type
-              kind: job.kind,
-              timestamp: job.created_at
-            }
+              created_at: job.created_at,
+
+              input_type: "text",
+              format: job.format || "square",
+              resolution: "1080"
+            } as Generation
           })
           setGenerations(mapped)
         }

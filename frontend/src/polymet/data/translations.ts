@@ -51,6 +51,33 @@ export const translations = {
             viewAll: "Смотреть все",
             empty: "Нет генераций"
         },
+        generationDetails: {
+            title: "Детали генерации",
+            prompt: "Промпт",
+            model: "Модель",
+            resolution: "Разрешение",
+            format: "Формат",
+            duration: "Длительность",
+            cost: "Стоимость",
+            date: "Дата",
+            download: "Скачать",
+            delete: "Удалить",
+            copyPrompt: "Копировать",
+            readMore: "Читать далее",
+            readLess: "Свернуть",
+            copied: "Скопировано",
+            status: {
+                queued: "В очереди",
+                running: "Генерация...",
+                succeeded: "Готово",
+                failed: "Ошибка"
+            },
+            units: {
+                pixels: "px",
+                seconds: "сек",
+                credits: "кр"
+            }
+        },
         dashboard: {
             title: "Дашборд",
             subtitle: "Управление AI провайдерами и моделями",
@@ -387,6 +414,33 @@ export const translations = {
                 viewAll: "Барлығын көру",
                 empty: "Генерациялар жоқ"
             },
+            generationDetails: {
+                title: "Генерация мәліметтері",
+                prompt: "Промпт",
+                model: "Модель",
+                resolution: "Өлшемі",
+                format: "Формат",
+                duration: "Ұзақтығы",
+                cost: "Құны",
+                date: "Күні",
+                download: "Жүктеу",
+                delete: "Жою",
+                copyPrompt: "Көшіру",
+                readMore: "Толығырақ",
+                readLess: "Жасыру",
+                copied: "Көшірілді",
+                status: {
+                    queued: "Кезекте",
+                    running: "Дайындалуда...",
+                    succeeded: "Дайын",
+                    failed: "Қате"
+                },
+                units: {
+                    pixels: "px",
+                    seconds: "сек",
+                    credits: "кр"
+                }
+            },
             loading: "Модельдер жүктелуде...",
             errorLoading: "Модельдерді жүктеу қатесі",
             errorLoadingDesc: "Сервердің жұмыс істеп тұрғанын және авторланғаныңызды тексеріңіз.",
@@ -676,6 +730,33 @@ export const translations = {
                 title: "Менин генерацияларым",
                 viewAll: "Баарын көрүү",
                 empty: "Генерациялар жок"
+            },
+            generationDetails: {
+                title: "Генерация маолыматы",
+                prompt: "Промпт",
+                model: "Модель",
+                resolution: "Өлчөмү",
+                format: "Формат",
+                duration: "Узактыгы",
+                cost: "Баасы",
+                date: "Күнү",
+                download: "Жүктөө",
+                delete: "Өчүрүү",
+                copyPrompt: "Көчүрүү",
+                readMore: "Толугураак",
+                readLess: "Жашыруу",
+                copied: "Көчүрүлдү",
+                status: {
+                    queued: "Кезекте",
+                    running: "Даярдалууда...",
+                    succeeded: "Даяр",
+                    failed: "Ката"
+                },
+                units: {
+                    pixels: "px",
+                    seconds: "сек",
+                    credits: "кр"
+                }
             },
             loading: "Моделдер жүктөлүүдө...",
             errorLoading: "Моделдерди жүктөө катасы",
