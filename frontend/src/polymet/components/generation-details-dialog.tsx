@@ -3,18 +3,22 @@ import { Generation } from "@/polymet/data/types"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { DownloadIcon, Share2Icon, CopyIcon, CalendarIcon, FileImageIcon, BoxIcon, MaximizeIcon } from "lucide-react"
+import { DownloadIcon, Share2Icon, CopyIcon, CalendarIcon, FileImageIcon, BoxIcon, MaximizeIcon, Trash2Icon } from "lucide-react"
 import { useLanguage } from "@/polymet/components/language-provider"
 import { toast } from "sonner"
+import { api } from "@/lib/api"
+import { useState } from "react"
 
 interface GenerationDetailsDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     generation: Generation | null
+    onDelete?: (id: string) => void
 }
 
-export function GenerationDetailsDialog({ open, onOpenChange, generation }: GenerationDetailsDialogProps) {
+export function GenerationDetailsDialog({ open, onOpenChange, generation, onDelete }: GenerationDetailsDialogProps) {
     const { t } = useLanguage()
+    const [isDeleting, setIsDeleting] = useState(false)
 
     if (!generation) return null
 
@@ -23,14 +27,44 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation }: Gene
         toast.success("Prompt copied to clipboard")
     }
 
-    const handleDownload = () => {
-        // Create a temporary link to force download
-        const link = document.createElement("a");
-        link.href = generation.url;
-        link.download = `generation-${generation.id}.${generation.url.split('.').pop()}`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    const handleDownload = async () => {
+        try {
+            // Force download by fetching blob
+            const response = await fetch(generation.url);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            // Guess extension
+            const ext = generation.type === 'video' ? 'mp4' : 'png';
+            link.download = `generation-${generation.id}.${ext}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error("Download failed", e)
+            toast.error("Failed to download file")
+            // Fallback
+            window.open(generation.url, '_blank')
+        }
+    }
+
+    const handleDelete = async () => {
+        if (!confirm("Are you sure you want to delete this file? This cannot be undone.")) return;
+
+        setIsDeleting(true)
+        try {
+            await api.delete(`/jobs/${generation.id}`)
+            toast.success("File deleted")
+            onOpenChange(false)
+            if (onDelete) onDelete(generation.id)
+        } catch (e) {
+            console.error("Delete failed", e)
+            toast.error("Failed to delete file")
+        } finally {
+            setIsDeleting(false)
+        }
     }
 
     const aspectRatio = `${generation.width}x${generation.height}`
@@ -126,12 +160,11 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation }: Gene
                                 <DownloadIcon className="w-4 h-4 mr-2" />
                                 Download
                             </Button>
-                            {/* 
-                <Button variant="outline" className="w-full">
-                    <Share2Icon className="w-4 h-4 mr-2" />
-                    Share Link
-                </Button> 
-                */}
+
+                            <Button variant="ghost" className="w-full text-destructive hover:text-destructive hover:bg-destructive/10" onClick={handleDelete} disabled={isDeleting}>
+                                <Trash2Icon className="w-4 h-4 mr-2" />
+                                {isDeleting ? "Deleting..." : "Delete File"}
+                            </Button>
                         </div>
 
                     </div>

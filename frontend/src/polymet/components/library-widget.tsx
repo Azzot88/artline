@@ -125,20 +125,21 @@ export function LibraryWidget({ refreshTrigger, newGeneration }: LibraryWidgetPr
                     </div>
                 ) : (
                     <div className="relative">
-                        {/* Horizontal Scroll Container */}
-                        <div className="flex items-start overflow-x-auto pb-6 gap-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+                        {/* Horizontal Scroll Container - Filmstrip Mode */}
+                        <div className="flex items-start overflow-x-auto pb-6 gap-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 h-[320px]">
                             {generations.slice(0, 10).map((gen) => (
-                                <div key={gen.id} className="flex-none w-[280px] snap-start">
+                                <div key={gen.id} className="flex-none h-[280px] snap-start">
                                     <GenerationCard
                                         generation={gen}
                                         onClick={handleCardClick}
+                                        layoutMode="fixed-height"
                                     />
                                 </div>
                             ))}
 
                             {/* View More Card */}
                             {generations.length > 5 && (
-                                <div className="flex-none w-[100px] flex items-center justify-center snap-start">
+                                <div className="flex-none h-[280px] flex items-center justify-center snap-start w-[100px]">
                                     <Link
                                         to="/library"
                                         className="flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors p-4"
@@ -159,6 +160,9 @@ export function LibraryWidget({ refreshTrigger, newGeneration }: LibraryWidgetPr
                 open={detailsOpen}
                 onOpenChange={setDetailsOpen}
                 generation={selectedGeneration}
+                onDelete={(id) => {
+                    setGenerations(prev => prev.filter(g => g.id !== id))
+                }}
             />
         </>
     )
