@@ -40,7 +40,7 @@ export function GenerationCard({ generation, onClick }: GenerationCardProps) {
 
   const CardContent = (
     <Card
-      className="break-inside-avoid overflow-hidden group cursor-pointer hover:shadow-lg transition-all border border-border/60 hover:border-primary/50"
+      className="break-inside-avoid overflow-hidden group cursor-pointer hover:shadow-lg transition-all border border-border/60 hover:border-primary/50 relative isolate transform-gpu rounded-xl"
       onClick={handleClick}
     >
       {/* Media */}
@@ -48,7 +48,8 @@ export function GenerationCard({ generation, onClick }: GenerationCardProps) {
         {generation.type === "video" ? (
           <video
             src={generation.url}
-            className="w-full h-auto object-cover"
+            poster={generation.image}
+            className="w-full h-auto object-cover rounded-[inherit]"
             style={{ aspectRatio: `${generation.width}/${generation.height}` }}
             muted
             loop
@@ -60,7 +61,7 @@ export function GenerationCard({ generation, onClick }: GenerationCardProps) {
           <img
             src={generation.url}
             alt={generation.prompt}
-            className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500 rounded-[inherit] will-change-transform"
             style={{ aspectRatio: `${generation.width}/${generation.height}` }}
           />
         )}
