@@ -20,18 +20,16 @@ export function Library() {
 
                 if (Array.isArray(data)) {
                     const mapped = data.map((job: any) => {
-                        // Strict Dimension Logic based on Backend 'format'
-                        // Default to square
-                        let width = 1024;
-                        let height = 1024;
+                        // 1. Prefer Real DB Dimensions
+                        let width = job.width;
+                        let height = job.height;
 
-                        // Override based on format field
-                        if (job.format === "portrait") {
-                            width = 576;
-                            height = 1024;
-                        } else if (job.format === "landscape") {
+                        // 2. Fallback to Format Logic
+                        if (!width || !height) {
                             width = 1024;
-                            height = 576;
+                            height = 1024;
+                            if (job.format === "portrait") { width = 576; height = 1024; }
+                            if (job.format === "landscape") { width = 1024; height = 576; }
                         }
 
                         // Clean prompt

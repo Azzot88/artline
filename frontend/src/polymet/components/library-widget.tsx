@@ -34,22 +34,17 @@ export function LibraryWidget({ refreshTrigger, newGeneration }: LibraryWidgetPr
                     // data.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
                     const mapped = data.map((job: any) => {
-                        // Strict Dimension Logic based on Backend 'format'
-                        // Default to square
-                        let width = 1024;
-                        let height = 1024;
+                        // 1. Prefer Real DB Dimensions
+                        let width = job.width;
+                        let height = job.height;
 
-                        // Override based on format field (which we now populate correctly in backend)
-                        if (job.format === "portrait") {
-                            // 9:16 ratio approx
-                            width = 576;
-                            height = 1024;
-                        } else if (job.format === "landscape") {
-                            // 16:9 ratio approx
+                        // 2. Fallback to Format Logic (for old jobs or missing data)
+                        if (!width || !height) {
                             width = 1024;
-                            height = 576;
+                            height = 1024;
+                            if (job.format === "portrait") { width = 576; height = 1024; }
+                            if (job.format === "landscape") { width = 1024; height = 576; }
                         }
-                        // If square, leave as 1024x1024
 
                         // Clean prompt
                         let cleanPrompt = job.prompt || "";
