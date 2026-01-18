@@ -121,6 +121,9 @@ export function Library() {
                 open={isDialogOpen}
                 onOpenChange={setIsDialogOpen}
                 generation={selectedGeneration}
+                onDelete={(id) => {
+                    setGenerations(prev => prev.filter(g => g.id !== id))
+                }}
             />
         </div>
     )

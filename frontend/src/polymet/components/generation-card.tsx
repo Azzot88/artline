@@ -40,7 +40,7 @@ export function GenerationCard({ generation, onClick, layoutMode = "fixed-width"
 
   const CardContent = (
     <Card
-      className={`break-inside-avoid overflow-hidden group cursor-pointer hover:shadow-lg transition-all border border-border/60 hover:border-primary/50 relative isolate transform-gpu rounded-xl ${layoutMode === 'fixed-height' ? 'h-full w-auto aspect-auto inline-block' : 'w-full h-auto'}`}
+      className={`break-inside-avoid overflow-hidden group cursor-pointer hover:shadow-lg transition-all border border-border/60 hover:border-primary/50 relative isolate transform-gpu rounded-xl ${layoutMode === 'fixed-height' ? 'h-full w-auto aspect-auto inline-flex' : 'w-full h-auto'}`}
       style={layoutMode === 'fixed-width' ? { aspectRatio } : undefined}
       onClick={handleClick}
     >
