@@ -67,7 +67,7 @@ export function GenerationCard({ generation, onClick }: GenerationCardProps) {
         )}
 
         {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
           <div className="bg-black/60 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur-md">
             Click for details
           </div>

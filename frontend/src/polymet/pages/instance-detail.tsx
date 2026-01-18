@@ -1,14 +1,17 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
-import { getGenerationById } from "@/polymet/data/generations-data"
 import { useLanguage } from "@/polymet/components/language-provider"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
-import { 
-  HeartIcon, 
+import { api } from "@/lib/api"
+import { Generation } from "@/polymet/data/types"
+import { Loader2 } from "lucide-react"
+
+import {
+  HeartIcon,
   CoinsIcon,
   DownloadIcon,
   Share2Icon,
@@ -23,24 +26,91 @@ import {
 } from "lucide-react"
 
 export function InstanceDetail() {
-  const { instanceId = "gen-001" } = useParams()
+  const { instanceId } = useParams()
   const { t } = useLanguage()
-  const generation = getGenerationById(instanceId)
+
+  const [generation, setGeneration] = useState<Generation | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
   const [isLiked, setIsLiked] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  const [editedPrompt, setEditedPrompt] = useState(generation?.prompt || "")
+  const [editedPrompt, setEditedPrompt] = useState("")
 
-  if (!generation) {
+  useEffect(() => {
+    if (!instanceId) return;
+
+    const fetchGen = async () => {
+      try {
+        setLoading(true)
+        const job: any = await api.get(`/jobs/${instanceId}`)
+
+        // Map backend job to Generation UI type
+        const width = job.format === "portrait" ? 768 : (job.format === "landscape" ? 1024 : 1024);
+        const height = job.format === "portrait" ? 1024 : (job.format === "landscape" ? 768 : 1024);
+        let cleanPrompt = job.prompt || "";
+        if (cleanPrompt.includes("|")) cleanPrompt = cleanPrompt.split("|").pop().trim();
+        else if (cleanPrompt.startsWith("[")) cleanPrompt = cleanPrompt.replace(/\[.*?\]\s*/, "").trim();
+
+        const mapped: Generation = {
+          id: job.id,
+          url: job.result_url || job.image,
+          image: job.result_url || job.image,
+          prompt: cleanPrompt,
+          model: job.model_id || "Flux",
+          provider: "replicate",
+          credits: job.credits_spent || 1,
+          likes: job.likes || 0,
+          views: job.views || 0,
+          userName: job.user ? (job.user.is_admin ? "Admin" : (job.user.username || job.user.email)) : "Guest",
+          userAvatar: "https://github.com/shadcn.png",
+          width: width,
+          height: height,
+          type: job.kind as any,
+          kind: job.kind as any,
+          // Ensure date string is compatible
+          created_at: job.created_at,
+          createdAt: job.created_at, // Map for both if needed by legacy
+          status: job.status,
+          is_public: job.is_public,
+          is_curated: job.is_curated,
+          input_type: "text", // Default
+          format: job.format || "square",
+          resolution: job.resolution || "1080",
+          credits_spent: job.credits_spent || 1,
+        } as any
+
+        setGeneration(mapped)
+        setEditedPrompt(mapped.prompt)
+      } catch (e) {
+        console.error(e)
+        setError(true)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchGen()
+  }, [instanceId])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error || !generation) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
         <ImageIcon className="w-16 h-16 text-muted-foreground" />
-        <h2 className="text-2xl font-bold">{t.notFound}</h2>
-        <p className="text-muted-foreground">{t.instance} не найден</p>
+        <h2 className="text-2xl font-bold">{t.notFound || "Not Found"}</h2>
+        <p className="text-muted-foreground">{t.instance || "Instance"} не найден</p>
         <Button asChild>
           <Link to="/gallery">
             <ArrowLeftIcon className="w-4 h-4 mr-2" />
-            {t.gallery}
+            {t.gallery || "Gallery"}
           </Link>
         </Button>
       </div>
@@ -112,8 +182,8 @@ export function InstanceDetail() {
               <div className="relative bg-muted flex items-center justify-center">
                 {generation.type === "video" ? (
                   <div className="relative w-full" style={{ aspectRatio: `${generation.width}/${generation.height}` }}>
-                    <img 
-                      src={generation.url} 
+                    <img
+                      src={generation.url}
                       alt={generation.prompt}
                       className="w-full h-full object-contain"
                     />
@@ -130,8 +200,8 @@ export function InstanceDetail() {
                     </div>
                   </div>
                 ) : (
-                  <img 
-                    src={generation.url} 
+                  <img
+                    src={generation.url}
                     alt={generation.prompt}
                     className="w-full h-auto object-contain"
                     style={{ aspectRatio: `${generation.width}/${generation.height}` }}
@@ -143,7 +213,7 @@ export function InstanceDetail() {
 
           {/* Actions */}
           <div className="flex flex-wrap gap-3 mt-4">
-            <Button 
+            <Button
               onClick={handleLike}
               variant={isLiked ? "default" : "outline"}
               className="flex-1 min-w-[120px]"
@@ -151,7 +221,7 @@ export function InstanceDetail() {
               <HeartIcon className={`w-4 h-4 mr-2 ${isLiked ? "fill-current" : ""}`} />
               {isLiked ? "Понравилось" : "Нравится"}
             </Button>
-            <Button 
+            <Button
               variant="outline"
               onClick={handleDownload}
               className="flex-1 min-w-[120px]"
@@ -159,7 +229,7 @@ export function InstanceDetail() {
               <DownloadIcon className="w-4 h-4 mr-2" />
               {t.download}
             </Button>
-            <Button 
+            <Button
               variant="outline"
               onClick={handleShare}
               className="flex-1 min-w-[120px]"
@@ -176,8 +246,8 @@ export function InstanceDetail() {
           <Card>
             <CardContent className="p-6 space-y-4">
               <div className="flex items-center gap-3">
-                <img 
-                  src={generation.userAvatar} 
+                <img
+                  src={generation.userAvatar}
                   alt={generation.userName}
                   className="w-12 h-12 rounded-full"
                 />
@@ -217,8 +287,8 @@ export function InstanceDetail() {
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold">Промпт</h3>
                 {!isEditing && (
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     variant="ghost"
                     onClick={() => setIsEditing(true)}
                   >
@@ -237,16 +307,16 @@ export function InstanceDetail() {
                     placeholder="Введите промпт..."
                   />
                   <div className="flex gap-2">
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       onClick={handleSaveEdit}
                       className="flex-1"
                     >
                       <SaveIcon className="w-3.5 h-3.5 mr-1" />
                       {t.save}
                     </Button>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
                       onClick={handleCancelEdit}
                       className="flex-1"
@@ -266,7 +336,7 @@ export function InstanceDetail() {
           <Card>
             <CardContent className="p-6 space-y-4">
               <h3 className="font-semibold">Детали генерации</h3>
-              
+
               <div className="space-y-3">
                 {/* Model */}
                 <div className="flex items-start justify-between">

@@ -38,10 +38,11 @@ export default function AIWorkbenchApp() {
             <Route path="/workbench" element={<AppLayout><Workbench /></AppLayout>} />
             <Route path="/library" element={<AppLayout><Library /></AppLayout>} />
             <Route path="/gallery" element={<AppLayout><Gallery /></AppLayout>} />
+            <Route path="/instance/:instanceId" element={<AppLayout><InstanceDetail /></AppLayout>} />
 
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
-              <Route path="/instance/:instanceId" element={<AppLayout><InstanceDetail /></AppLayout>} />
+
               <Route path="/account" element={<AppLayout><Account /></AppLayout>} />
               <Route path="/dashboard" element={<AppLayout showRightSidebar={false}><Dashboard /></AppLayout>} />
               <Route path="/model-config" element={<AppLayout showRightSidebar={false}><ModelConfig /></AppLayout>} />
