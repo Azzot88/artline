@@ -24,7 +24,8 @@ import {
   getEffectiveDefault
 } from "@/polymet/data/model-parameters-data"
 import { formatToResolutions } from "@/polymet/data/types"
-import type { ParameterValues, ImageFormatType, VideoFormatType } from "@/polymet/data/types"
+import { formatToResolutions } from "@/polymet/data/types"
+import type { ParameterValues, ImageFormatType, VideoFormatType, Generation } from "@/polymet/data/types"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
@@ -54,6 +55,7 @@ export function Workbench() {
 
 const [loading, setLoading] = useState(false)
 const [refreshLibrary, setRefreshLibrary] = useState(0)
+const [lastGeneration, setLastGeneration] = useState<Generation | null>(null)
 
 
 // Dynamic parameters based on selected model
@@ -159,6 +161,34 @@ const pollJobStatus = async (jobId: string) => {
         clearInterval(interval)
         setIsGenerating(false)
         toast.success(t('workbench.toasts.jobStarted')) // Actually finished now
+
+        // Map job to Generation for immediate display
+        const width = job.format === "portrait" ? 768 : (job.format === "landscape" ? 1024 : 1024);
+        const height = job.format === "portrait" ? 1024 : (job.format === "landscape" ? 768 : 1024);
+        let cleanPrompt = job.prompt || "";
+        if (cleanPrompt.includes("|")) cleanPrompt = cleanPrompt.split("|").pop().trim();
+        else if (cleanPrompt.startsWith("[")) cleanPrompt = cleanPrompt.replace(/\[.*?\]\s*/, "").trim();
+
+        const newGen: Generation = {
+          id: job.id,
+          url: job.result_url || job.image,
+          image: job.result_url || job.image,
+          prompt: cleanPrompt,
+          model: job.model_id || "Flux",
+          provider: "replicate",
+          credits: job.credits_spent || 1,
+          likes: job.likes || 0,
+          views: job.views || 0,
+          userName: "Me",
+          userAvatar: "https://github.com/shadcn.png",
+          width: width,
+          height: height,
+          type: job.kind as any,
+          kind: job.kind as any,
+          timestamp: job.created_at,
+          status: job.status
+        }
+        setLastGeneration(newGen)
         setRefreshLibrary(prev => prev + 1)
 
       } else if (job.status === 'failed') {
@@ -406,7 +436,7 @@ return (
     </Card>
 
     {/* Library Widget - Dynamic Visibility */}
-    <LibraryWidget refreshTrigger={refreshLibrary} />
+    <LibraryWidget refreshTrigger={refreshLibrary} newGeneration={lastGeneration} />
 
     {/* Community Gallery Card */}
     <Card>
