@@ -47,9 +47,10 @@ export function GenerationCard({ generation, onClick }: GenerationCardProps) {
       <div className="relative bg-muted overflow-hidden">
         {generation.type === "video" ? (
           <video
-            src={generation.url}
-            poster={generation.image}
-            className="w-full h-auto object-cover rounded-[inherit]"
+            src={`${generation.url}#t=0.001`}
+            preload="metadata"
+            poster={generation.image && !generation.image.endsWith('.mp4') ? generation.image : undefined}
+            className="w-full h-auto object-cover rounded-[inherit] bg-muted"
             style={{ aspectRatio: `${generation.width}/${generation.height}` }}
             muted
             loop
