@@ -19,10 +19,18 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column('jobs', sa.Column('width', sa.Integer(), nullable=True))
-    op.add_column('jobs', sa.Column('height', sa.Integer(), nullable=True))
-    op.add_column('jobs', sa.Column('duration', sa.Integer(), nullable=True))
-    op.add_column('jobs', sa.Column('cover_image_url', sa.String(), nullable=True))
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    columns = [c['name'] for c in inspector.get_columns('jobs')]
+
+    if 'width' not in columns:
+        op.add_column('jobs', sa.Column('width', sa.Integer(), nullable=True))
+    if 'height' not in columns:
+        op.add_column('jobs', sa.Column('height', sa.Integer(), nullable=True))
+    if 'duration' not in columns:
+        op.add_column('jobs', sa.Column('duration', sa.Integer(), nullable=True))
+    if 'cover_image_url' not in columns:
+        op.add_column('jobs', sa.Column('cover_image_url', sa.String(), nullable=True))
 
 
 def downgrade() -> None:
