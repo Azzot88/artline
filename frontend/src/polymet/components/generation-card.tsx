@@ -1,16 +1,9 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
-import { Generation } from "@/polymet/data/generations-data"
+import { Generation } from "@/polymet/data/types"
 import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import {
-  HeartIcon,
-  CoinsIcon,
-  DownloadIcon,
-  Share2Icon,
-  SparklesIcon
-} from "lucide-react"
+import { SparklesIcon } from "lucide-react"
 
 interface GenerationCardProps {
   generation: Generation
@@ -19,73 +12,105 @@ interface GenerationCardProps {
 }
 
 export function GenerationCard({ generation, onClick, layoutMode = "fixed-width" }: GenerationCardProps) {
-  const [isLiked, setIsLiked] = useState(false)
-
-  // ... (handlers)
 
   const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
       e.preventDefault()
+      e.stopPropagation()
       onClick(generation)
     }
   }
 
-  // CSS Logic
-  // fixed-width (Masonry): width=100%, height=auto. Container controls width.
-  // fixed-height (Strip): height=100%, width=auto. Container controls height.
-  // We apply aspect-ratio to the container to reserve space? 
-  // For fixed-height, we need aspect-ratio to drive the width.
-
-  const aspectRatio = `${generation.width}/${generation.height}`
-
-  const CardContent = (
-    <Card
-      className={`break-inside-avoid overflow-hidden group cursor-pointer hover:shadow-lg transition-all border border-border/60 hover:border-primary/50 relative isolate transform-gpu rounded-xl ${layoutMode === 'fixed-height' ? 'inline-flex' : 'w-full h-auto'}`}
-      style={layoutMode === 'fixed-width' ? { aspectRatio } : { height: '100%', width: 'auto' }}
-      onClick={handleClick}
-    >
-      {/* Media */}
+  // FLOW 1: WIDGET (Fixed Height Row)
+  // Priority: Height is fixed (from parent). Width adjusts naturally.
+  if (layoutMode === 'fixed-height') {
+    const CardContent = (
       <div
-        className={`relative bg-muted overflow-hidden`}
-        style={layoutMode === 'fixed-height' ? { height: '100%', width: 'auto' } : undefined}
+        className="relative h-full inline-flex group cursor-pointer overflow-hidden rounded-xl border border-border/60 hover:border-primary/50 bg-muted"
+        onClick={handleClick}
       >
+        {/* Direct Image/Video - No wrapping div that forces width */}
         {generation.type === "video" ? (
           <video
             src={`${generation.url}#t=0.001`}
             preload="metadata"
-            poster={generation.image && !generation.image.endsWith('.mp4') ? generation.image : undefined}
-            className={`object-cover rounded-[inherit] bg-muted`}
-            style={layoutMode === 'fixed-height'
-              ? { height: '100%', width: 'auto', maxWidth: 'none', aspectRatio: `${generation.width}/${generation.height}` }
-              : { width: '100%', height: 'auto', aspectRatio }
-            }
-            muted
-            loop
-            playsInline
+            className="h-full w-auto object-cover max-w-none"
+            muted loop playsInline
             onMouseEnter={(e) => e.currentTarget.play()}
             onMouseLeave={(e) => e.currentTarget.pause()}
+            poster={generation.image && !generation.image.endsWith('.mp4') ? generation.image : undefined}
           />
         ) : (
           <img
             src={generation.url}
             alt={generation.prompt}
-            className={`object-cover group-hover:scale-105 transition-transform duration-500 rounded-[inherit] will-change-transform`}
-            style={layoutMode === 'fixed-height'
-              ? { height: '100%', width: 'auto', maxWidth: 'none', aspectRatio: `${generation.width}/${generation.height}` }
-              : { width: '100%', height: 'auto', aspectRatio }
-            }
+            className="h-full w-auto object-cover max-w-none hover:scale-105 transition-transform duration-500"
           />
         )}
 
+        {/* Badges/Overlays */}
+        {generation.type === "video" && (
+          <div className="absolute top-2 right-2">
+            <Badge className="bg-black/50 hover:bg-black/70 backdrop-blur-sm text-white border-0">
+              <SparklesIcon className="w-3 h-3 mr-1" />
+              Video
+            </Badge>
+          </div>
+        )}
 
-        {/* Hover Overlay */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 pointer-events-none">
+          <div className="bg-black/60 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur-md">
+            Click for details
+          </div>
+        </div>
+      </div>
+    )
+
+    return <div className="h-full inline-block align-top">{CardContent}</div>
+  }
+
+  // FLOW 2: GALLERY (Masonry Column)
+  // Priority: Width is fixed (from column). Height adjusts naturally.
+  // layoutMode === 'fixed-width' (Default)
+
+  const aspectRatio = `${generation.width}/${generation.height}`
+
+  const CardContent = (
+    <Card
+      className="break-inside-avoid overflow-hidden group cursor-pointer hover:shadow-lg transition-all border border-border/60 hover:border-primary/50 relative isolate transform-gpu rounded-xl w-full h-auto mb-4"
+      onClick={handleClick}
+    >
+      <div className="relative bg-muted w-full">
+        <div style={{ paddingBottom: `${(generation.height / generation.width) * 100}%` }} />
+        <div className="absolute inset-0">
+          {generation.type === "video" ? (
+            <video
+              src={`${generation.url}#t=0.001`}
+              preload="metadata"
+              className="w-full h-full object-cover"
+              style={{ aspectRatio }}
+              muted loop playsInline
+              onMouseEnter={(e) => e.currentTarget.play()}
+              onMouseLeave={(e) => e.currentTarget.pause()}
+              poster={generation.image && !generation.image.endsWith('.mp4') ? generation.image : undefined}
+            />
+          ) : (
+            <img
+              src={generation.url}
+              alt={generation.prompt}
+              className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+              style={{ aspectRatio }}
+            />
+          )}
+        </div>
+
+        {/* Overlays */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 pointer-events-none">
           <div className="bg-black/60 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur-md">
             Click for details
           </div>
         </div>
 
-        {/* Video Badge - only for videos */}
         {generation.type === "video" && (
           <div className="absolute top-2 right-2">
             <Badge className="bg-black/50 hover:bg-black/70 backdrop-blur-sm text-white border-0">
@@ -98,18 +123,13 @@ export function GenerationCard({ generation, onClick, layoutMode = "fixed-width"
     </Card>
   )
 
-  // If no onClick, wrap in Link for standard navigation (backward compatibility)
   if (!onClick) {
     return (
-      <Link to={`/instance/${generation.id}`}>
+      <Link to={`/instance/${generation.id}`} className="block mb-4">
         {CardContent}
       </Link>
     )
   }
 
-  return (
-    <div className="mb-4">
-      {CardContent}
-    </div>
-  )
+  return CardContent
 }
