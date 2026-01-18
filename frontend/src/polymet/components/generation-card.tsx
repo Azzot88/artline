@@ -15,43 +15,44 @@ import {
 interface GenerationCardProps {
   generation: Generation
   onClick?: (generation: Generation) => void
+  layoutMode?: "fixed-width" | "fixed-height"
 }
 
-export function GenerationCard({ generation, onClick }: GenerationCardProps) {
+export function GenerationCard({ generation, onClick, layoutMode = "fixed-width" }: GenerationCardProps) {
   const [isLiked, setIsLiked] = useState(false)
 
-  const handleLike = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setIsLiked(!isLiked)
-  }
-
-  const handleDownload = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    console.log("Downloading:", generation.id)
-  }
+  // ... (handlers)
 
   const handleClick = (e: React.MouseEvent) => {
-    // If onClick is provided, use it (and prevent default link navigation if we were using Links)
     if (onClick) {
       e.preventDefault()
       onClick(generation)
     }
   }
 
+  // CSS Logic
+  // fixed-width (Masonry): width=100%, height=auto. Container controls width.
+  // fixed-height (Strip): height=100%, width=auto. Container controls height.
+  // We apply aspect-ratio to the container to reserve space? 
+  // For fixed-height, we need aspect-ratio to drive the width.
+
+  const aspectRatio = `${generation.width}/${generation.height}`
+
   const CardContent = (
     <Card
-      className="break-inside-avoid overflow-hidden group cursor-pointer hover:shadow-lg transition-all border border-border/60 hover:border-primary/50 relative isolate transform-gpu rounded-xl"
+      className={`break-inside-avoid overflow-hidden group cursor-pointer hover:shadow-lg transition-all border border-border/60 hover:border-primary/50 relative isolate transform-gpu rounded-xl ${layoutMode === 'fixed-height' ? 'h-full aspect-[var(--ar)] w-auto' : 'w-full h-auto'}`}
+      style={{ '--ar': aspectRatio } as React.CSSProperties}
       onClick={handleClick}
     >
       {/* Media */}
-      <div className="relative bg-muted overflow-hidden">
+      <div className={`relative bg-muted overflow-hidden ${layoutMode === 'fixed-height' ? 'h-full w-full' : ''}`}>
         {generation.type === "video" ? (
           <video
             src={`${generation.url}#t=0.001`}
             preload="metadata"
             poster={generation.image && !generation.image.endsWith('.mp4') ? generation.image : undefined}
-            className="w-full h-auto object-cover rounded-[inherit] bg-muted"
-            style={{ aspectRatio: `${generation.width}/${generation.height}` }}
+            className={`object-cover rounded-[inherit] bg-muted ${layoutMode === 'fixed-height' ? 'h-full w-full' : 'w-full h-auto'}`}
+            style={{ aspectRatio: layoutMode === 'fixed-width' ? aspectRatio : undefined }}
             muted
             loop
             playsInline
@@ -62,10 +63,11 @@ export function GenerationCard({ generation, onClick }: GenerationCardProps) {
           <img
             src={generation.url}
             alt={generation.prompt}
-            className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500 rounded-[inherit] will-change-transform"
-            style={{ aspectRatio: `${generation.width}/${generation.height}` }}
+            className={`object-cover group-hover:scale-105 transition-transform duration-500 rounded-[inherit] will-change-transform ${layoutMode === 'fixed-height' ? 'h-full w-full' : 'w-full h-auto'}`}
+            style={{ aspectRatio: layoutMode === 'fixed-width' ? aspectRatio : undefined }}
           />
         )}
+
 
         {/* Hover Overlay */}
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
