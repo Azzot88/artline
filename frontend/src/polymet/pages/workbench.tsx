@@ -50,400 +50,399 @@ export function Workbench() {
     }
   }, [models, model])
 
-}
-  }, [models, model])
-
-const [loading, setLoading] = useState(false)
-const [refreshLibrary, setRefreshLibrary] = useState(0)
-const [lastGeneration, setLastGeneration] = useState<Generation | null>(null)
 
 
-// Dynamic parameters based on selected model
-const [parameterValues, setParameterValues] = useState<ParameterValues>({})
+  const [loading, setLoading] = useState(false)
+  const [refreshLibrary, setRefreshLibrary] = useState(0)
+  const [lastGeneration, setLastGeneration] = useState<Generation | null>(null)
 
-// Get model parameters (max 4, excluding prompt/negative_prompt)
-const allParameters = getEnabledParameters(model)
-const parameterConfigs = getModelParameterConfigs(model)
 
-// Filter out prompt-like parameters and limit to 4
-// Format parameter is ALWAYS shown first if present
-const formatParam = allParameters.find(p => p.name === 'format')
-const otherParams = allParameters
-  .filter(p =>
-    p.name !== 'format' &&
-    !p.name.toLowerCase().includes('prompt') &&
-    !p.name.toLowerCase().includes('description') &&
-    !p.name.toLowerCase().includes('width') &&
-    !p.name.toLowerCase().includes('height') &&
-    !p.name.toLowerCase().includes('size')
-  )
+  // Dynamic parameters based on selected model
+  const [parameterValues, setParameterValues] = useState<ParameterValues>({})
 
-// Combine: format first, then other parameters (max 4 total)
-const displayParameters = formatParam
-  ? [formatParam, ...otherParams].slice(0, 4)
-  : otherParams.slice(0, 4)
+  // Get model parameters (max 4, excluding prompt/negative_prompt)
+  const allParameters = getEnabledParameters(model)
+  const parameterConfigs = getModelParameterConfigs(model)
 
-// Get model credits from dynamic list or fallback
-const selectedModel = models.find(m => m.id === model)
-// Backend doesn't send credits yet? Default to 5
-// If backend updated to send credits, use it.
-const modelCredits = 5
+  // Filter out prompt-like parameters and limit to 4
+  // Format parameter is ALWAYS shown first if present
+  const formatParam = allParameters.find(p => p.name === 'format')
+  const otherParams = allParameters
+    .filter(p =>
+      p.name !== 'format' &&
+      !p.name.toLowerCase().includes('prompt') &&
+      !p.name.toLowerCase().includes('description') &&
+      !p.name.toLowerCase().includes('width') &&
+      !p.name.toLowerCase().includes('height') &&
+      !p.name.toLowerCase().includes('size')
+    )
 
-// Initialize parameter values with defaults when model changes
-useEffect(() => {
-  const initialValues: ParameterValues = {}
-  allParameters.forEach(param => {
-    const config = parameterConfigs.find(c => c.parameter_id === param.id)
-    initialValues[param.id] = getEffectiveDefault(param, config)
-  })
-  setParameterValues(initialValues)
-}, [model])
+  // Combine: format first, then other parameters (max 4 total)
+  const displayParameters = formatParam
+    ? [formatParam, ...otherParams].slice(0, 4)
+    : otherParams.slice(0, 4)
 
-const handleParameterChange = (parameterId: string, value: any) => {
-  setParameterValues(prev => {
-    const newValues = { ...prev, [parameterId]: value }
+  // Get model credits from dynamic list or fallback
+  const selectedModel = models.find(m => m.id === model)
+  // Backend doesn't send credits yet? Default to 5
+  // If backend updated to send credits, use it.
+  const modelCredits = 5
 
-    // If format changed, auto-calculate resolution
-    const param = allParameters.find(p => p.id === parameterId)
-    if (param?.name === 'format') {
-      // Find resolution/size parameter
-      const resolutionParam = allParameters.find(p =>
-        p.name === 'resolution' || p.name === 'size'
-      )
+  // Initialize parameter values with defaults when model changes
+  useEffect(() => {
+    const initialValues: ParameterValues = {}
+    allParameters.forEach(param => {
+      const config = parameterConfigs.find(c => c.parameter_id === param.id)
+      initialValues[param.id] = getEffectiveDefault(param, config)
+    })
+    setParameterValues(initialValues)
+  }, [model])
 
-      if (resolutionParam) {
-        // Get quality from quality parameter if exists
-        const qualityParam = allParameters.find(p => p.name === 'quality')
-        const quality = qualityParam ? newValues[qualityParam.id] : 'hd'
+  const handleParameterChange = (parameterId: string, value: any) => {
+    setParameterValues(prev => {
+      const newValues = { ...prev, [parameterId]: value }
 
-        // Map quality to resolution quality
-        const resQuality = quality === 'hd' ? 'hd' : quality === '4k' ? '4k' : 'sd'
+      // If format changed, auto-calculate resolution
+      const param = allParameters.find(p => p.id === parameterId)
+      if (param?.name === 'format') {
+        // Find resolution/size parameter
+        const resolutionParam = allParameters.find(p =>
+          p.name === 'resolution' || p.name === 'size'
+        )
 
-        // Get available resolutions for this format
-        const availableResolutions = formatToResolutions(value as ImageFormatType | VideoFormatType, resQuality)
+        if (resolutionParam) {
+          // Get quality from quality parameter if exists
+          const qualityParam = allParameters.find(p => p.name === 'quality')
+          const quality = qualityParam ? newValues[qualityParam.id] : 'hd'
 
-        // Set to first available resolution (usually the best quality)
-        if (availableResolutions.length > 0) {
-          newValues[resolutionParam.id] = availableResolutions[availableResolutions.length - 1]
+          // Map quality to resolution quality
+          const resQuality = quality === 'hd' ? 'hd' : quality === '4k' ? '4k' : 'sd'
+
+          // Get available resolutions for this format
+          const availableResolutions = formatToResolutions(value as ImageFormatType | VideoFormatType, resQuality)
+
+          // Set to first available resolution (usually the best quality)
+          if (availableResolutions.length > 0) {
+            newValues[resolutionParam.id] = availableResolutions[availableResolutions.length - 1]
+          }
         }
       }
-    }
 
-    return newValues
-  })
-}
+      return newValues
+    })
+  }
 
-// Polling State
-const [isGenerating, setIsGenerating] = useState(false)
-const [currentJobStatus, setCurrentJobStatus] = useState<string>("idle") // idle, queued, processing, succeeded, failed
-const [currentJobLogs, setCurrentJobLogs] = useState<string>("")
+  // Polling State
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [currentJobStatus, setCurrentJobStatus] = useState<string>("idle") // idle, queued, processing, succeeded, failed
+  const [currentJobLogs, setCurrentJobLogs] = useState<string>("")
 
-const pollJobStatus = async (jobId: string) => {
-  let attempts = 0
-  const maxAttempts = 60 // 2 minutes approx
+  const pollJobStatus = async (jobId: string) => {
+    let attempts = 0
+    const maxAttempts = 60 // 2 minutes approx
 
-  const interval = setInterval(async () => {
-    attempts++
-    if (attempts > maxAttempts) {
-      clearInterval(interval)
-      setIsGenerating(false)
-      setCurrentJobStatus("failed")
-      toast.error("Generation timed out")
+    const interval = setInterval(async () => {
+      attempts++
+      if (attempts > maxAttempts) {
+        clearInterval(interval)
+        setIsGenerating(false)
+        setCurrentJobStatus("failed")
+        toast.error("Generation timed out")
+        return
+      }
+
+      try {
+        const job: any = await api.get(`/jobs/${jobId}`)
+        setCurrentJobStatus(job.status)
+        if (job.logs) setCurrentJobLogs(job.logs)
+
+        if (job.status === 'succeeded') {
+          clearInterval(interval)
+          setIsGenerating(false)
+          toast.success(t('workbench.toasts.jobStarted')) // Actually finished now
+
+          // Map job to Generation for immediate display
+          const width = job.format === "portrait" ? 768 : (job.format === "landscape" ? 1024 : 1024);
+          const height = job.format === "portrait" ? 1024 : (job.format === "landscape" ? 768 : 1024);
+          let cleanPrompt = job.prompt || "";
+          if (cleanPrompt.includes("|")) cleanPrompt = cleanPrompt.split("|").pop().trim();
+          else if (cleanPrompt.startsWith("[")) cleanPrompt = cleanPrompt.replace(/\[.*?\]\s*/, "").trim();
+
+          const newGen: Generation = {
+            id: job.id,
+            url: job.result_url || job.image,
+            image: job.result_url || job.image,
+            prompt: cleanPrompt,
+            model: job.model_id || "Flux",
+            provider: "replicate",
+            credits: job.credits_spent || 1,
+            likes: job.likes || 0,
+            views: job.views || 0,
+            userName: "Me",
+            userAvatar: "https://github.com/shadcn.png",
+            width: width,
+            height: height,
+            type: job.kind as any,
+            kind: job.kind as any,
+            timestamp: job.created_at,
+            status: job.status
+          }
+          setLastGeneration(newGen)
+          setRefreshLibrary(prev => prev + 1)
+
+        } else if (job.status === 'failed') {
+          clearInterval(interval)
+          setIsGenerating(false)
+          toast.error("Generation failed", { description: job.error_message })
+        }
+      } catch (e) {
+        console.error("Poll error", e)
+      }
+    }, 2000)
+  }
+
+  const handleGenerate = async () => {
+    if (!prompt.trim()) {
+      toast.error(t('workbench.toasts.enterPrompt'))
       return
     }
 
+    setLoading(true)
+    setIsGenerating(true)
+    setCurrentJobStatus("queued")
+    setCurrentJobLogs("")
+
     try {
-      const job: any = await api.get(`/jobs/${jobId}`)
-      setCurrentJobStatus(job.status)
-      if (job.logs) setCurrentJobLogs(job.logs)
-
-      if (job.status === 'succeeded') {
-        clearInterval(interval)
-        setIsGenerating(false)
-        toast.success(t('workbench.toasts.jobStarted')) // Actually finished now
-
-        // Map job to Generation for immediate display
-        const width = job.format === "portrait" ? 768 : (job.format === "landscape" ? 1024 : 1024);
-        const height = job.format === "portrait" ? 1024 : (job.format === "landscape" ? 768 : 1024);
-        let cleanPrompt = job.prompt || "";
-        if (cleanPrompt.includes("|")) cleanPrompt = cleanPrompt.split("|").pop().trim();
-        else if (cleanPrompt.startsWith("[")) cleanPrompt = cleanPrompt.replace(/\[.*?\]\s*/, "").trim();
-
-        const newGen: Generation = {
-          id: job.id,
-          url: job.result_url || job.image,
-          image: job.result_url || job.image,
-          prompt: cleanPrompt,
-          model: job.model_id || "Flux",
-          provider: "replicate",
-          credits: job.credits_spent || 1,
-          likes: job.likes || 0,
-          views: job.views || 0,
-          userName: "Me",
-          userAvatar: "https://github.com/shadcn.png",
-          width: width,
-          height: height,
-          type: job.kind as any,
-          kind: job.kind as any,
-          timestamp: job.created_at,
-          status: job.status
-        }
-        setLastGeneration(newGen)
-        setRefreshLibrary(prev => prev + 1)
-
-      } else if (job.status === 'failed') {
-        clearInterval(interval)
-        setIsGenerating(false)
-        toast.error("Generation failed", { description: job.error_message })
+      const payload = {
+        model_id: model,
+        prompt: prompt,
+        kind: creationType,
+        params: parameterValues
       }
-    } catch (e) {
-      console.error("Poll error", e)
-    }
-  }, 2000)
-}
 
-const handleGenerate = async () => {
-  if (!prompt.trim()) {
-    toast.error(t('workbench.toasts.enterPrompt'))
-    return
-  }
+      const res: any = await api.post<any>("/jobs", payload)
+      // Start polling
+      pollJobStatus(res.id)
 
-  setLoading(true)
-  setIsGenerating(true)
-  setCurrentJobStatus("queued")
-  setCurrentJobLogs("")
-
-  try {
-    const payload = {
-      model_id: model,
-      prompt: prompt,
-      kind: creationType,
-      params: parameterValues
-    }
-
-    const res: any = await api.post<any>("/jobs", payload)
-    // Start polling
-    pollJobStatus(res.id)
-
-  } catch (err: any) {
-    console.error(err)
-    toast.error(t('workbench.toasts.genFailed'), { description: err.message || t('workbench.toasts.unknownError') })
-    setIsGenerating(false)
-    setCurrentJobStatus("idle")
-  } finally {
-    setLoading(false)
-  }
-}
-
-const isGenerateDisabled = () => {
-  if (inputType === "text" && !prompt.trim()) return true
-  if (inputType === "image" && !file) return true
-  if (!model) return true
-  if (modelsLoading) return true
-  if (isGenerating) return true
-
-  // Check required parameters
-  const requiredParams = allParameters.filter(p => p.required)
-  for (const param of requiredParams) {
-    const value = parameterValues[param.id]
-    if (value === null || value === undefined || value === "") {
-      return true
+    } catch (err: any) {
+      console.error(err)
+      toast.error(t('workbench.toasts.genFailed'), { description: err.message || t('workbench.toasts.unknownError') })
+      setIsGenerating(false)
+      setCurrentJobStatus("idle")
+    } finally {
+      setLoading(false)
     }
   }
 
-  return false
-}
+  const isGenerateDisabled = () => {
+    if (inputType === "text" && !prompt.trim()) return true
+    if (inputType === "image" && !file) return true
+    if (!model) return true
+    if (modelsLoading) return true
+    if (isGenerating) return true
 
-return (
-  <div className="w-full space-y-6">
-    {/* Page Header */}
-    <div className="space-y-2">
-      <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-        {t('workbench.appTitle')}
-      </h1>
-      <p className="text-muted-foreground">
-        {t('workbench.appSubtitle')}
-      </p>
-    </div>
+    // Check required parameters
+    const requiredParams = allParameters.filter(p => p.required)
+    for (const param of requiredParams) {
+      const value = parameterValues[param.id]
+      if (value === null || value === undefined || value === "") {
+        return true
+      }
+    }
 
-    {modelsError && (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>{t('workbench.errorLoading')}</AlertTitle>
-        <AlertDescription>
-          {modelsError}. {t('workbench.errorLoadingDesc')}
-        </AlertDescription>
-      </Alert>
-    )}
+    return false
+  }
 
-    {modelsLoading && (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <span className="ml-3 text-muted-foreground">{t('workbench.loading')}</span>
+  return (
+    <div className="w-full space-y-6">
+      {/* Page Header */}
+      <div className="space-y-2">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+          {t('workbench.appTitle')}
+        </h1>
+        <p className="text-muted-foreground">
+          {t('workbench.appSubtitle')}
+        </p>
       </div>
-    )}
 
-    {/* Main Unified Card - Large Textarea with Controls Inside */}
-    <Card className="overflow-hidden">
-      <CardContent className="p-0">
-        {/* Large Main Textarea Area */}
-        <div className="relative">
+      {modelsError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>{t('workbench.errorLoading')}</AlertTitle>
+          <AlertDescription>
+            {modelsError}. {t('workbench.errorLoadingDesc')}
+          </AlertDescription>
+        </Alert>
+      )}
 
-          {/* OVERLAY */}
-          <GenerationOverlay
-            isVisible={isGenerating}
-            status={currentJobStatus}
-            logs={currentJobLogs}
-          />
+      {modelsLoading && (
+        <div className="flex items-center justify-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <span className="ml-3 text-muted-foreground">{t('workbench.loading')}</span>
+        </div>
+      )}
 
-          {/* Top Controls Bar - Input Type Toggle */}
-          <div className="absolute top-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-b border-border p-4 z-10">
-            <div className="flex flex-wrap items-center gap-4">
-              <CreationTypeToggle value={creationType} onChange={setCreationType} />
-              <InputTypeToggle
-                value={inputType}
-                onChange={setInputType}
-                creationType={creationType}
-              />
-            </div>
-          </div>
+      {/* Main Unified Card - Large Textarea with Controls Inside */}
+      <Card className="overflow-hidden">
+        <CardContent className="p-0">
+          {/* Large Main Textarea Area */}
+          <div className="relative">
 
-          {/* Textarea - Hidden when Image-to-X mode is active */}
-          {inputType === "text" ? (
-            <div className="relative w-full">
-              <Textarea
-                id="main-prompt-input"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder={creationType === "image" ? t('workbench.describeImage') : t('workbench.describeVideo')}
-                maxLength={1000}
-                className="w-full min-h-[400px] md:min-h-[400px] resize-y border-0 focus-visible:ring-0 text-base p-6 pt-24 pb-32"
-              />
-              {/* Enhance Button - Inside textarea, floating right */}
-              <div className="absolute top-24 right-6 z-20">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    // Enhance prompt logic here
-                    console.log("Enhancing prompt:", prompt)
-                  }}
-                >
-                  <SparklesIcon className="w-4 h-4 mr-2" />
-                  {t('workbench.enhance')}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="w-full min-h-[400px] md:min-h-[400px] p-6 pt-24 pb-32 relative">
-              {/* Small Upload Icon at Top Left */}
-              <div className="absolute top-24 left-6">
-                <button
-                  onClick={() => document.getElementById('file-input')?.click()}
-                  className="flex items-center justify-center w-10 h-10 rounded-lg border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all"
-                >
-                  <PlusIcon className="w-5 h-5 text-muted-foreground" />
-                </button>
-                <input
-                  id="file-input"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+            {/* OVERLAY */}
+            <GenerationOverlay
+              isVisible={isGenerating}
+              status={currentJobStatus}
+              logs={currentJobLogs}
+            />
+
+            {/* Top Controls Bar - Input Type Toggle */}
+            <div className="absolute top-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-b border-border p-4 z-10">
+              <div className="flex flex-wrap items-center gap-4">
+                <CreationTypeToggle value={creationType} onChange={setCreationType} />
+                <InputTypeToggle
+                  value={inputType}
+                  onChange={setInputType}
+                  creationType={creationType}
                 />
-                {file && (
-                  <p className="text-xs text-muted-foreground mt-2 max-w-[100px] truncate">
-                    {file.name}
-                  </p>
-                )}
               </div>
             </div>
-          )}
 
-          {/* Bottom Controls Bar - Content-Driven Responsive Layout */}
-          <div className="absolute bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-4">
-            {/* Format & Resolution Indicator */}
-            {(() => {
-              const formatParam = allParameters.find(p => p.name === 'format')
-              const resolutionParam = allParameters.find(p => p.name === 'resolution' || p.name === 'size')
+            {/* Textarea - Hidden when Image-to-X mode is active */}
+            {inputType === "text" ? (
+              <div className="relative w-full">
+                <Textarea
+                  id="main-prompt-input"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder={creationType === "image" ? t('workbench.describeImage') : t('workbench.describeVideo')}
+                  maxLength={1000}
+                  className="w-full min-h-[400px] md:min-h-[400px] resize-y border-0 focus-visible:ring-0 text-base p-6 pt-24 pb-32"
+                />
+                {/* Enhance Button - Inside textarea, floating right */}
+                <div className="absolute top-24 right-6 z-20">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Enhance prompt logic here
+                      console.log("Enhancing prompt:", prompt)
+                    }}
+                  >
+                    <SparklesIcon className="w-4 h-4 mr-2" />
+                    {t('workbench.enhance')}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="w-full min-h-[400px] md:min-h-[400px] p-6 pt-24 pb-32 relative">
+                {/* Small Upload Icon at Top Left */}
+                <div className="absolute top-24 left-6">
+                  <button
+                    onClick={() => document.getElementById('file-input')?.click()}
+                    className="flex items-center justify-center w-10 h-10 rounded-lg border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all"
+                  >
+                    <PlusIcon className="w-5 h-5 text-muted-foreground" />
+                  </button>
+                  <input
+                    id="file-input"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  />
+                  {file && (
+                    <p className="text-xs text-muted-foreground mt-2 max-w-[100px] truncate">
+                      {file.name}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
-              if (formatParam && resolutionParam) {
-                const format = parameterValues[formatParam.id]
-                const resolution = parameterValues[resolutionParam.id]
+            {/* Bottom Controls Bar - Content-Driven Responsive Layout */}
+            <div className="absolute bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-4">
+              {/* Format & Resolution Indicator */}
+              {(() => {
+                const formatParam = allParameters.find(p => p.name === 'format')
+                const resolutionParam = allParameters.find(p => p.name === 'resolution' || p.name === 'size')
 
-                if (format && resolution) {
+                if (formatParam && resolutionParam) {
+                  const format = parameterValues[formatParam.id]
+                  const resolution = parameterValues[resolutionParam.id]
+
+                  if (format && resolution) {
+                    return (
+                      <div className="mb-3">
+                        <FormatResolutionIndicator
+                          format={format}
+                          resolution={resolution}
+                        />
+                      </div>
+                    )
+                  }
+                }
+                return null
+              })()}
+
+              <div className="flex flex-wrap items-end gap-3">
+                {/* Model Selector */}
+                <div className="flex-shrink-0 w-full sm:w-auto sm:min-w-[200px] sm:max-w-[300px]">
+                  <ModelSelector
+                    value={model}
+                    onChange={setModel}
+                    creationType={creationType}
+                    models={models}
+                    loading={modelsLoading}
+                  />
+                </div>
+
+                {/* Dynamic Parameters (max 4) - Format is always first */}
+                {displayParameters.map(param => {
+                  const config = parameterConfigs.find(c => c.parameter_id === param.id)
+                  const isFormat = param.name === 'format'
+
                   return (
-                    <div className="mb-3">
-                      <FormatResolutionIndicator
-                        format={format}
-                        resolution={resolution}
+                    <div
+                      key={param.id}
+                      className={`flex-shrink-0 w-full sm:w-auto ${isFormat ? 'sm:min-w-[120px] sm:max-w-[150px]' : 'sm:min-w-[150px] sm:max-w-[200px]'}`}
+                    >
+                      <ModelParameterControl
+                        parameter={param}
+                        config={config}
+                        value={parameterValues[param.id]}
+                        onChange={(val) => handleParameterChange(param.id, val)}
+                        disabled={loading}
+                        compact
                       />
                     </div>
                   )
-                }
-              }
-              return null
-            })()}
+                })}
 
-            <div className="flex flex-wrap items-end gap-3">
-              {/* Model Selector */}
-              <div className="flex-shrink-0 w-full sm:w-auto sm:min-w-[200px] sm:max-w-[300px]">
-                <ModelSelector
-                  value={model}
-                  onChange={setModel}
-                  creationType={creationType}
-                  models={models}
-                  loading={modelsLoading}
-                />
-              </div>
-
-              {/* Dynamic Parameters (max 4) - Format is always first */}
-              {displayParameters.map(param => {
-                const config = parameterConfigs.find(c => c.parameter_id === param.id)
-                const isFormat = param.name === 'format'
-
-                return (
-                  <div
-                    key={param.id}
-                    className={`flex-shrink-0 w-full sm:w-auto ${isFormat ? 'sm:min-w-[120px] sm:max-w-[150px]' : 'sm:min-w-[150px] sm:max-w-[200px]'}`}
-                  >
-                    <ModelParameterControl
-                      parameter={param}
-                      config={config}
-                      value={parameterValues[param.id]}
-                      onChange={(val) => handleParameterChange(param.id, val)}
-                      disabled={loading}
-                      compact
-                    />
-                  </div>
-                )
-              })}
-
-              {/* Generate Button */}
-              <div className="flex-shrink-0 w-full sm:w-auto sm:ml-auto">
-                <GenerateButton
-                  credits={modelCredits}
-                  onClick={handleGenerate}
-                  disabled={isGenerateDisabled()}
-                  loading={loading && !isGenerating} // Only show old spinner if not using overlay? or keep both? overlay implies loading.
-                />
+                {/* Generate Button */}
+                <div className="flex-shrink-0 w-full sm:w-auto sm:ml-auto">
+                  <GenerateButton
+                    credits={modelCredits}
+                    onClick={handleGenerate}
+                    disabled={isGenerateDisabled()}
+                    loading={loading && !isGenerating} // Only show old spinner if not using overlay? or keep both? overlay implies loading.
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
 
-    {/* Library Widget - Dynamic Visibility */}
-    <LibraryWidget refreshTrigger={refreshLibrary} newGeneration={lastGeneration} />
+      {/* Library Widget - Dynamic Visibility */}
+      <LibraryWidget refreshTrigger={refreshLibrary} newGeneration={lastGeneration} />
 
-    {/* Community Gallery Card */}
-    <Card>
-      <CardContent className="pt-6">
-        <CommunityGallery />
-      </CardContent>
-    </Card>
-  </div >
-)
+      {/* Community Gallery Card */}
+      <Card>
+        <CardContent className="pt-6">
+          <CommunityGallery />
+        </CardContent>
+      </Card>
+    </div >
+  )
 }
