@@ -127,15 +127,21 @@ export function LibraryWidget({ refreshTrigger, newGeneration }: LibraryWidgetPr
                     <div className="relative">
                         {/* Horizontal Scroll Container - Filmstrip Mode */}
                         <div className="flex items-start overflow-x-auto pb-6 gap-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 h-[320px]">
-                            {generations.slice(0, 10).map((gen) => (
-                                <div key={gen.id} className="flex-none h-[280px] snap-start">
-                                    <GenerationCard
-                                        generation={gen}
-                                        onClick={handleCardClick}
-                                        layoutMode="fixed-height"
-                                    />
-                                </div>
-                            ))}
+                            {generations.slice(0, 10).map((gen) => {
+                                // Calculate strict width for 280px height to avoid CSS layout issues
+                                const aspect = gen.width / gen.height;
+                                const width = 280 * aspect; // e.g. 280 * (9/16) = 157.5
+
+                                return (
+                                    <div key={gen.id} className="flex-none h-[280px] snap-start" style={{ width: `${width}px` }}>
+                                        <GenerationCard
+                                            generation={gen}
+                                            onClick={handleCardClick}
+                                            layoutMode="fixed-height"
+                                        />
+                                    </div>
+                                )
+                            })}
 
                             {/* View More Card */}
                             {generations.length > 5 && (

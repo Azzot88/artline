@@ -20,6 +20,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     };
 
     const config = {
+        credentials: "include",
         ...options,
         headers,
     };
