@@ -44,7 +44,10 @@ class JobRead(BaseModel):
     input_image_url: Optional[str] = None
     format: str = "square"
     resolution: str = "1080"
+    width: Optional[int] = None
+    height: Optional[int] = None
     duration: Optional[int] = None
+    cover_image_url: Optional[str] = None
     credits_spent: int = 0
     
     # Social

@@ -35,7 +35,13 @@ class Job(Base):
     # Generation Params
     format: Mapped[str] = mapped_column(String, default="square")
     resolution: Mapped[str] = mapped_column(String, default="1080")
+    
+    # Real Dimensions (Populated after generation)
+    width: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    height: Mapped[int | None] = mapped_column(Integer, nullable=True)
     duration: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    cover_image_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    
     generation_params: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     
     status: Mapped[str] = mapped_column(String, default="queued", index=True) # "queued", "running", "succeeded", "failed"

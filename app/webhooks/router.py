@@ -86,6 +86,19 @@ async def replicate_webhook(request: Request, db: AsyncSession = Depends(get_db)
                     if resp.status_code == 200:
                         file_content = resp.content
                         
+                        # 1.1 Read Real Dimensions (Pillow)
+                        # We do this before upload to save metadata
+                        try:
+                            if job.kind == "image" or not job.kind:
+                                from PIL import Image
+                                import io
+                                with Image.open(io.BytesIO(file_content)) as img:
+                                    job.width, job.height = img.size
+                                    # print(f"DEBUG: Scanned Image Size: {job.width}x{job.height}", flush=True)
+                        except Exception as e:
+                            logger.error(f"Failed to scan image dimensions: {e}")
+                            # Non-fatal, proceed to upload
+
                         # 2. Upload to S3
                         if settings.AWS_ACCESS_KEY_ID and settings.AWS_BUCKET_NAME:
                             ext = "png" # Default
