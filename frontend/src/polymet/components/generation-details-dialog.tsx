@@ -27,27 +27,9 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
         toast.success("Prompt copied to clipboard")
     }
 
-    const handleDownload = async () => {
-        try {
-            // Force download by fetching blob
-            const response = await fetch(generation.url);
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            // Guess extension
-            const ext = generation.type === 'video' ? 'mp4' : 'png';
-            link.download = `generation-${generation.id}.${ext}`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-        } catch (e) {
-            console.error("Download failed", e)
-            toast.error("Failed to download file")
-            // Fallback
-            window.open(generation.url, '_blank')
-        }
+    const handleDownload = () => {
+        // Use backend proxy to force download and avoid CORS/Popup issues
+        window.location.href = `/api/jobs/${generation.id}/download`
     }
 
     const handleDelete = async () => {
