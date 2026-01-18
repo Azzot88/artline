@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { GenerationCard } from "@/polymet/components/generation-card"
+import { normalizeGeneration } from "@/polymet/data/transformers"
 import { GenerationDetailsDialog } from "@/polymet/components/generation-details-dialog"
 import { SparklesIcon, Loader2, ImageIcon } from "lucide-react"
 import { useLanguage } from "@/polymet/components/language-provider"
@@ -19,55 +20,7 @@ export function Library() {
                 const data = await api.get<any[]>("/jobs")
 
                 if (Array.isArray(data)) {
-                    const mapped = data.map((job: any) => {
-                        // 1. Prefer Real DB Dimensions
-                        let width = job.width;
-                        let height = job.height;
-
-                        // 2. Fallback to Format Logic
-                        if (!width || !height) {
-                            width = 1024;
-                            height = 1024;
-                            if (job.format === "portrait") { width = 576; height = 1024; }
-                            if (job.format === "landscape") { width = 1024; height = 576; }
-                        }
-
-                        // Clean prompt
-                        let cleanPrompt = job.prompt || "";
-                        if (cleanPrompt.includes("|")) {
-                            cleanPrompt = cleanPrompt.split("|").pop().trim();
-                        } else if (cleanPrompt.startsWith("[")) {
-                            cleanPrompt = cleanPrompt.replace(/\[.*?\]\s*/, "").trim();
-                        }
-
-                        return {
-                            id: job.id,
-                            url: job.result_url || job.image,
-                            image: job.result_url || job.image,
-
-                            prompt: cleanPrompt,
-                            model: job.model_id || "Flux",
-                            model_name: job.model_name,
-                            duration: job.duration,
-                            provider: "replicate",
-
-                            credits: job.credits_spent || 1,
-                            likes: job.likes || 0,
-                            views: job.views || 0,
-
-                            userName: "Me",
-                            userAvatar: "https://github.com/shadcn.png", // specific avatar if available
-
-                            width: width,
-                            height: height,
-                            type: job.kind,
-                            kind: job.kind,
-                            timestamp: job.created_at,
-
-                            // Status specific to personal library
-                            status: job.status
-                        }
-                    })
+                    const mapped = data.map((job: any) => normalizeGeneration(job))
                     setGenerations(mapped)
                 }
             } catch (e) {

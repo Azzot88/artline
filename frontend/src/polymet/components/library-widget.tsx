@@ -5,6 +5,7 @@ import { Link } from "react-router-dom"
 import { useLanguage } from "@/polymet/components/language-provider"
 import { api } from "@/lib/api"
 import { Generation } from "@/polymet/data/types"
+import { normalizeGeneration } from "@/polymet/data/transformers"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area" // Assuming shadcn scroll area exists, or use native div
 import { Button } from "@/components/ui/button"
 import { GenerationDetailsDialog } from "@/polymet/components/generation-details-dialog"
