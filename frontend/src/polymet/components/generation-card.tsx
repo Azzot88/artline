@@ -40,19 +40,25 @@ export function GenerationCard({ generation, onClick, layoutMode = "fixed-width"
 
   const CardContent = (
     <Card
-      className={`break-inside-avoid overflow-hidden group cursor-pointer hover:shadow-lg transition-all border border-border/60 hover:border-primary/50 relative isolate transform-gpu rounded-xl ${layoutMode === 'fixed-height' ? 'h-full w-auto aspect-auto inline-flex' : 'w-full h-auto'}`}
-      style={layoutMode === 'fixed-width' ? { aspectRatio } : undefined}
+      className={`break-inside-avoid overflow-hidden group cursor-pointer hover:shadow-lg transition-all border border-border/60 hover:border-primary/50 relative isolate transform-gpu rounded-xl ${layoutMode === 'fixed-height' ? 'inline-flex' : 'w-full h-auto'}`}
+      style={layoutMode === 'fixed-width' ? { aspectRatio } : { height: '100%', width: 'auto' }}
       onClick={handleClick}
     >
       {/* Media */}
-      <div className={`relative bg-muted overflow-hidden ${layoutMode === 'fixed-height' ? 'h-full w-auto' : ''}`}>
+      <div
+        className={`relative bg-muted overflow-hidden`}
+        style={layoutMode === 'fixed-height' ? { height: '100%', width: 'auto' } : undefined}
+      >
         {generation.type === "video" ? (
           <video
             src={`${generation.url}#t=0.001`}
             preload="metadata"
             poster={generation.image && !generation.image.endsWith('.mp4') ? generation.image : undefined}
-            className={`object-cover rounded-[inherit] bg-muted ${layoutMode === 'fixed-height' ? 'h-full w-auto max-w-none' : 'w-full h-auto'}`}
-            style={{ aspectRatio: layoutMode === 'fixed-width' ? aspectRatio : undefined }}
+            className={`object-cover rounded-[inherit] bg-muted`}
+            style={layoutMode === 'fixed-height'
+              ? { height: '100%', width: 'auto', maxWidth: 'none', aspectRatio: `${generation.width}/${generation.height}` }
+              : { width: '100%', height: 'auto', aspectRatio }
+            }
             muted
             loop
             playsInline
@@ -63,8 +69,11 @@ export function GenerationCard({ generation, onClick, layoutMode = "fixed-width"
           <img
             src={generation.url}
             alt={generation.prompt}
-            className={`object-cover group-hover:scale-105 transition-transform duration-500 rounded-[inherit] will-change-transform ${layoutMode === 'fixed-height' ? 'h-full w-auto max-w-none' : 'w-full h-auto'}`}
-            style={{ aspectRatio: layoutMode === 'fixed-width' ? aspectRatio : undefined }}
+            className={`object-cover group-hover:scale-105 transition-transform duration-500 rounded-[inherit] will-change-transform`}
+            style={layoutMode === 'fixed-height'
+              ? { height: '100%', width: 'auto', maxWidth: 'none', aspectRatio: `${generation.width}/${generation.height}` }
+              : { width: '100%', height: 'auto', aspectRatio }
+            }
           />
         )}
 

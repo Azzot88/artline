@@ -122,7 +122,9 @@ export function Library() {
                 onOpenChange={setIsDialogOpen}
                 generation={selectedGeneration}
                 onDelete={(id) => {
+                    console.log("Deleting generation:", id)
                     setGenerations(prev => prev.filter(g => g.id !== id))
+                    setIsDialogOpen(false)
                 }}
             />
         </div>
