@@ -126,7 +126,7 @@ export function LibraryWidget({ refreshTrigger, newGeneration }: LibraryWidgetPr
                 ) : (
                     <div className="relative">
                         {/* Horizontal Scroll Container */}
-                        <div className="flex overflow-x-auto pb-6 gap-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+                        <div className="flex items-start overflow-x-auto pb-6 gap-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
                             {generations.slice(0, 10).map((gen) => (
                                 <div key={gen.id} className="flex-none w-[280px] snap-start">
                                     <GenerationCard
