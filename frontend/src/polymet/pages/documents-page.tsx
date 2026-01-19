@@ -57,7 +57,7 @@ export default function DocumentsPage() {
     return (
         <div className="flex flex-col min-h-[calc(100vh-4rem)]">
             <div className="max-w-4xl mx-auto w-full flex-1 md:px-6 px-4">
-                <h1 className="text-3xl font-bold mb-8 md:mt-8 mt-6">{t('documents.title')}</h1>
+                <h1 id="top" className="text-3xl font-bold mb-8 md:mt-8 mt-6 scroll-mt-24">{t('documents.title')}</h1>
 
                 <div className="flex flex-col gap-8">
                     {/* Navigation - Top Bar on Desktop, Stack on Mobile */}

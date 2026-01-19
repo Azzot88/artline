@@ -33,7 +33,7 @@ export function SiteFooter() {
 
                 <div className="space-y-4">
                     <h3 className="font-semibold text-foreground">
-                        <Link to="/documents" className="hover:text-primary transition-colors">{t('landing.footer.documents')}</Link>
+                        <Link to="/documents#top" className="hover:text-primary transition-colors">{t('landing.footer.documents')}</Link>
                     </h3>
                     <ul className="space-y-2 text-muted-foreground">
                         <li><Link to="/documents#terms" className="hover:underline hover:text-primary">{t('landing.footer.terms')}</Link></li>
