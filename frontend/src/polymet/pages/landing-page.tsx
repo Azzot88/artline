@@ -4,9 +4,10 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Play, PlayCircle, Check, Image as ImageIcon, ImageOff, Zap, History, RotateCcw, FileCheck, Download, Layers, Palette, Cpu, Scan, FlaskConical, Lock, FolderKanban, Vault, Plug, Star, Video, Film, Sparkles, Wand2, BarChart, Globe, Shield, Music, AudioWaveform } from "lucide-react";
+import { Play, PlayCircle, Check, Image as ImageIcon, ImageOff, Zap, History, RotateCcw, FileCheck, Download, Layers, Palette, Cpu, Scan, FlaskConical, Lock, FolderKanban, Vault, Plug, Star, Video, Film, Sparkles, Wand2, BarChart, Globe, Shield, Music, AudioWaveform, Brain } from "lucide-react";
 import { useLanguage } from "@/polymet/components/language-provider"
 import { LanguageSwitcher } from "@/polymet/components/language-switcher"
+import { ModeToggle } from "@/components/mode-toggle"
 
 export function LandingPage() {
     const { t } = useLanguage()
@@ -69,7 +70,7 @@ export function LandingPage() {
                 <div className="container flex h-14 items-center justify-between mx-auto px-4 md:px-6">
                     <Link to="/" className="flex items-center gap-2 font-bold text-xl">
                         <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
-                            <Sparkles className="h-5 w-5" />
+                            <Brain className="h-5 w-5" />
                         </div>
                         <span>{t('common.brand')}</span>
                     </Link>
@@ -86,6 +87,7 @@ export function LandingPage() {
                         <Link to="/register">
                             <Button size="sm">{t('common.register')}</Button>
                         </Link>
+                        <ModeToggle />
                     </div>
                 </div>
             </header>
@@ -452,7 +454,7 @@ export function LandingPage() {
                     <div className="space-y-4">
                         <Link to="/" className="flex items-center gap-2 font-bold text-lg">
                             <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-primary-foreground">
-                                <Sparkles className="h-4 w-4" />
+                                <Brain className="h-4 w-4" />
                             </div>
                             <span>{t('common.brand')}</span>
                         </Link>
