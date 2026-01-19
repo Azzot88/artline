@@ -11,7 +11,6 @@ import {
   XIcon,
   TrendingUpIcon,
   CreditCardIcon,
-  CreditCardIcon,
   Brain,
   CheckCircle
 } from "lucide-react"
