@@ -16,33 +16,33 @@ export function AppLayout({ children, showRightSidebar = true }: AppLayoutProps)
   const { t } = useLanguage()
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      {/* Left Sidebar */}
-      <AppSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div className="flex flex-col h-screen overflow-hidden bg-background">
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar */}
+        <AppSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto flex flex-col">
-        {/* Mobile Header with Hamburger */}
-        <div className="sticky top-0 z-30 flex items-center h-16 px-4 border-b border-border bg-background lg:hidden shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(true)}
-            className="mr-2"
-          >
-            <MenuIcon className="w-5 h-5" />
-          </Button>
-          <span className="font-bold text-lg">{t('common.brand')}</span>
-        </div>
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto flex flex-col">
+          {/* Mobile Header with Hamburger */}
+          <div className="sticky top-0 z-30 flex items-center h-16 px-4 border-b border-border bg-background lg:hidden shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(true)}
+              className="mr-2"
+            >
+              <MenuIcon className="w-5 h-5" />
+            </Button>
+            <span className="font-bold text-lg">{t('common.brand')}</span>
+          </div>
 
-        <div className="px-4 py-6 md:py-8 flex-1">
-          {children}
-        </div>
+          <div className="px-4 py-6 md:py-8 flex-1">
+            {children}
+          </div>
+        </main>
+      </div>
 
-        <SiteFooter />
-      </main>
-
-      {/* Right Sidebar - Removed */}
+      <SiteFooter />
     </div>
   )
 }
