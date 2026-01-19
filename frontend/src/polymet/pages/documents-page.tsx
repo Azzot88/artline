@@ -1,112 +1,94 @@
-import React, { useEffect } from 'react'
-import { useLocation, Link } from 'react-router-dom'
-import { useLanguage } from '@/polymet/components/language-provider'
-import { LanguageSwitcher } from '@/polymet/components/language-switcher'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Brain } from 'lucide-react'
+import { Button } from "@/components/ui/button"
+import { useLanguage } from "@/polymet/components/language-provider"
+import { useState, useRef, useEffect } from "react"
+import { useLocation } from "react-router-dom"
+import { SiteFooter } from "@/components/site-footer"
 
-export default function DocumentsPage() {
+export function DocumentsPage() {
     const { t } = useLanguage()
+    const [activeSection, setActiveSection] = useState<string>("terms")
     const location = useLocation()
-    const [activeTab, setActiveTab] = React.useState("terms")
 
     useEffect(() => {
-        if (location.hash === '#terms') setActiveTab('terms')
-        if (location.hash === '#privacy') setActiveTab('privacy')
-        if (location.hash === '#about') setActiveTab('about')
-    }, [location.hash])
+        if (location.hash) {
+            const id = location.hash.slice(1)
+            const element = document.getElementById(id)
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth" })
+                setActiveSection(id)
+            }
+        }
+    }, [location])
+
+    const scrollToSection = (id: string) => {
+        const element = document.getElementById(id)
+        if (element) {
+            element.scrollIntoView({ behavior: "smooth" })
+            setActiveSection(id)
+            window.history.pushState(null, "", `#${id}`)
+        }
+    }
 
     return (
-        <div className="min-h-screen bg-background flex flex-col font-sans">
-            <header className="px-4 lg:px-6 h-14 flex items-center border-b justify-between">
-                <Link to="/" className="flex items-center justify-center">
-                    <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground mr-2">
-                        <Brain className="h-5 w-5" />
-                    </div>
-                    <span className="font-bold text-lg">{t('common.brand')}</span>
-                </Link>
-                <LanguageSwitcher />
-            </header>
+        <div className="max-w-4xl mx-auto flex flex-col min-h-[calc(100vh-4rem)]">
+            <h1 className="text-3xl font-bold mb-8">{t('landing.footer.documents')}</h1>
 
-            <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
-                <h1 className="text-3xl font-bold mb-8 text-center">{t('documents.title')}</h1>
+            <div className="flex flex-col md:flex-row gap-8 flex-1">
+                {/* Navigation Sidebar */}
+                <div className="w-full md:w-64 shrink-0">
+                    <nav className="sticky top-24 flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
+                        <Button
+                            variant={activeSection === "terms" ? "secondary" : "ghost"}
+                            className="justify-start whitespace-nowrap"
+                            onClick={() => scrollToSection("terms")}
+                        >
+                            {t('landing.footer.terms')}
+                        </Button>
+                        <Button
+                            variant={activeSection === "privacy" ? "secondary" : "ghost"}
+                            className="justify-start whitespace-nowrap"
+                            onClick={() => scrollToSection("privacy")}
+                        >
+                            {t('landing.footer.privacy')}
+                        </Button>
+                        <Button
+                            variant={activeSection === "about" ? "secondary" : "ghost"}
+                            className="justify-start whitespace-nowrap"
+                            onClick={() => scrollToSection("about")}
+                        >
+                            {t('landing.footer.about')}
+                        </Button>
+                    </nav>
+                </div>
 
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-1 h-auto md:grid-cols-3 mb-8">
-                        <TabsTrigger value="terms">{t('documents.tabs.terms')}</TabsTrigger>
-                        <TabsTrigger value="privacy">{t('documents.tabs.privacy')}</TabsTrigger>
-                        <TabsTrigger value="about">{t('documents.tabs.about')}</TabsTrigger>
-                    </TabsList>
+                {/* Content Area */}
+                <div className="flex-1 space-y-16 pb-16">
+                    <section id="terms" className="scroll-mt-24">
+                        <h2 className="text-2xl font-semibold mb-4">{t('landing.footer.terms')}</h2>
+                        <div className="prose dark:prose-invert max-w-none text-muted-foreground whitespace-pre-wrap">
+                            {t('documents.terms.content')}
+                        </div>
+                    </section>
 
-                    <TabsContent value="terms">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{t('documents.tabs.terms')}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4 text-sm text-muted-foreground">
-                                {(t('documents.content.terms') as string[]).map((paragraph, index) => {
-                                    const match = paragraph.match(/^(\d+\.\s+[^.]+)\.(.*)$/);
-                                    if (match) {
-                                        return (
-                                            <p key={index}>
-                                                <span className="font-semibold text-foreground">{match[1]}.</span>
-                                                {match[2]}
-                                            </p>
-                                        );
-                                    }
-                                    return <p key={index}>{paragraph}</p>;
-                                })}
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
+                    <section id="privacy" className="scroll-mt-24">
+                        <h2 className="text-2xl font-semibold mb-4">{t('landing.footer.privacy')}</h2>
+                        <div className="prose dark:prose-invert max-w-none text-muted-foreground whitespace-pre-wrap">
+                            {t('documents.privacy.content')}
+                        </div>
+                    </section>
 
-                    <TabsContent value="privacy">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{t('documents.tabs.privacy')}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4 text-sm text-muted-foreground">
-                                {(t('documents.content.privacy') as string[]).map((paragraph, index) => {
-                                    const match = paragraph.match(/^(\d+\.\s+[^.]+)\.(.*)$/);
-                                    if (match) {
-                                        return (
-                                            <p key={index}>
-                                                <span className="font-semibold text-foreground">{match[1]}.</span>
-                                                {match[2]}
-                                            </p>
-                                        );
-                                    }
-                                    return <p key={index}>{paragraph}</p>;
-                                })}
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
+                    <section id="about" className="scroll-mt-24">
+                        <h2 className="text-2xl font-semibold mb-4">{t('landing.footer.about')}</h2>
+                        <div className="prose dark:prose-invert max-w-none text-muted-foreground whitespace-pre-wrap">
+                            {t('documents.about.content')}
+                        </div>
+                    </section>
+                </div>
+            </div>
 
-                    <TabsContent value="about">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{t('documents.tabs.about')}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4 text-sm text-muted-foreground">
-                                {(t('documents.content.about') as string[]).map((paragraph, index) => {
-                                    const isHeader = paragraph.length < 50 && !paragraph.includes('.') && !paragraph.includes(':');
-                                    const isLabel = paragraph.endsWith(':');
-                                    return (
-                                        <p key={index} className={isHeader || isLabel ? "font-semibold text-foreground pt-2" : ""}>
-                                            {paragraph}
-                                        </p>
-                                    )
-                                })}
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
-            </main>
-
-            <footer className="container mx-auto px-4 py-6 border-t text-center text-xs text-muted-foreground">
-                © {new Date().getFullYear()} {t('common.brand')}. All rights reserved.
-            </footer>
+            <div className="-mx-4 md:-mx-8 lg:-mx-12 mt-auto">
+                <SiteFooter />
+            </div>
         </div>
     )
 }
