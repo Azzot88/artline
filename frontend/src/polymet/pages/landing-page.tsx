@@ -182,9 +182,9 @@ export function LandingPage() {
                             <p className="text-muted-foreground mt-4 text-lg">{t('landing.payAsYouGo.subtitle')}</p>
                         </div>
 
-                        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                        <div className="flex overflow-x-auto pb-6 gap-4 md:grid md:grid-cols-3 md:gap-8 max-w-5xl mx-auto md:overflow-visible snap-x snap-mandatory mask-linear-fade">
                             {/* 7.1 Starter */}
-                            <Card className="flex flex-col">
+                            <Card className="flex flex-col min-w-[85vw] sm:min-w-[350px] md:min-w-0 snap-center">
                                 <CardHeader>
                                     <CardTitle>{t('landing.payAsYouGo.starter.title')}</CardTitle>
                                     <div className="text-3xl font-bold mt-2">{t('landing.payAsYouGo.starter.price')}</div>
@@ -206,7 +206,7 @@ export function LandingPage() {
                             </Card>
 
                             {/* 7.2 Basic (Popular) */}
-                            <Card className="flex flex-col relative border-primary shadow-lg scale-105">
+                            <Card className="flex flex-col relative border-primary shadow-lg scale-105 min-w-[85vw] sm:min-w-[350px] md:min-w-0 snap-center">
                                 <div className="absolute -top-4 left-0 right-0 mx-auto w-fit bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">{t('landing.payAsYouGo.popular')}</div>
                                 <CardHeader>
                                     <CardTitle>{t('landing.payAsYouGo.basic.title')}</CardTitle>
@@ -229,7 +229,7 @@ export function LandingPage() {
                             </Card>
 
                             {/* 7.3 Advanced */}
-                            <Card className="flex flex-col">
+                            <Card className="flex flex-col min-w-[85vw] sm:min-w-[350px] md:min-w-0 snap-center">
                                 <CardHeader>
                                     <CardTitle>{t('landing.payAsYouGo.advanced.title')}</CardTitle>
                                     <div className="text-3xl font-bold mt-2">{t('landing.payAsYouGo.advanced.price')}</div>
@@ -263,9 +263,9 @@ export function LandingPage() {
                             </p>
                         </div>
 
-                        <div className="grid lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                        <div className="flex overflow-x-auto pb-6 gap-6 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible max-w-6xl mx-auto snap-x snap-mandatory">
                             {/* BASIC */}
-                            <Card className="flex flex-col hover:border-primary/50 transition-colors duration-300">
+                            <Card className="flex flex-col hover:border-primary/50 transition-colors duration-300 min-w-[85vw] sm:min-w-[350px] lg:min-w-0 snap-center">
                                 <CardHeader className="py-4">
                                     <CardTitle className="text-xl">{t('landing.subscriptions.basic.title')}</CardTitle>
                                     <div className="mt-2 flex items-baseline gap-1">
@@ -292,7 +292,7 @@ export function LandingPage() {
                             </Card>
 
                             {/* PRO */}
-                            <Card className="flex flex-col relative border-primary bg-background shadow-md">
+                            <Card className="flex flex-col relative border-primary bg-background shadow-md min-w-[85vw] sm:min-w-[350px] lg:min-w-0 snap-center">
                                 <div className="absolute top-0 right-0 p-3">
                                     <div className="bg-primary/10 text-primary px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
                                         HIT
@@ -324,7 +324,7 @@ export function LandingPage() {
                             </Card>
 
                             {/* STUDIO */}
-                            <Card className="flex flex-col hover:border-purple-500/50 transition-colors duration-300 bg-slate-50 dark:bg-slate-900/50">
+                            <Card className="flex flex-col hover:border-purple-500/50 transition-colors duration-300 bg-slate-50 dark:bg-slate-900/50 min-w-[85vw] sm:min-w-[350px] lg:min-w-0 snap-center">
                                 <CardHeader className="py-4">
                                     <CardTitle className="text-xl">{t('landing.subscriptions.studio.title')}</CardTitle>
                                     <div className="mt-2 flex items-baseline gap-1">

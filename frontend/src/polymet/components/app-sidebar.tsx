@@ -59,7 +59,7 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
     },
     {
       key: "tariffs",
-      href: "/landingpage",
+      href: "/landingpage#pricing",
       icon: CreditCardIcon,
       title: "common.tariffs"
     },
