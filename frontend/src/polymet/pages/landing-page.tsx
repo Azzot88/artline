@@ -1,4 +1,6 @@
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -8,6 +10,53 @@ import { LanguageSwitcher } from "@/polymet/components/language-switcher"
 
 export function LandingPage() {
     const { t } = useLanguage()
+    const location = useLocation()
+
+    useEffect(() => {
+        if (location.hash) {
+            const element = document.getElementById(location.hash.slice(1)) // Remove '#'
+            if (element) {
+                // Small timeout to ensure DOM is ready/rendered
+                setTimeout(() => {
+                    element.scrollIntoView({ behavior: 'smooth' })
+                }, 100)
+            }
+        }
+    }, [location])
+
+    // Helper for carousel dots
+    const [paygIndex, setPaygIndex] = useState(0)
+    const [subIndex, setSubIndex] = useState(0)
+
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>, setIndex: (i: number) => void) => {
+        const container = e.currentTarget
+        const center = container.scrollLeft + (container.clientWidth / 2)
+        const cards = container.getElementsByClassName('snap-center')
+
+        let closestIndex = 0
+        let closestDist = Infinity
+
+        Array.from(cards).forEach((card, index) => {
+            const cardCenter = (card as HTMLElement).offsetLeft + ((card as HTMLElement).offsetWidth / 2)
+            const dist = Math.abs(center - cardCenter)
+            if (dist < closestDist) {
+                closestDist = dist
+                closestIndex = index
+            }
+        })
+        setIndex(closestIndex)
+    }
+
+    const CarouselDots = ({ count, activeIndex }: { count: number, activeIndex: number }) => (
+        <div className="flex justify-center gap-2 mt-4 md:hidden">
+            {Array.from({ length: count }).map((_, i) => (
+                <div
+                    key={i}
+                    className={`h-2 w-2 rounded-full transition-colors duration-300 ${i === activeIndex ? "bg-primary" : "bg-primary/20"}`}
+                />
+            ))}
+        </div>
+    )
 
     const basicIcons = [ImageOff, Zap, History, RotateCcw, FileCheck];
     const proIcons = [Download, Layers, Palette, Cpu, Scan];
@@ -182,7 +231,10 @@ export function LandingPage() {
                             <p className="text-muted-foreground mt-4 text-lg">{t('landing.payAsYouGo.subtitle')}</p>
                         </div>
 
-                        <div className="flex overflow-x-auto pb-6 gap-4 md:grid md:grid-cols-3 md:gap-8 max-w-5xl mx-auto md:overflow-visible snap-x snap-mandatory mask-linear-fade">
+                        <div
+                            className="flex overflow-x-auto pb-6 pt-12 gap-4 md:grid md:grid-cols-3 md:gap-8 max-w-5xl mx-auto md:overflow-visible snap-x snap-mandatory mask-linear-fade scrollbar-hide"
+                            onScroll={(e) => handleScroll(e, setPaygIndex)}
+                        >
                             {/* 7.1 Starter */}
                             <Card className="flex flex-col min-w-[85vw] sm:min-w-[350px] md:min-w-0 snap-center">
                                 <CardHeader>
@@ -206,7 +258,7 @@ export function LandingPage() {
                             </Card>
 
                             {/* 7.2 Basic (Popular) */}
-                            <Card className="flex flex-col relative border-primary shadow-lg scale-105 min-w-[85vw] sm:min-w-[350px] md:min-w-0 snap-center">
+                            <Card className="flex flex-col relative border-primary shadow-lg md:scale-105 min-w-[85vw] sm:min-w-[350px] md:min-w-0 snap-center">
                                 <div className="absolute -top-4 left-0 right-0 mx-auto w-fit bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">{t('landing.payAsYouGo.popular')}</div>
                                 <CardHeader>
                                     <CardTitle>{t('landing.payAsYouGo.basic.title')}</CardTitle>
@@ -250,6 +302,7 @@ export function LandingPage() {
                                 </CardFooter>
                             </Card>
                         </div>
+                        <CarouselDots count={3} activeIndex={paygIndex} />
                     </div>
                 </section>
 
@@ -263,7 +316,10 @@ export function LandingPage() {
                             </p>
                         </div>
 
-                        <div className="flex overflow-x-auto pb-6 gap-6 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible max-w-6xl mx-auto snap-x snap-mandatory">
+                        <div
+                            className="flex overflow-x-auto pb-6 pt-12 gap-6 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible max-w-6xl mx-auto snap-x snap-mandatory scrollbar-hide"
+                            onScroll={(e) => handleScroll(e, setSubIndex)}
+                        >
                             {/* BASIC */}
                             <Card className="flex flex-col hover:border-primary/50 transition-colors duration-300 min-w-[85vw] sm:min-w-[350px] lg:min-w-0 snap-center">
                                 <CardHeader className="py-4">
@@ -350,6 +406,7 @@ export function LandingPage() {
                                 </CardFooter>
                             </Card>
                         </div>
+                        <CarouselDots count={3} activeIndex={subIndex} />
                     </div>
                 </section>
 
