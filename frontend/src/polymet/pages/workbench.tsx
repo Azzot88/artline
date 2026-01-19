@@ -24,7 +24,7 @@ import {
   getEffectiveDefault
 } from "@/polymet/data/model-parameters-data"
 import { formatToResolutions } from "@/polymet/data/types"
-import { formatToResolutions } from "@/polymet/data/types"
+
 import type { ParameterValues, ImageFormatType, VideoFormatType, Generation } from "@/polymet/data/types"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
