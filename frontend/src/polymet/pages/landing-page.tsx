@@ -459,7 +459,7 @@ export function LandingPage() {
                             <span>{t('common.brand')}</span>
                         </Link>
                         <div className="text-muted-foreground">
-                            <p>Email: {t('landing.footer.email')}</p>
+                            <p>Email: <a href="mailto:contact@workbench.ink" className="hover:text-primary transition-colors">contact@workbench.ink</a></p>
                         </div>
                     </div>
 
