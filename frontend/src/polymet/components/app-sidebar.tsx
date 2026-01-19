@@ -22,6 +22,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useLanguage } from "@/polymet/components/language-provider"
 import { LanguageSwitcher } from "@/polymet/components/language-switcher"
 import { useAuth } from "@/polymet/components/auth-provider"
+import { ModeToggle } from "@/components/mode-toggle"
+
 
 interface NavItem {
   key: string
@@ -216,6 +218,14 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
                 {t('common.language')}
               </span>
               <LanguageSwitcher variant="ghost" />
+            </div>
+
+            {/* Theme Toggle Row */}
+            <div className="flex items-center justify-between px-3 py-2">
+              <span className="text-sm font-medium text-muted-foreground flex items-center gap-3">
+                {t('common.theme')}
+              </span>
+              <ModeToggle />
             </div>
           </div>
 
