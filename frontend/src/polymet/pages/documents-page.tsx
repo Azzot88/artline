@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { useLocation } from "react-router-dom"
 import { SiteFooter } from "@/components/site-footer"
 
-export function DocumentsPage() {
+export default function DocumentsPage() {
     const { t } = useLanguage()
     const [activeSection, setActiveSection] = useState<string>("terms")
     const location = useLocation()
