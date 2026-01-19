@@ -138,5 +138,3 @@ export function Gallery() {
     </div>
   )
 }
-// Need to add Input import back since I removed it from imports list above
-import { Input } from "@/components/ui/input"

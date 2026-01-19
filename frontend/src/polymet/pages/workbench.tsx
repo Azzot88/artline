@@ -17,30 +17,24 @@ import { toast } from "sonner" // Toast
 import { GenerationOverlay } from "@/polymet/components/generation-overlay" // Import Overlay
 import { LibraryWidget } from "@/polymet/components/library-widget"
 
-
 import {
   getEnabledParameters,
   getModelParameterConfigs,
   getEffectiveDefault
 } from "@/polymet/data/model-parameters-data"
 import { formatToResolutions } from "@/polymet/data/types"
-import { formatToResolutions } from "@/polymet/data/types"
 import type { ParameterValues, ImageFormatType, VideoFormatType, Generation } from "@/polymet/data/types"
-
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
-
 export function Workbench() {
   const { t } = useLanguage()
   const [creationType, setCreationType] = useState<CreationType>("image")
   const [inputType, setInputType] = useState<InputType>("text")
   const [prompt, setPrompt] = useState("")
   const [file, setFile] = useState<File | null>(null)
-
   // Use Dynamic Models
   const { models, loading: modelsLoading, error: modelsError } = useModels()
   const [model, setModel] = useState("")
-
   // Select first model when loaded
   useEffect(() => {
     if (models.length > 0 && !model) {
@@ -49,21 +43,14 @@ export function Workbench() {
       setModel(flux ? flux.id : models[0].id)
     }
   }, [models, model])
-
-
-
   const [loading, setLoading] = useState(false)
   const [refreshLibrary, setRefreshLibrary] = useState(0)
   const [lastGeneration, setLastGeneration] = useState<Generation | null>(null)
-
-
   // Dynamic parameters based on selected model
   const [parameterValues, setParameterValues] = useState<ParameterValues>({})
-
   // Get model parameters (max 4, excluding prompt/negative_prompt)
   const allParameters = getEnabledParameters(model)
   const parameterConfigs = getModelParameterConfigs(model)
-
   // Filter out prompt-like parameters and limit to 4
   // Format parameter is ALWAYS shown first if present
   const formatParam = allParameters.find(p => p.name === 'format')
@@ -76,20 +63,16 @@ export function Workbench() {
       !p.name.toLowerCase().includes('height') &&
       !p.name.toLowerCase().includes('size')
     )
-
   // Combine: format first, then other parameters (max 4 total)
   const displayParameters = formatParam
     ? [formatParam, ...otherParams].slice(0, 4)
     : otherParams.slice(0, 4)
-
   // Get model credits from dynamic list or fallback
   const selectedModel = models.find(m => m.id === model)
   // Backend doesn't send credits yet? Default to 5
   // If backend updated to send credits, use it.
   const modelCredits = 5
-
   // Initialize parameter values with defaults when model changes
-  useEffect(() => {
     const initialValues: ParameterValues = {}
     allParameters.forEach(param => {
       const config = parameterConfigs.find(c => c.parameter_id === param.id)
@@ -97,11 +80,9 @@ export function Workbench() {
     })
     setParameterValues(initialValues)
   }, [model])
-
   const handleParameterChange = (parameterId: string, value: any) => {
     setParameterValues(prev => {
       const newValues = { ...prev, [parameterId]: value }
-
       // If format changed, auto-calculate resolution
       const param = allParameters.find(p => p.id === parameterId)
       if (param?.name === 'format') {
@@ -109,38 +90,29 @@ export function Workbench() {
         const resolutionParam = allParameters.find(p =>
           p.name === 'resolution' || p.name === 'size'
         )
-
         if (resolutionParam) {
           // Get quality from quality parameter if exists
           const qualityParam = allParameters.find(p => p.name === 'quality')
           const quality = qualityParam ? newValues[qualityParam.id] : 'hd'
-
           // Map quality to resolution quality
           const resQuality = quality === 'hd' ? 'hd' : quality === '4k' ? '4k' : 'sd'
-
           // Get available resolutions for this format
           const availableResolutions = formatToResolutions(value as ImageFormatType | VideoFormatType, resQuality)
-
           // Set to first available resolution (usually the best quality)
           if (availableResolutions.length > 0) {
             newValues[resolutionParam.id] = availableResolutions[availableResolutions.length - 1]
           }
         }
       }
-
       return newValues
-    })
   }
-
   // Polling State
   const [isGenerating, setIsGenerating] = useState(false)
   const [currentJobStatus, setCurrentJobStatus] = useState<string>("idle") // idle, queued, processing, succeeded, failed
   const [currentJobLogs, setCurrentJobLogs] = useState<string>("")
-
   const pollJobStatus = async (jobId: string) => {
     let attempts = 0
     const maxAttempts = 60 // 2 minutes approx
-
     const interval = setInterval(async () => {
       attempts++
       if (attempts > maxAttempts) {
@@ -149,25 +121,20 @@ export function Workbench() {
         setCurrentJobStatus("failed")
         toast.error("Generation timed out")
         return
-      }
-
       try {
         const job: any = await api.get(`/jobs/${jobId}`)
         setCurrentJobStatus(job.status)
         if (job.logs) setCurrentJobLogs(job.logs)
-
         if (job.status === 'succeeded') {
           clearInterval(interval)
           setIsGenerating(false)
           toast.success(t('workbench.toasts.jobStarted')) // Actually finished now
-
           // Map job to Generation for immediate display
           const width = job.format === "portrait" ? 768 : (job.format === "landscape" ? 1024 : 1024);
           const height = job.format === "portrait" ? 1024 : (job.format === "landscape" ? 768 : 1024);
           let cleanPrompt = job.prompt || "";
           if (cleanPrompt.includes("|")) cleanPrompt = cleanPrompt.split("|").pop().trim();
           else if (cleanPrompt.startsWith("[")) cleanPrompt = cleanPrompt.replace(/\[.*?\]\s*/, "").trim();
-
           const newGen: Generation = {
             id: job.id,
             url: job.result_url || job.image,
@@ -186,44 +153,30 @@ export function Workbench() {
             kind: job.kind as any,
             timestamp: job.created_at,
             status: job.status
-          }
           setLastGeneration(newGen)
           setRefreshLibrary(prev => prev + 1)
-
         } else if (job.status === 'failed') {
-          clearInterval(interval)
-          setIsGenerating(false)
           toast.error("Generation failed", { description: job.error_message })
-        }
       } catch (e) {
         console.error("Poll error", e)
-      }
     }, 2000)
-  }
-
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       toast.error(t('workbench.toasts.enterPrompt'))
       return
-    }
-
     setLoading(true)
     setIsGenerating(true)
     setCurrentJobStatus("queued")
     setCurrentJobLogs("")
-
     try {
       const payload = {
         model_id: model,
         prompt: prompt,
         kind: creationType,
         params: parameterValues
-      }
-
       const res: any = await api.post<any>("/jobs", payload)
       // Start polling
       pollJobStatus(res.id)
-
     } catch (err: any) {
       console.error(err)
       toast.error(t('workbench.toasts.genFailed'), { description: err.message || t('workbench.toasts.unknownError') })
@@ -231,28 +184,19 @@ export function Workbench() {
       setCurrentJobStatus("idle")
     } finally {
       setLoading(false)
-    }
-  }
-
   const isGenerateDisabled = () => {
     if (inputType === "text" && !prompt.trim()) return true
     if (inputType === "image" && !file) return true
     if (!model) return true
     if (modelsLoading) return true
     if (isGenerating) return true
-
     // Check required parameters
     const requiredParams = allParameters.filter(p => p.required)
     for (const param of requiredParams) {
       const value = parameterValues[param.id]
       if (value === null || value === undefined || value === "") {
         return true
-      }
-    }
-
     return false
-  }
-
   return (
     <div className="w-full space-y-6">
       {/* Page Header */}
@@ -264,7 +208,6 @@ export function Workbench() {
           {t('workbench.appSubtitle')}
         </p>
       </div>
-
       {modelsError && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -274,27 +217,22 @@ export function Workbench() {
           </AlertDescription>
         </Alert>
       )}
-
       {modelsLoading && (
         <div className="flex items-center justify-center p-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <span className="ml-3 text-muted-foreground">{t('workbench.loading')}</span>
         </div>
-      )}
-
       {/* Main Unified Card - Large Textarea with Controls Inside */}
       <Card className="overflow-hidden">
         <CardContent className="p-0">
           {/* Large Main Textarea Area */}
           <div className="relative">
-
             {/* OVERLAY */}
             <GenerationOverlay
               isVisible={isGenerating}
               status={currentJobStatus}
               logs={currentJobLogs}
             />
-
             {/* Top Controls Bar - Input Type Toggle */}
             <div className="absolute top-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-b border-border p-4 z-10">
               <div className="flex flex-wrap items-center gap-4">
@@ -306,7 +244,6 @@ export function Workbench() {
                 />
               </div>
             </div>
-
             {/* Textarea - Hidden when Image-to-X mode is active */}
             {inputType === "text" ? (
               <div className="relative w-full">
@@ -317,7 +254,6 @@ export function Workbench() {
                   placeholder={creationType === "image" ? t('workbench.describeImage') : t('workbench.describeVideo')}
                   maxLength={1000}
                   className="w-full min-h-[400px] md:min-h-[400px] resize-y border-0 focus-visible:ring-0 text-base p-6 pt-24 pb-32"
-                />
                 {/* Enhance Button - Inside textarea, floating right */}
                 <div className="absolute top-24 right-6 z-20">
                   <Button
@@ -332,7 +268,6 @@ export function Workbench() {
                     {t('workbench.enhance')}
                   </Button>
                 </div>
-              </div>
             ) : (
               <div className="w-full min-h-[400px] md:min-h-[400px] p-6 pt-24 pb-32 relative">
                 {/* Small Upload Icon at Top Left */}
@@ -340,7 +275,6 @@ export function Workbench() {
                   <button
                     onClick={() => document.getElementById('file-input')?.click()}
                     className="flex items-center justify-center w-10 h-10 rounded-lg border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all"
-                  >
                     <PlusIcon className="w-5 h-5 text-muted-foreground" />
                   </button>
                   <input
@@ -355,21 +289,16 @@ export function Workbench() {
                       {file.name}
                     </p>
                   )}
-                </div>
-              </div>
             )}
-
             {/* Bottom Controls Bar - Content-Driven Responsive Layout */}
             <div className="absolute bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-4">
               {/* Format & Resolution Indicator */}
               {(() => {
                 const formatParam = allParameters.find(p => p.name === 'format')
                 const resolutionParam = allParameters.find(p => p.name === 'resolution' || p.name === 'size')
-
                 if (formatParam && resolutionParam) {
                   const format = parameterValues[formatParam.id]
                   const resolution = parameterValues[resolutionParam.id]
-
                   if (format && resolution) {
                     return (
                       <div className="mb-3">
@@ -383,7 +312,6 @@ export function Workbench() {
                 }
                 return null
               })()}
-
               <div className="flex flex-wrap items-end gap-3">
                 {/* Model Selector */}
                 <div className="flex-shrink-0 w-full sm:w-auto sm:min-w-[200px] sm:max-w-[300px]">
@@ -393,14 +321,10 @@ export function Workbench() {
                     creationType={creationType}
                     models={models}
                     loading={modelsLoading}
-                  />
-                </div>
-
                 {/* Dynamic Parameters (max 4) - Format is always first */}
                 {displayParameters.map(param => {
                   const config = parameterConfigs.find(c => c.parameter_id === param.id)
                   const isFormat = param.name === 'format'
-
                   return (
                     <div
                       key={param.id}
@@ -417,7 +341,6 @@ export function Workbench() {
                     </div>
                   )
                 })}
-
                 {/* Generate Button */}
                 <div className="flex-shrink-0 w-full sm:w-auto sm:ml-auto">
                   <GenerateButton
@@ -425,24 +348,15 @@ export function Workbench() {
                     onClick={handleGenerate}
                     disabled={isGenerateDisabled()}
                     loading={loading && !isGenerating} // Only show old spinner if not using overlay? or keep both? overlay implies loading.
-                  />
-                </div>
-              </div>
-            </div>
           </div>
-
         </CardContent>
       </Card>
-
       {/* Library Widget - Dynamic Visibility */}
       <LibraryWidget refreshTrigger={refreshLibrary} newGeneration={lastGeneration} />
-
       {/* Community Gallery Card */}
       <Card>
         <CardContent className="pt-6">
           <CommunityGallery />
-        </CardContent>
-      </Card>
     </div >
   )
 }
