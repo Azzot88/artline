@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 
 export default function AIWorkbenchAppRender() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <AIWorkbenchApp />
     </ThemeProvider>
   )
