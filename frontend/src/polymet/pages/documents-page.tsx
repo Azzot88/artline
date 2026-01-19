@@ -33,7 +33,6 @@ export default function DocumentsPage() {
         const content = t(key);
         if (Array.isArray(content)) {
             return content.map((paragraph: string, index: number) => {
-                // Formatting logic for numbering 1. 2. etc
                 const match = paragraph.match(/^(\d+\.\s+[^.]+)\.(.*)$/);
                 if (match) {
                     return (
@@ -43,8 +42,6 @@ export default function DocumentsPage() {
                         </p>
                     );
                 }
-                // Logic for "About" section headers (short lines without dots/colons?) or just any header logic
-                // Reusing a safe logic: if it ends with colon or is short and no dots, treat as header
                 const isHeader = (paragraph.length < 50 && !paragraph.includes('.') && !paragraph.includes(':')) || paragraph.endsWith(':');
                 if (isHeader) {
                     return <p key={index} className="font-semibold text-foreground pt-2 mb-2">{paragraph}</p>;
@@ -62,10 +59,10 @@ export default function DocumentsPage() {
             <div className="max-w-4xl mx-auto w-full flex-1 md:px-6 px-4">
                 <h1 className="text-3xl font-bold mb-8 md:mt-8 mt-6">{t('documents.title')}</h1>
 
-                <div className="flex flex-col md:flex-row gap-8">
-                    {/* Navigation Sidebar */}
-                    <div className="w-full md:w-64 shrink-0">
-                        <nav className="sticky top-24 flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
+                <div className="flex flex-col gap-8">
+                    {/* Navigation - Top Bar on Desktop, Stack on Mobile */}
+                    <div className="w-full shrink-0 sticky top-0 z-10 bg-background/95 backdrop-blur pb-4 pt-2">
+                        <nav className="flex flex-col md:flex-row gap-2 md:gap-4">
                             <Button
                                 variant={activeSection === "terms" ? "secondary" : "ghost"}
                                 className="justify-start whitespace-nowrap"
@@ -91,22 +88,22 @@ export default function DocumentsPage() {
                     </div>
 
                     {/* Content Area */}
-                    <div className="flex-1 space-y-16 pb-16">
-                        <section id="terms" className="scroll-mt-24">
+                    <div className="flex-1 space-y-16 pb-16 pt-4">
+                        <section id="terms" className="scroll-mt-32">
                             <h2 className="text-2xl font-semibold mb-4">{t('documents.tabs.terms')}</h2>
                             <div className="prose dark:prose-invert max-w-none text-muted-foreground whitespace-pre-wrap">
                                 {renderContent('documents.content.terms')}
                             </div>
                         </section>
 
-                        <section id="privacy" className="scroll-mt-24">
+                        <section id="privacy" className="scroll-mt-32">
                             <h2 className="text-2xl font-semibold mb-4">{t('documents.tabs.privacy')}</h2>
                             <div className="prose dark:prose-invert max-w-none text-muted-foreground whitespace-pre-wrap">
                                 {renderContent('documents.content.privacy')}
                             </div>
                         </section>
 
-                        <section id="about" className="scroll-mt-24">
+                        <section id="about" className="scroll-mt-32">
                             <h2 className="text-2xl font-semibold mb-4">{t('documents.tabs.about')}</h2>
                             <div className="prose dark:prose-invert max-w-none text-muted-foreground whitespace-pre-wrap">
                                 {renderContent('documents.content.about')}
