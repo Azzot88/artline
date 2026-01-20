@@ -18,6 +18,9 @@ from app.domain.billing.service import get_user_balance, add_ledger_entry
 from app.domain.jobs.service import create_job, get_user_jobs, get_public_jobs, get_review_jobs
 from app.domain.jobs.runner import process_job
 from app.domain.users.guest_service import get_or_create_guest
+import boto3
+import asyncio
+from botocore.exceptions import ClientError
 
 router = APIRouter()
 
@@ -219,6 +222,18 @@ async def list_jobs(
 ):
     if not user:
         return []
+    # Note: get_user_jobs is a helper. We should verify if we need to update IT or filter here.
+    # Ideally update the Service helper or filter here if the helper returns query.
+    # The helper returns list of scalars.
+    # Let's update get_user_jobs in app/domain/jobs/service.py instead for cleanliness, 
+    # OR we can hot-fix existing usage. 
+    
+    # Wait, the helper is "get_user_jobs" found earlier. 
+    # Checking app/domain/jobs/service.py:
+    # It constructs a select statement. 
+    # I should update app/domain/jobs/service.py to exclude deleted.
+    
+    # I'll update the service file in next step.
     return await get_user_jobs(db, user, limit)
 
 @router.get("/gallery", response_model=list[JobRead])
@@ -351,6 +366,135 @@ async def get_job_status(
              pass
     
     return job
+
+@router.delete("/jobs/{job_id}")
+async def delete_job(
+    job_id: str,
+    user: User | object | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db)
+):
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    # Fetch Job
+    stmt = select(Job).where(Job.id == job_id)
+    if isinstance(user, User):
+        stmt = stmt.where(Job.user_id == user.id)
+    else:
+        stmt = stmt.where(Job.guest_id == user.id)
+    
+    result = await db.execute(stmt)
+    job = result.scalar_one_or_none()
+    
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    # Scrubbed Soft Delete Logic
+    s3_url = job.result_url
+    
+    # Update DB Record
+    job.status = 'deleted'
+    job.is_public = False
+    job.is_curated = False
+    job.prompt = '[Deleted]'
+    job.result_url = None
+    job.thumbnailUrl = None
+    job.input_image_url = None
+    # We preserve billing/model/duration info
+    
+    # Trigger S3 Deletion (Async)
+    if s3_url and "amazonaws.com" in s3_url:
+        try:
+            # Extract Key from URL
+            # Format: https://{bucket}.s3.{region}.amazonaws.com/{key}
+            # or https://s3.{region}.amazonaws.com/{bucket}/{key}
+            # Simplified assumption: standard virtual-hosted-style
+            from urllib.parse import urlparse
+            path = urlparse(s3_url).path.lstrip('/')
+            
+            # If path starts with settings.AWS_BUCKET_NAME, strip it (path-style)
+            # But usually virtual-hosted means path IS the key.
+            # Let's assume standard key "generations/{id}.ext"
+            
+            await delete_s3_object(path)
+        except Exception as e:
+            print(f"S3 Delete Error: {e}")
+            # Non-fatal for the user request
+            
+    await db.commit()
+    return {"ok": True}
+
+async def delete_s3_object(key: str):
+    if not settings.AWS_ACCESS_KEY_ID:
+        return
+        
+    def _delete():
+        s3 = boto3.client(
+            's3',
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_REGION
+        )
+        s3.delete_object(Bucket=settings.AWS_BUCKET_NAME, Key=key)
+
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, _delete)
+
+
+@router.get("/jobs/{job_id}/download")
+async def download_job(
+    job_id: str,
+    user: User | object | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db)
+):
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    stmt = select(Job).where(Job.id == job_id)
+    if isinstance(user, User):
+        stmt = stmt.where(Job.user_id == user.id)
+    else:
+        stmt = stmt.where(Job.guest_id == user.id)
+        
+    result = await db.execute(stmt)
+    job = result.scalar_one_or_none()
+    
+    if not job or not job.result_url:
+         raise HTTPException(status_code=404, detail="File not found")
+
+    # Generate Presigned URL
+    try:
+        # Extract Ext
+        ext = job.result_url.split('.')[-1]
+        filename = f"artline-{job_id[:8]}.{ext}"
+        
+        # Parse Key
+        from urllib.parse import urlparse
+        key = urlparse(job.result_url).path.lstrip('/')
+        
+        url = generate_presigned_url(key, filename)
+        return {"url": url}
+    except Exception as e:
+        print(f"Presign Error: {e}")
+        # Fallback to direct URL if presign fails
+        return {"url": job.result_url}
+
+def generate_presigned_url(key: str, filename: str):
+    s3 = boto3.client(
+        's3',
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        region_name=settings.AWS_REGION
+    )
+    return s3.generate_presigned_url(
+        'get_object',
+        Params={
+            'Bucket': settings.AWS_BUCKET_NAME,
+            'Key': key,
+            'ResponseContentDisposition': f'attachment; filename="{filename}"'
+        },
+        ExpiresIn=3600
+    )
 
 @router.post("/jobs/{job_id}/public")
 async def toggle_public(

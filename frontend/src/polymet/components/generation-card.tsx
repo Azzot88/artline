@@ -46,9 +46,11 @@ export function GenerationCard({ generation, onClick, layoutMode = "fixed-width"
   const height = generation.height || 1024;
 
   const handleClick = (e: React.MouseEvent) => {
+    // Stop propagation immediately to prevent parent handlers (like Link or Masonry Item) from firing
+    e.preventDefault();
+    e.stopPropagation();
+
     if (onClick) {
-      e.preventDefault()
-      e.stopPropagation()
       onClick(generation)
     }
   }

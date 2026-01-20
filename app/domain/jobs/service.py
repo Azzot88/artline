@@ -136,6 +136,8 @@ async def get_user_jobs(db: AsyncSession, user: User | object, limit: int = 50):
     else:
         stmt = stmt.where(Job.user_id == user.id)
         
+    stmt = stmt.where(Job.status != 'deleted')
+        
     result = await db.execute(stmt)
     return result.scalars().all()
 

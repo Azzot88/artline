@@ -42,6 +42,7 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
     if (!generation) return null
 
     // Handlers
+    // Handlers
     const handleCopyPrompt = () => {
         navigator.clipboard.writeText(generation.prompt)
         toast.success(t('generationDetails.copied') || "Prompt copied")
@@ -49,20 +50,23 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
 
     const handleDownload = async () => {
         try {
-            const response = await fetch(generation.url);
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            const ext = generation.url.split('.').pop()?.split('?')[0] || 'png';
-            a.download = `artline-${generation.id.slice(0, 8)}.${ext}`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-            toast.success("Download started");
+            // New Endpoint Logic
+            const res = await api.get(`/jobs/${generation.id}/download`);
+            if (res.url) {
+                // If presigned URL, open it (browser handles download via Content-Disposition)
+                const link = document.createElement('a');
+                link.href = res.url;
+                link.setAttribute('download', ''); // Hint
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                toast.success("Download started");
+            } else {
+                throw new Error("No URL returned");
+            }
         } catch (e) {
-            console.error("Download fallback", e);
+            console.error("Download failed, trying direct fallback", e);
+            // Fallback: Open original URL
             window.open(generation.url, '_blank');
         }
     }
@@ -90,7 +94,7 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
     const aspectRatio = (width / height).toFixed(2)
     const resolutionLabel = generation.kind === 'video' && height === 1080 ? '1080p (Full HD)' : `${width}x${height}`
 
-    let fileExt = generation.url.split('.').pop()?.split('?')[0] || ''
+    let fileExt = generation.url ? generation.url.split('.').pop()?.split('?')[0] || '' : '';
     if (generation.kind === 'video' && !fileExt) fileExt = 'mp4'
     if (generation.kind === 'image' && !fileExt) fileExt = 'webp'
 
@@ -107,15 +111,19 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
 
                 {/* --- LEFT: Media Viewport --- */}
                 <div className="flex-1 bg-black/95 flex items-center justify-center p-4 relative overflow-hidden md:h-full h-[45vh] group-media">
-                    {/* Atmospheric Background Blur */}
+                    {/* Atmospheric Background Blur - Optimized */}
+                    {/* Using will-change-transform and limiting blur radius helps performance */}
                     <div
-                        className="absolute inset-0 opacity-30 blur-[100px] scale-150 transition-opacity duration-1000"
+                        className="absolute inset-0 opacity-20 blur-[60px] scale-110 pointer-events-none"
                         style={{
                             backgroundImage: `url(${generation.thumbnailUrl || generation.url})`,
                             backgroundSize: 'cover',
-                            backgroundPosition: 'center'
+                            backgroundPosition: 'center',
+                            willChange: 'transform, opacity'
                         }}
                     />
+
+                    {/* ... rest of content ... */}
 
                     {/* Main Content - CONTAINED to ensure full visibility */}
                     <div className="relative z-10 w-full h-full flex items-center justify-center">
