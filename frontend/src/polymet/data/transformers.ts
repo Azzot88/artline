@@ -5,95 +5,104 @@ import { Generation, JobStatus, JobKind, InputType } from "@/polymet/data/types"
  * This ensures consistency across the app, centralizing fallback logic for dimensions, keys, and values.
  */
 export function normalizeGeneration(raw: any): Generation {
-    // 1. Dimensions Logic (Pillow -> Format -> Default)
-    let width = raw.width;
-    let height = raw.height;
+    // 1. Dimensions Logic
+    let width = Number(raw.width);
+    let height = Number(raw.height);
 
-    if (!width || !height) {
-        // Fallback based on format
-        if (raw.format === "portrait") {
+    // Fallback if missing or invalid
+    if (!width || !height || isNaN(width) || isNaN(height)) {
+        if (raw.format === "portrait" || raw.format === "9:16") {
             width = 576;
             height = 1024;
-        } else if (raw.format === "landscape") {
+        } else if (raw.format === "landscape" || raw.format === "16:9") {
             width = 1024;
             height = 576;
         } else {
-            // Square or unknown
+            // Default to Square
             width = 1024;
             height = 1024;
         }
     }
 
-    // 2. Prompt Cleaning
-    // Remove technical prefixes sometimes left by pipelines if raw prompt is dirty
-    // e.g. "[1234] parameters... | actual prompt"
-    let cleanPrompt = raw.prompt || "";
-    if (typeof cleanPrompt === 'string') {
-        if (cleanPrompt.includes("|")) {
-            cleanPrompt = cleanPrompt.split("|").pop()?.trim() || cleanPrompt;
-        } else if (cleanPrompt.startsWith("[")) {
-            cleanPrompt = cleanPrompt.replace(/\[.*?\]\s*/, "").trim();
-        }
+    // 2. Kind Inference
+    // Backend source of truth is 'kind', but we fallback to URL extension
+    let kind: JobKind = raw.kind;
+    const url = raw.result_url || raw.image || raw.url || "";
+
+    if (!kind) {
+        if (url.match(/\.(mp4|mov|webm)(\?|$)/i)) kind = "video";
+        else if (url.match(/\.(mp3|wav|ogg)(\?|$)/i)) kind = "audio";
+        else kind = "image";
     }
 
-    // 3. Status Handling
+    // 3. Prompt Cleaning
+    let cleanPrompt = raw.prompt || "";
+    if (typeof cleanPrompt === 'string') {
+        // Remove pipeline artifacts
+        if (cleanPrompt.includes("|")) {
+            // Heuristic: usually "params | prompt"
+            cleanPrompt = cleanPrompt.split("|").pop()?.trim() || cleanPrompt;
+        }
+        cleanPrompt = cleanPrompt.replace(/\[.*?\]\s*/g, "").trim();
+    }
+
+    // 4. Status
     const status: JobStatus = (raw.status && ["queued", "running", "succeeded", "failed"].includes(raw.status))
         ? raw.status as JobStatus
         : "queued";
 
-    // 4. Kind Handling
-    // Detect video/audio if not explicit, though backend should be source of truth
-    let kind: JobKind = raw.kind || "image";
-    if (!raw.kind && raw.result_url) {
-        if (raw.result_url.endsWith(".mp4")) kind = "video";
-        // if (raw.result_url.endsWith(".mp3")) kind = "audio"; // Future support
-    }
+    // 5. Metadata Extraction
+    const modelId = raw.model_id || raw.model || "";
+    const modelName = raw.model_name || modelId || "Unknown Model";
 
-    // 5. Construct Object
+    // Duration
+    let duration = raw.duration ? Number(raw.duration) : undefined;
+    if (!duration && kind === 'video') duration = 0; // Default video duration if unknown
+
+    // Cost
+    const cost = raw.credits_spent || raw.cost_credits || 0;
+
     return {
-        // Core
+        // Identity
         id: raw.id,
         kind: kind,
-        prompt: cleanPrompt,
         status: status,
 
-        // Result
-        result_url: raw.result_url || raw.image, // Handle legacy 'image' field
-        url: raw.result_url || raw.image, // Legacy alias for UI components
-        thumbnailUrl: raw.thumbnail_url || raw.cover_image_url || undefined,
-
-        // Inputs & Params
-        input_type: raw.input_type || "text",
-        input_image_url: raw.input_image_url,
+        // Content
+        url: url,
+        thumbnailUrl: raw.thumbnail_url || raw.cover_image_url || raw.thumbnail || undefined,
+        prompt: cleanPrompt,
 
         // Dimensions
-        format: raw.format || "square",
-        resolution: raw.resolution || "1080",
-        width: width,
-        height: height,
-        duration: raw.duration,
+        width,
+        height,
+        format: raw.format || "square", // Legacy field, kept for compatibility
+        resolution: raw.resolution || "1080", // Legacy field
 
-        // Model Info
-        model_id: raw.model_id,
-        model_name: raw.model_name || raw.model_id || "Unknown Model",
+        // Metadata
+        model_id: modelId,
+        model_name: modelName,
         provider: raw.provider || "replicate",
+        duration: duration,
+        credits_spent: cost,
 
-        // Metrics
-        credits_spent: raw.credits_spent || 0,
-
-        // Social / Access
+        // Social
         is_public: !!raw.is_public,
         is_curated: !!raw.is_curated,
         likes: raw.likes || 0,
         views: raw.views || 0,
 
         // Timestamps
-        created_at: raw.created_at,
+        created_at: raw.created_at || new Date().toISOString(),
         completed_at: raw.completed_at,
 
-        // User (If available in join)
+        // User
         user_id: raw.user_id,
-        user_name: raw.user_name || raw.userName || "Me",
-        user_avatar: raw.user_avatar || raw.userAvatar || "https://github.com/shadcn.png",
+        user_name: raw.user_name || raw.userName || "User",
+        user_avatar: raw.user_avatar || raw.userAvatar,
+
+        // Inputs (Legacy/Pass-through)
+        input_type: raw.input_type || "text",
+        input_image_url: raw.input_image_url
     }
 }

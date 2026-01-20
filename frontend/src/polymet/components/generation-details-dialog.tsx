@@ -37,44 +37,30 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
     const { t } = useLanguage()
     const [isDeleting, setIsDeleting] = useState(false)
     const [isPromptExpanded, setIsPromptExpanded] = useState(false)
-    const [isPromptOverflowing, setIsPromptOverflowing] = useState(false)
-    const promptRef = useRef<HTMLParagraphElement>(null)
-
-    // Reset states when generation changes
-    useEffect(() => {
-        setIsPromptExpanded(false)
-        if (generation && promptRef.current) {
-            // Simple check: if scrolling height > client height (assuming line clamp limits height)
-            // But with line-clamp, clientHeight is limited. scrollHeight would be full.
-            // A safer way is to check char count or line count approximation.
-            // For now, let's assume > 300 chars is "long".
-            setIsPromptOverflowing(generation.prompt.length > 300)
-        }
-    }, [generation])
+    const [canDownload, setCanDownload] = useState(true) // Optimistic
 
     if (!generation) return null
 
+    // Handlers
     const handleCopyPrompt = () => {
         navigator.clipboard.writeText(generation.prompt)
-        toast.success(t('generationDetails.copied') || "Copied to clipboard")
+        toast.success(t('generationDetails.copied') || "Prompt copied")
     }
 
     const handleDownload = async () => {
         try {
-            // Create a temporary anchor to trigger download
-            // If CORS allows value-added features, fetch blob. Otherwise direct link.
             const response = await fetch(generation.url);
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            // derive filename
             const ext = generation.url.split('.').pop()?.split('?')[0] || 'png';
-            a.download = `generation-${generation.id}.${ext}`;
+            a.download = `artline-${generation.id.slice(0, 8)}.${ext}`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
+            toast.success("Download started");
         } catch (e) {
             console.error("Download fallback", e);
             window.open(generation.url, '_blank');
@@ -82,218 +68,220 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
     }
 
     const handleDelete = async () => {
-        if (!confirm("Are you sure you want to delete this file? This cannot be undone.")) return;
+        if (!confirm("Delete this creation? This action cannot be undone.")) return;
 
         setIsDeleting(true)
         try {
             await api.delete(`/jobs/${generation.id}`)
-            toast.success(t('generationDetails.delete') + " success")
+            toast.success("Deleted successfully")
             onOpenChange(false)
             if (onDelete) onDelete(generation.id)
         } catch (e) {
             console.error("Delete failed", e)
-            toast.error("Failed to delete file")
+            toast.error("Failed to delete")
         } finally {
             setIsDeleting(false)
         }
     }
 
-    // Metadata Calculation
+    // Metadata Prep
     const width = generation.width || 1024
     const height = generation.height || 1024
     const aspectRatio = (width / height).toFixed(2)
-    const resolutionLabel = generation.kind === 'video' ? '1080p (Full HD)' : `${width}x${height} px`
+    const resolutionLabel = generation.kind === 'video' && height === 1080 ? '1080p (Full HD)' : `${width}x${height}`
 
-    // Determine file extension
     let fileExt = generation.url.split('.').pop()?.split('?')[0] || ''
     if (generation.kind === 'video' && !fileExt) fileExt = 'mp4'
     if (generation.kind === 'image' && !fileExt) fileExt = 'webp'
 
-    // Cost display
     const cost = generation.credits_spent || 0
+    const durationLabel = generation.duration ? `${Math.round(generation.duration)}s` : null
+
+    // Prompt logic
+    const isPromptLong = generation.prompt.length > 280 || generation.prompt.split('\n').length > 4
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-5xl p-0 overflow-hidden bg-background gap-0 border-none shadow-2xl md:h-[85vh] h-[95vh] flex flex-col md:flex-row">
-                <DialogTitle className="sr-only">Generation Details</DialogTitle>
+            <DialogContent className="max-w-6xl p-0 overflow-hidden bg-background/95 backdrop-blur-xl gap-0 border-border/40 shadow-2xl md:h-[85vh] h-[95vh] flex flex-col md:flex-row ring-1 ring-white/10" aria-describedby={undefined}>
+                <DialogTitle className="sr-only">Details for generation {generation.id}</DialogTitle>
 
-                {/* --- LEFT: Media Preview --- */}
-                <div className="flex-1 bg-black/95 flex items-center justify-center p-4 relative overflow-hidden md:h-full h-[40vh]">
-                    {/* Background Blur */}
+                {/* --- LEFT: Media Viewport --- */}
+                <div className="flex-1 bg-black/95 flex items-center justify-center p-4 relative overflow-hidden md:h-full h-[45vh] group-media">
+                    {/* Atmospheric Background Blur */}
                     <div
-                        className="absolute inset-0 opacity-20 blur-3xl scale-125"
-                        style={{ backgroundImage: `url(${generation.kind === 'video' ? (generation.thumbnailUrl || generation.url) : generation.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+                        className="absolute inset-0 opacity-30 blur-[100px] scale-150 transition-opacity duration-1000"
+                        style={{
+                            backgroundImage: `url(${generation.thumbnailUrl || generation.url})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center'
+                        }}
                     />
 
-                    {/* Content */}
+                    {/* Main Content - CONTAINED to ensure full visibility */}
                     <div className="relative z-10 w-full h-full flex items-center justify-center">
                         {generation.kind === 'video' ? (
-                            <video
-                                src={generation.url}
-                                controls
-                                autoPlay
-                                loop
-                                className="max-w-full max-h-full object-contain rounded shadow-2xl"
-                            />
-                        ) : generation.kind === 'audio' || (generation as any).type === 'audio' ? (
-                            <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-xl p-8 flex flex-col items-center gap-6">
-                                <div className="w-32 h-32 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
-                                    <MusicIcon className="w-16 h-16 text-primary" />
+                            <div className="relative w-full h-full flex items-center justify-center">
+                                <video
+                                    src={generation.url}
+                                    controls
+                                    autoPlay
+                                    loop
+                                    className="max-w-full max-h-full w-auto h-auto object-contain rounded-sm shadow-2xl box-shadow-xl ring-1 ring-white/10"
+                                    poster={generation.thumbnailUrl}
+                                />
+                            </div>
+                        ) : generation.kind === 'audio' ? (
+                            <div className="w-full max-w-md bg-white/5 backdrop-blur-2xl rounded-2xl p-8 flex flex-col items-center gap-8 border border-white/10 shadow-2xl">
+                                <div className="w-40 h-40 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg animate-pulse-slow">
+                                    <MusicIcon className="w-20 h-20 text-white" />
                                 </div>
-                                <div className="w-full space-y-2">
-                                    {/* Fake Waveform Visual */}
-                                    <div className="flex items-center justify-between gap-1 h-12">
-                                        {[...Array(30)].map((_, i) => (
+                                <div className="w-full space-y-4">
+                                    {/* Audio Waveform Visualization */}
+                                    <div className="flex items-center justify-center gap-1.5 h-16 w-full">
+                                        {[...Array(40)].map((_, i) => (
                                             <div
                                                 key={i}
-                                                className="w-1.5 bg-primary/60 rounded-full"
+                                                className="w-1.5 bg-primary rounded-full transition-all duration-300"
                                                 style={{
-                                                    height: `${30 + Math.random() * 70}%`,
-                                                    opacity: 0.6 + Math.random() * 0.4
+                                                    height: `${20 + Math.random() * 80}%`,
+                                                    opacity: 0.5 + Math.random() * 0.5
                                                 }}
                                             />
                                         ))}
                                     </div>
-                                    <audio src={generation.url} controls className="w-full mt-4" />
+                                    <audio src={generation.url} controls className="w-full" />
                                 </div>
                             </div>
                         ) : (
                             <img
                                 src={generation.url}
                                 alt={generation.prompt}
-                                className="max-w-full max-h-full object-contain rounded shadow-2xl"
+                                className="max-w-full max-h-full w-auto h-auto object-contain rounded-sm shadow-2xl ring-1 ring-white/10"
                             />
                         )}
                     </div>
                 </div>
 
-                {/* --- RIGHT: Details Sidebar --- */}
-                <div className="w-full md:w-[400px] flex flex-col bg-background border-l border-border h-full">
-                    <ScrollArea className="flex-1">
-                        <div className="p-6 space-y-6">
+                {/* --- RIGHT: Information Sidebar --- */}
+                <div className="w-full md:w-[420px] flex flex-col bg-background/50 backdrop-blur-md border-l border-border h-full">
+                    <ScrollArea className="flex-1 w-full">
+                        <div className="p-6 space-y-8">
 
-                            {/* Header */}
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <Badge variant="outline" className="px-3 py-1 font-mono text-xs uppercase tracking-wider">
-                                        {generation.kind}
-                                    </Badge>
-                                    <span className="text-xs text-muted-foreground font-mono">
-                                        {new Date(generation.created_at).toLocaleDateString()}
-                                    </span>
-                                </div>
-
-                                {/* Status Alert if failed */}
-                                {generation.status === 'failed' && (
-                                    <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md border border-destructive/20 flex items-start gap-2">
-                                        <div className="mt-0.5">⚠️</div>
-                                        <div>
-                                            <p className="font-semibold">{t('generationDetails.status.failed')}</p>
-                                            <p className="opacity-80 text-xs">Generation failed to complete.</p>
-                                        </div>
+                            {/* Header Info */}
+                            <div className="flex items-start justify-between">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="outline" className="uppercase tracking-widest text-[10px] font-bold px-2 py-0.5 border-primary/20 text-primary">
+                                            {generation.kind}
+                                        </Badge>
+                                        <span className="text-xs text-muted-foreground font-mono">
+                                            {new Date(generation.created_at).toLocaleDateString()}
+                                        </span>
                                     </div>
-                                )}
+                                    <h3 className="text-lg font-semibold font-display tracking-tight leading-tight">
+                                        {generation.model_name.split('/').pop()?.split(':')[0].replace(/-/g, ' ') || "Generation"}
+                                    </h3>
+                                </div>
+                                <div className="flex gap-1">
+                                    {/* Action Shortcuts could go here */}
+                                </div>
                             </div>
 
-                            <Separator />
+                            <Separator className="bg-border/40" />
 
-                            {/* Prompt Section */}
+                            {/* Prompt Block */}
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                                        {t('generationDetails.prompt')}
-                                    </label>
-                                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs gap-1.5 hover:bg-muted" onClick={handleCopyPrompt}>
-                                        <CopyIcon className="w-3 h-3" />
-                                        {t('generationDetails.copyPrompt')}
+                                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                                        <span className="w-1 h-4 bg-primary rounded-full" />
+                                        Prompt
+                                    </h4>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-muted" onClick={handleCopyPrompt} title={t('generationDetails.title.copy')}>
+                                        <CopyIcon className="w-3.5 h-3.5" />
                                     </Button>
                                 </div>
-
-                                <div className="bg-muted/30 rounded-lg p-3 border border-border/50 group relative">
-                                    <p
-                                        ref={promptRef}
-                                        className={cn(
-                                            "text-sm leading-relaxed text-foreground whitespace-pre-wrap transition-all duration-300",
-                                            !isPromptExpanded && "line-clamp-5"
-                                        )}
-                                    >
+                                <div className="relative group">
+                                    <div className={cn(
+                                        "p-4 rounded-xl bg-muted/40 border border-border/50 text-sm leading-relaxed text-foreground transition-all duration-300 font-medium",
+                                        !isPromptExpanded && isPromptLong && "max-h-[140px] overflow-hidden mask-bottom-gradient"
+                                    )}>
                                         {generation.prompt}
-                                    </p>
-                                    {/* Read More Trigger (always show if long) */}
-                                    {generation.prompt.length > 200 && (
+                                    </div>
+                                    {isPromptLong && (
                                         <Button
-                                            variant="link"
+                                            variant="ghost"
                                             size="sm"
-                                            className="h-auto p-0 mt-2 text-xs text-primary font-medium"
+                                            className="w-full mt-1 h-8 text-xs text-primary hover:text-primary/80 hover:bg-transparent justify-center gap-1"
                                             onClick={() => setIsPromptExpanded(!isPromptExpanded)}
                                         >
                                             {isPromptExpanded ? (
-                                                <span className="flex items-center gap-1">{t('generationDetails.readLess')}<ChevronUpIcon className="w-3 h-3" /></span>
+                                                <>Read Less <ChevronUpIcon className="w-3 h-3" /></>
                                             ) : (
-                                                <span className="flex items-center gap-1">{t('generationDetails.readMore')}<ChevronDownIcon className="w-3 h-3" /></span>
+                                                <>Read More <ChevronDownIcon className="w-3 h-3" /></>
                                             )}
                                         </Button>
                                     )}
                                 </div>
                             </div>
 
-                            <Separator />
-
                             {/* Metadata Grid */}
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+                            <div className="grid grid-cols-2 gap-4">
                                 <MetaItem
-                                    icon={<BoxIcon />}
-                                    label={t('generationDetails.model')}
-                                    value={generation.model_name || generation.model_id || "Unknown"}
+                                    icon={BoxIcon}
+                                    label="Model Version"
+                                    value={generation.model_id?.slice(0, 10) + '...'}
+                                    subValue="ID"
                                 />
                                 <MetaItem
-                                    icon={<MaximizeIcon />}
-                                    label={t('generationDetails.resolution')}
+                                    icon={MaximizeIcon}
+                                    label="Resolution"
                                     value={resolutionLabel}
-                                    subValue={`Aspect Ratio ${width}:${height} (${Number(width) / Number(height) > 1 ? 'Landscape' : 'Portrait'})`}
+                                    subValue={aspectRatio ? `${aspectRatio} Aspect Ratio` : 'Unknown AR'}
                                 />
                                 <MetaItem
-                                    icon={<FileImageIcon />}
-                                    label={t('generationDetails.format')}
+                                    icon={FileImageIcon}
+                                    label="Format"
                                     value={fileExt.toUpperCase()}
                                 />
-                                {generation.duration && (
+                                {durationLabel && (
                                     <MetaItem
-                                        icon={<ClockIcon />}
-                                        label={t('generationDetails.duration')}
-                                        value={`${generation.duration}s`}
+                                        icon={ClockIcon}
+                                        label="Duration"
+                                        value={durationLabel}
                                     />
                                 )}
                                 <MetaItem
-                                    icon={<CoinsIcon />}
-                                    label={t('generationDetails.cost')}
-                                    value={`${cost} Credits`}
-                                    className="text-primary font-medium"
-                                />
-                                <MetaItem
-                                    icon={<CalendarIcon />}
-                                    label={t('generationDetails.date')}
-                                    value={new Date(generation.created_at).toLocaleString()}
+                                    icon={CoinsIcon}
+                                    label="Cost"
+                                    value={cost > 0 ? `${cost} Credits` : 'Free'}
+                                    className="text-indigo-400 font-bold"
                                 />
                             </div>
+
+                            {/* Error State */}
+                            {generation.status === 'failed' && (
+                                <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive flex gap-3 items-start">
+                                    <AlertCircle className="w-5 h-5 shrink-0" />
+                                    <div className="space-y-1">
+                                        <p className="font-semibold text-sm">Generation Failed</p>
+                                        <p className="text-xs opacity-90">An error occurred during process.</p>
+                                    </div>
+                                </div>
+                            )}
 
                         </div>
                     </ScrollArea>
 
                     {/* Footer Actions */}
-                    <div className="p-6 border-t border-border bg-muted/10 space-y-3">
-                        <Button className="w-full gap-2 font-medium" size="lg" onClick={handleDownload}>
-                            <DownloadIcon className="w-4 h-4" />
-                            {t('generationDetails.download')}
+                    <div className="p-6 bg-muted/20 border-t border-border space-y-3">
+                        <Button className="w-full shadow-lg shadow-primary/20 font-semibold" size="lg" onClick={handleDownload}>
+                            <DownloadIcon className="w-4 h-4 mr-2" />
+                            Download {fileExt.toUpperCase()}
                         </Button>
-                        <Button
-                            variant="outline"
-                            className="w-full gap-2 text-destructive hover:text-destructive border-transparent hover:bg-destructive/10"
-                            onClick={handleDelete}
-                            disabled={isDeleting}
-                        >
-                            <Trash2Icon className="w-4 h-4" />
-                            {isDeleting ? "Deleting..." : t('generationDetails.delete')}
+
+                        <Button variant="outline" className="w-full hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors" onClick={handleDelete} disabled={isDeleting}>
+                            <Trash2Icon className="w-4 h-4 mr-2 opacity-70" />
+                            {isDeleting ? "Deleting..." : "Delete from Library"}
                         </Button>
                     </div>
                 </div>
@@ -302,17 +290,22 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
     )
 }
 
-function MetaItem({ icon, label, value, subValue, className }: { icon: React.ReactNode, label: string, value: string, subValue?: string, className?: string }) {
+// Updated MetaItem with lucide-react icon type ref
+function MetaItem({ icon: Icon, label, value, subValue, className }: { icon: any, label: string, value: string, subValue?: string, className?: string }) {
     return (
-        <div className="space-y-1.5">
-            <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                <span className="w-3.5 h-3.5 [&>svg]:w-full [&>svg]:h-full opacity-70">{icon}</span>
+        <div className="flex flex-col gap-1 p-3 rounded-lg bg-muted/20 border border-border/30 hover:border-border/60 transition-colors">
+            <span className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-0.5">
+                <Icon className="w-3 h-3 text-muted-foreground/70" />
                 {label}
-            </label>
-            <div>
-                <p className={cn("text-sm font-semibold text-foreground", className)}>{value}</p>
-                {subValue && <p className="text-[10px] text-muted-foreground mt-0.5">{subValue}</p>}
-            </div>
+            </span>
+            <span className={cn("text-sm font-semibold truncate", className)} title={value}>
+                {value}
+            </span>
+            {subValue && (
+                <span className="text-[10px] text-muted-foreground/60 font-mono truncate">
+                    {subValue}
+                </span>
+            )}
         </div>
     )
 }
