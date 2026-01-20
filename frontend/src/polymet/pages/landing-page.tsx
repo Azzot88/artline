@@ -420,7 +420,7 @@ export function LandingPage() {
                             <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">{t('landing.faq.title')}</h2>
                         </div>
 
-                        <Accordion type="multiple" defaultValue={(t('landing.faq.items') as any[]).map((_, i) => `item-${i}`)} className="w-full grid md:grid-cols-2 gap-x-8 gap-y-2">
+                        <Accordion type="multiple" className="w-full grid md:grid-cols-2 gap-x-8 gap-y-2">
                             {(t('landing.faq.items') as any[]).map((item, i) => (
                                 <AccordionItem key={i} value={`item-${i}`} className="border-b-0 mb-4">
                                     <AccordionTrigger className="hover:no-underline hover:text-primary text-left text-sm py-3 px-4 bg-background rounded-lg border shadow-sm data-[state=open]:rounded-b-none data-[state=open]:border-b-0 transition-all duration-200">
