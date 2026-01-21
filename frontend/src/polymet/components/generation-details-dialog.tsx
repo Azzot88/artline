@@ -31,9 +31,10 @@ interface GenerationDetailsDialogProps {
     onOpenChange: (open: boolean) => void
     generation: Generation | null
     onDelete?: (id: string) => void
+    onUsePrompt?: (prompt: string) => void
 }
 
-export function GenerationDetailsDialog({ open, onOpenChange, generation, onDelete }: GenerationDetailsDialogProps) {
+export function GenerationDetailsDialog({ open, onOpenChange, generation, onDelete, onUsePrompt }: GenerationDetailsDialogProps) {
     const { t } = useLanguage()
     const [isDeleting, setIsDeleting] = useState(false)
     const [isPromptExpanded, setIsPromptExpanded] = useState(false)
@@ -44,8 +45,14 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
     // Handlers
     // Handlers
     const handleCopyPrompt = () => {
+        if (!generation?.prompt) return
         navigator.clipboard.writeText(generation.prompt)
         toast.success(t('generationDetails.copied') || "Prompt copied")
+
+        // Auto-use prompt if handler provided
+        if (onUsePrompt) {
+            onUsePrompt(generation.prompt)
+        }
     }
 
     const handleDownload = async () => {
@@ -209,7 +216,7 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                 </div>
                                 <div className="relative group">
                                     <div className={cn(
-                                        "p-4 rounded-xl bg-muted/40 border border-border/50 text-sm leading-relaxed text-foreground transition-all duration-300 font-medium",
+                                        "p-4 rounded-xl bg-muted/40 border border-border/50 text-sm leading-relaxed text-foreground transition-all duration-300 font-medium break-words whitespace-pre-wrap",
                                         !isPromptExpanded && isPromptLong && "max-h-[140px] overflow-hidden mask-bottom-gradient"
                                     )}>
                                         {generation.prompt}

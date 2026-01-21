@@ -39,6 +39,36 @@ export function Workbench() {
   const [prompt, setPrompt] = useState("")
   const [file, setFile] = useState<File | null>(null)
 
+  const location = useLocation()
+
+  // Handle Cross-Page Prompt Reuse
+  useEffect(() => {
+    // Check if prompt was passed via navigation state (old way)
+    if (history.state?.usr?.appendPrompt) {
+      const textToAppend = history.state.usr.appendPrompt
+      setPrompt(prev => {
+        const spacer = prev.trim().length > 0 ? " " : ""
+        return prev + spacer + textToAppend
+      })
+      // Clear state to prevent double-append on refresh?
+      // Actually history.replaceState is better but accessing it directly in React Router context is tricky without hook.
+      // For now, let's assume it's one-off.
+      window.history.replaceState({}, '')
+    }
+
+    // Also check react-router location state (new way)
+    if (location.state && (location.state as any).appendPrompt) {
+      const text = (location.state as any).appendPrompt
+      setPrompt(prev => {
+        const spacer = prev.trim().length > 0 ? "\n" : ""
+        return prev + spacer + text
+      })
+      // Clear state
+      window.history.replaceState({}, document.title)
+    }
+  }, [location])
+
+
   // Use Dynamic Models
   const { models, loading: modelsLoading, error: modelsError } = useModels()
   const [model, setModel] = useState("")
@@ -468,7 +498,18 @@ export function Workbench() {
       </Card>
 
       {/* Library Widget - Dynamic Visibility */}
-      <LibraryWidget refreshTrigger={refreshLibrary} newGeneration={lastGeneration} />
+      <LibraryWidget
+        refreshTrigger={refreshLibrary}
+        newGeneration={lastGeneration}
+        onUsePrompt={(text) => {
+          setPrompt(prev => {
+            const spacer = prev.trim().length > 0 ? "\n" : ""
+            return prev + spacer + text
+          })
+          // Scroll to top to see input
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }}
+      />
 
       {/* Community Gallery Card */}
       <Card>

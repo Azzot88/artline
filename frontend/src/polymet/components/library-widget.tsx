@@ -13,9 +13,10 @@ import { GenerationDetailsDialog } from "@/polymet/components/generation-details
 interface LibraryWidgetProps {
     refreshTrigger: number
     newGeneration?: Generation | null
+    onUsePrompt?: (prompt: string) => void
 }
 
-export function LibraryWidget({ refreshTrigger, newGeneration }: LibraryWidgetProps) {
+export function LibraryWidget({ refreshTrigger, newGeneration, onUsePrompt }: LibraryWidgetProps) {
     const { t } = useLanguage()
     const [generations, setGenerations] = useState<Generation[]>([])
     const [loading, setLoading] = useState(true)
@@ -185,6 +186,13 @@ export function LibraryWidget({ refreshTrigger, newGeneration }: LibraryWidgetPr
                 generation={selectedGeneration}
                 onDelete={(id) => {
                     setGenerations(prev => prev.filter(g => g.id !== id))
+                }}
+                onUsePrompt={(prompt) => {
+                    // If callback provided by parent (Workbench), call it
+                    if (onUsePrompt) {
+                        onUsePrompt(prompt)
+                        setDetailsOpen(false) // Close modal
+                    }
                 }}
             />
         </>

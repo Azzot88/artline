@@ -7,8 +7,11 @@ import { useLanguage } from "@/polymet/components/language-provider"
 import { api } from "@/lib/api"
 import { Generation } from "@/polymet/data/types"
 
+import { useNavigate } from "react-router-dom"
+
 export function Library() {
     const { t } = useLanguage()
+    const navigate = useNavigate()
     const [generations, setGenerations] = useState<Generation[]>([])
     const [loading, setLoading] = useState(true)
 
@@ -86,6 +89,10 @@ export function Library() {
                     console.log("Deleting generation:", id)
                     setGenerations(prev => prev.filter(g => g.id !== id))
                     setIsDialogOpen(false)
+                }}
+                onUsePrompt={(prompt) => {
+                    // Navigate to workbench with prompt state
+                    navigate('/workbench', { state: { appendPrompt: prompt } })
                 }}
             />
         </div>
