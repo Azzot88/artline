@@ -2,7 +2,7 @@ from datetime import timedelta
 from typing import List, Optional, Any, Dict
 from pydantic import BaseModel
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, func, delete
 import uuid
@@ -370,6 +370,7 @@ async def get_job_status(
 @router.delete("/jobs/{job_id}")
 async def delete_job(
     job_id: str,
+    background_tasks: BackgroundTasks,
     user: User | object | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db)
 ):
@@ -400,35 +401,28 @@ async def delete_job(
     job.result_url = None
     job.thumbnailUrl = None
     job.input_image_url = None
-    # We preserve billing/model/duration info
     
-    # Trigger S3 Deletion (Async)
+    # Trigger S3 Deletion (Background)
     if s3_url and "amazonaws.com" in s3_url:
+        # Extract Key logic inside the task wrapper or here?
+        # Let's pass the raw key to the helper
         try:
-            # Extract Key from URL
-            # Format: https://{bucket}.s3.{region}.amazonaws.com/{key}
-            # or https://s3.{region}.amazonaws.com/{bucket}/{key}
-            # Simplified assumption: standard virtual-hosted-style
-            from urllib.parse import urlparse
-            path = urlparse(s3_url).path.lstrip('/')
-            
-            # If path starts with settings.AWS_BUCKET_NAME, strip it (path-style)
-            # But usually virtual-hosted means path IS the key.
-            # Let's assume standard key "generations/{id}.ext"
-            
-            await delete_s3_object(path)
-        except Exception as e:
-            print(f"S3 Delete Error: {e}")
-            # Non-fatal for the user request
+             from urllib.parse import urlparse
+             path = urlparse(s3_url).path.lstrip('/')
+             background_tasks.add_task(delete_s3_object_bg, path)
+        except:
+             pass
             
     await db.commit()
+    print(f"DEBUG: Job {job_id} marked as deleted.")
     return {"ok": True}
 
-async def delete_s3_object(key: str):
+# Renamed to strictly imply background usage (synchronous wrapper for boto3)
+def delete_s3_object_bg(key: str):
     if not settings.AWS_ACCESS_KEY_ID:
         return
-        
-    def _delete():
+    try:
+        print(f"DEBUG: Deleting S3 Object: {key}")
         s3 = boto3.client(
             's3',
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
@@ -436,9 +430,11 @@ async def delete_s3_object(key: str):
             region_name=settings.AWS_REGION
         )
         s3.delete_object(Bucket=settings.AWS_BUCKET_NAME, Key=key)
+    except Exception as e:
+        print(f"ERROR: Failed to delete S3 object {key}: {e}")
 
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, _delete)
+# Removed async wrapper as we use BackgroundTasks which runs in threadpool for sync functions
+# (FastAPI handles it if def is not async)
 
 
 @router.get("/jobs/{job_id}/download")
