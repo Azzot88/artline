@@ -4,8 +4,15 @@ import { Textarea } from "@/components/ui/textarea"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { InfoIcon } from "lucide-react"
+
 import { FormatSelectorV2 } from "@/polymet/components/format-selector-v2"
-import { ResolutionSelectorV2 } from "@/polymet/components/resolution-selector-v2"
+import { DynamicList } from "@/polymet/components/smart-inputs/dynamic-list"
+import { ColorPicker } from "@/polymet/components/smart-inputs/color-picker"
+import { FileUploader } from "@/polymet/components/smart-inputs/file-uploader"
+import { DualSlider } from "@/polymet/components/smart-inputs/dual-slider"
+
 import type { ModelParameter, ModelParameterConfig, ImageFormatType, VideoFormatType } from "@/polymet/data/types"
 import { getEffectiveDefault, getAllowedValues, getParameterLabel } from "@/polymet/data/model-parameters-data"
 
@@ -29,258 +36,118 @@ export function ModelParameterControl({
   const label = getParameterLabel(parameter, config)
   const allowedValues = getAllowedValues(parameter, config)
   const effectiveDefault = getEffectiveDefault(parameter, config)
-  
+  const description = config?.description || parameter.description
+
   // Use effective default if value is null/undefined
   const currentValue = value ?? effectiveDefault
 
-  // Special handling for "format" parameter
+  // --- Helper: Label + Tooltip ---
+  const LabelWithTooltip = () => (
+    <div className="flex items-center gap-2 mb-2">
+      <Label htmlFor={parameter.id} className="cursor-pointer">
+        {label}
+        {parameter.required && <span className="text-destructive ml-1">*</span>}
+      </Label>
+      {description && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <InfoIcon className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-3 text-sm">
+            {description}
+          </PopoverContent>
+        </Popover>
+      )}
+    </div>
+  )
+
+  // --- Special Handlers ---
+
+  // 1. Format Selector
   if (parameter.name === "format") {
-    // Determine if it's image or video based on allowed values
     const isVideoFormat = allowedValues?.some(v => ["16:9", "9:16"].includes(String(v)))
     const type = isVideoFormat ? "video" : "image"
-    
+
     return (
-      <FormatSelectorV2
-        value={currentValue as ImageFormatType | VideoFormatType}
+      <div className="space-y-2">
+        {!compact && <LabelWithTooltip />}
+        <FormatSelectorV2
+          value={currentValue as ImageFormatType | VideoFormatType}
+          onChange={onChange}
+          type={type}
+          disabled={disabled}
+          compact={compact}
+        />
+      </div>
+    )
+  }
+
+  // 2. File/Image Upload
+  if (parameter.name.includes("image") || parameter.name.includes("file") || parameter.format === "uri") {
+    return (
+      <FileUploader
+        label={!compact ? label : undefined}
+        value={currentValue}
         onChange={onChange}
-        type={type}
         disabled={disabled}
-        compact={compact}
+        accept={parameter.name.includes("image") ? "image/*" : undefined}
       />
     )
   }
 
-  // Special handling for "resolution" or "size" parameter
-  if (parameter.name === "resolution" || parameter.name === "size") {
-    // This should be hidden in most cases, but if shown, use ResolutionSelectorV2
-    // Note: We need format context to show proper resolutions
-    // For now, just show as regular select
-  }
-
-  // String type with enum = Select
-  if (parameter.type === "string" && allowedValues) {
-    if (compact) {
-      return (
-        <Select
-          value={currentValue || ""}
-          onValueChange={onChange}
-          disabled={disabled}
-        >
-          <SelectTrigger id={parameter.id} className="h-9">
-            <SelectValue placeholder={label} />
-          </SelectTrigger>
-          <SelectContent>
-            {allowedValues.map((val) => (
-              <SelectItem key={String(val)} value={String(val)}>
-                {String(val)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )
-    }
-    
+  // 3. Color Picker
+  if (parameter.format === "color" || parameter.name.includes("color")) {
     return (
-      <div className="space-y-2">
-        <Label htmlFor={parameter.id}>
-          {label}
-          {parameter.required && <span className="text-destructive ml-1">*</span>}
-        </Label>
-        <Select
-          value={currentValue || ""}
-          onValueChange={onChange}
-          disabled={disabled}
-        >
-          <SelectTrigger id={parameter.id}>
-            <SelectValue placeholder={`Выберите ${label.toLowerCase()}`} />
-          </SelectTrigger>
-          <SelectContent>
-            {allowedValues.map((val) => (
-              <SelectItem key={String(val)} value={String(val)}>
-                {String(val)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <ColorPicker
+        label={!compact ? label : undefined}
+        value={currentValue}
+        onChange={onChange}
+        disabled={disabled}
+      />
     )
   }
 
-  // String type without enum = Input or Textarea
-  if (parameter.type === "string") {
-    const isLongText = parameter.name.includes("prompt") || parameter.name.includes("description")
-    
-    if (isLongText) {
-      return (
-        <div className="space-y-2">
-          <Label htmlFor={parameter.id}>
-            {label}
-            {parameter.required && <span className="text-destructive ml-1">*</span>}
-          </Label>
-          <Textarea
-            id={parameter.id}
-            value={currentValue || ""}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={`Введите ${label.toLowerCase()}`}
-            disabled={disabled}
-            rows={4}
-          />
-        </div>
-      )
-    }
-    
+  // --- Standard Types ---
+
+  // 4. Enumerations (Select)
+  if (allowedValues && allowedValues.length > 0) {
     return (
       <div className="space-y-2">
-        <Label htmlFor={parameter.id}>
-          {label}
-          {parameter.required && <span className="text-destructive ml-1">*</span>}
-        </Label>
-        <Input
-          id={parameter.id}
-          type="text"
-          value={currentValue || ""}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={`Введите ${label.toLowerCase()}`}
-          disabled={disabled}
-        />
-      </div>
-    )
-  }
-
-  // Integer/Number with enum = Select
-  if ((parameter.type === "integer" || parameter.type === "number") && allowedValues) {
-    if (compact) {
-      return (
+        {!compact && <LabelWithTooltip />}
         <Select
           value={String(currentValue ?? "")}
-          onValueChange={(val) => onChange(parameter.type === "integer" ? parseInt(val) : parseFloat(val))}
-          disabled={disabled}
-        >
-          <SelectTrigger id={parameter.id} className="h-9">
-            <SelectValue placeholder={label} />
-          </SelectTrigger>
-          <SelectContent>
-            {allowedValues.map((val) => (
-              <SelectItem key={String(val)} value={String(val)}>
-                {String(val)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )
-    }
-    
-    return (
-      <div className="space-y-2">
-        <Label htmlFor={parameter.id}>
-          {label}
-          {parameter.required && <span className="text-destructive ml-1">*</span>}
-        </Label>
-        <Select
-          value={String(currentValue ?? "")}
-          onValueChange={(val) => onChange(parameter.type === "integer" ? parseInt(val) : parseFloat(val))}
-          disabled={disabled}
-        >
-          <SelectTrigger id={parameter.id}>
-            <SelectValue placeholder={`Выберите ${label.toLowerCase()}`} />
-          </SelectTrigger>
-          <SelectContent>
-            {allowedValues.map((val) => (
-              <SelectItem key={String(val)} value={String(val)}>
-                {String(val)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-    )
-  }
-
-  // Integer/Number with min/max = Slider + Input
-  if ((parameter.type === "integer" || parameter.type === "number") && 
-      parameter.min !== undefined && parameter.max !== undefined) {
-    return (
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label htmlFor={parameter.id}>
-            {label}
-            {parameter.required && <span className="text-destructive ml-1">*</span>}
-          </Label>
-          <span className="text-sm text-muted-foreground">
-            {currentValue ?? effectiveDefault}
-          </span>
-        </div>
-        <div className="flex items-center gap-4">
-          <Slider
-            id={parameter.id}
-            value={[currentValue ?? effectiveDefault ?? parameter.min]}
-            onValueChange={(vals) => onChange(vals[0])}
-            min={parameter.min}
-            max={parameter.max}
-            step={parameter.type === "integer" ? 1 : 0.1}
-            disabled={disabled}
-            className="flex-1"
-          />
-          <Input
-            type="number"
-            value={currentValue ?? effectiveDefault ?? ""}
-            onChange={(e) => {
-              const val = parameter.type === "integer" 
-                ? parseInt(e.target.value) 
-                : parseFloat(e.target.value)
-              if (!isNaN(val)) onChange(val)
-            }}
-            min={parameter.min}
-            max={parameter.max}
-            step={parameter.type === "integer" ? 1 : 0.1}
-            disabled={disabled}
-            className="w-20"
-          />
-        </div>
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{parameter.min}</span>
-          <span>{parameter.max}</span>
-        </div>
-      </div>
-    )
-  }
-
-  // Integer/Number without constraints = Input
-  if (parameter.type === "integer" || parameter.type === "number") {
-    return (
-      <div className="space-y-2">
-        <Label htmlFor={parameter.id}>
-          {label}
-          {parameter.required && <span className="text-destructive ml-1">*</span>}
-        </Label>
-        <Input
-          id={parameter.id}
-          type="number"
-          value={currentValue ?? ""}
-          onChange={(e) => {
-            const val = parameter.type === "integer" 
-              ? parseInt(e.target.value) 
-              : parseFloat(e.target.value)
-            if (!isNaN(val)) onChange(val)
+          onValueChange={(val) => {
+            // Try to preserve type
+            if (parameter.type === "integer") onChange(parseInt(val))
+            else if (parameter.type === "number") onChange(parseFloat(val))
+            else if (parameter.type === "boolean") onChange(val === "true")
+            else onChange(val)
           }}
-          placeholder={`Введите ${label.toLowerCase()}`}
           disabled={disabled}
-        />
+        >
+          <SelectTrigger id={parameter.id} className={compact ? "h-9" : ""}>
+            <SelectValue placeholder={label} />
+          </SelectTrigger>
+          <SelectContent>
+            {allowedValues.map((val) => (
+              <SelectItem key={String(val)} value={String(val)}>
+                {String(val)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     )
   }
 
-  // Boolean = Switch
+  // 5. Booleans (Switch)
   if (parameter.type === "boolean") {
     return (
       <div className="flex items-center justify-between">
-        <Label htmlFor={parameter.id} className="cursor-pointer">
-          {label}
-          {parameter.required && <span className="text-destructive ml-1">*</span>}
-        </Label>
+        <LabelWithTooltip />
         <Switch
           id={parameter.id}
-          checked={currentValue ?? false}
+          checked={currentValue === true || currentValue === "true"}
           onCheckedChange={onChange}
           disabled={disabled}
         />
@@ -288,47 +155,97 @@ export function ModelParameterControl({
     )
   }
 
-  // Array/Object = JSON textarea (fallback)
-  if (parameter.type === "array" || parameter.type === "object") {
+  // 6. Numeric Ranges (Slider + Input)
+  if ((parameter.type === "integer" || parameter.type === "number") &&
+    parameter.min !== undefined && parameter.max !== undefined) {
+
+    const step = parameter.step || (parameter.type === "integer" ? 1 : 0.01)
+
+    return (
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <LabelWithTooltip />
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {currentValue ?? effectiveDefault}
+          </span>
+        </div>
+        <div className="flex items-center gap-4">
+          <Slider
+            value={[Number(currentValue ?? effectiveDefault ?? parameter.min)]}
+            onValueChange={(vals) => onChange(vals[0])}
+            min={parameter.min}
+            max={parameter.max}
+            step={step}
+            disabled={disabled}
+            className="flex-1"
+          />
+          <Input
+            type="number"
+            className="w-20 h-9"
+            value={currentValue ?? ""}
+            onChange={(e) => {
+              const val = Number(e.target.value)
+              if (!isNaN(val)) onChange(val)
+            }}
+            min={parameter.min}
+            max={parameter.max}
+            step={step}
+            disabled={disabled}
+          />
+        </div>
+        <div className="flex justify-between text-xs text-muted-foreground px-1">
+          <span>{parameter.min}</span>
+          <span>{parameter.max}</span>
+        </div>
+      </div>
+    )
+  }
+
+  // 7. Arrays (Dynamic List)
+  if (parameter.type === "array") {
+    return (
+      <DynamicList
+        label={!compact ? label : undefined}
+        value={Array.isArray(currentValue) ? currentValue : []}
+        onChange={onChange}
+        disabled={disabled}
+      />
+    )
+  }
+
+  // 8. Long Text
+  if (parameter.type === "string" && (parameter.name.includes("prompt") || parameter.format === "multiline")) {
     return (
       <div className="space-y-2">
-        <Label htmlFor={parameter.id}>
-          {label} (JSON)
-          {parameter.required && <span className="text-destructive ml-1">*</span>}
-        </Label>
+        {!compact && <LabelWithTooltip />}
         <Textarea
-          id={parameter.id}
-          value={typeof currentValue === "string" ? currentValue : JSON.stringify(currentValue, null, 2)}
-          onChange={(e) => {
-            try {
-              const parsed = JSON.parse(e.target.value)
-              onChange(parsed)
-            } catch {
-              onChange(e.target.value)
-            }
-          }}
-          placeholder={`Введите JSON для ${label.toLowerCase()}`}
+          value={currentValue || ""}
+          onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
           rows={4}
-          className="font-mono text-sm"
+          placeholder={`Enter ${label.toLowerCase()}...`}
         />
       </div>
     )
   }
 
-  // Fallback
+  // 9. Default Fallback (Input)
   return (
     <div className="space-y-2">
-      <Label htmlFor={parameter.id}>
-        {label}
-        {parameter.required && <span className="text-destructive ml-1">*</span>}
-      </Label>
+      {!compact && <LabelWithTooltip />}
       <Input
-        id={parameter.id}
-        value={String(currentValue ?? "")}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={`Введите ${label.toLowerCase()}`}
+        type={parameter.type === "number" || parameter.type === "integer" ? "number" : "text"}
+        value={currentValue ?? ""}
+        onChange={(e) => {
+          const val = e.target.value
+          if (parameter.type === "number" || parameter.type === "integer") {
+            onChange(val === "" ? undefined : Number(val))
+          } else {
+            onChange(val)
+          }
+        }}
         disabled={disabled}
+        placeholder={`Enter ${label}...`}
       />
     </div>
   )

@@ -121,16 +121,16 @@ export interface FormatResolutionMap {
 export function resolutionToFormat(resolution: string): ImageFormatType | VideoFormatType | null {
   const [width, height] = resolution.split('x').map(Number)
   if (!width || !height) return null
-  
+
   const ratio = width / height
-  
+
   // Image formats
   if (Math.abs(ratio - 1) < 0.1) return "1:1" // Square
-  if (Math.abs(ratio - 2/3) < 0.1) return "2:3" // Portrait
-  if (Math.abs(ratio - 3/2) < 0.1) return "3:2" // Landscape
-  if (Math.abs(ratio - 16/9) < 0.1) return "16:9" // Wide
-  if (Math.abs(ratio - 9/16) < 0.1) return "9:16" // Tall
-  
+  if (Math.abs(ratio - 2 / 3) < 0.1) return "2:3" // Portrait
+  if (Math.abs(ratio - 3 / 2) < 0.1) return "3:2" // Landscape
+  if (Math.abs(ratio - 16 / 9) < 0.1) return "16:9" // Wide
+  if (Math.abs(ratio - 9 / 16) < 0.1) return "9:16" // Tall
+
   return null
 }
 
@@ -162,7 +162,7 @@ export function formatToResolutions(format: ImageFormatType | VideoFormatType, q
       "4k": ["2160x3840"]
     }
   }
-  
+
   return resolutionMap[format]?.[quality] || []
 }
 export const LANGUAGE_CODES = ["ru", "kk", "ky", "en"] as const
@@ -231,7 +231,33 @@ export interface ModelParameterConfig {
   custom_label?: string // Override parameter name for UI
   custom_description?: string
   allowed_values?: any[] // Subset of enum values, if applicable
+  allowed_range?: { min?: number, max?: number, step?: number }
   override_default?: any // Admin can override default value
+
+  // New UI hints
+  is_advanced?: boolean // Hide behind "Advanced" toggle
+  description?: string // Tooltip text
+  component_type?: "slider" | "input" | "select" | "switch" | "textarea" | "color" | "file"
+}
+
+export interface ModelParameter {
+  id: string
+  version_id: string
+  name: string
+  type: ParameterType
+  default_value: any // JSONB
+  min?: number
+  max?: number
+  enum?: any[] // JSONB array
+  required: boolean
+  ui_group: UIGroup
+  created_at: string
+
+  // Extended Metadata from Schema
+  step?: number
+  description?: string
+  format?: string
+  dependencies?: string[] // Names of params this depends on
 }
 
 // Extended Model with Parameters

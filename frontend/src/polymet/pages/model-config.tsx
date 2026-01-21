@@ -8,9 +8,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import {
   ArrowLeftIcon,
   SaveIcon,
+  RefreshCwIcon,
+  FileJsonIcon,
+  DownloadIcon
 } from "lucide-react"
 import {
   Select,
@@ -19,7 +23,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ParameterConfigEditor, ExposureConfig } from "@/polymet/components/parameter-config-editor"
+
+import { useModelConfig } from "@/polymet/hooks/use-model-config"
+import { ModelParametersGroup } from "@/polymet/components/model-parameters-group"
 
 export function ModelConfig() {
   const { modelId } = useParams()
@@ -29,24 +35,26 @@ export function ModelConfig() {
   const [model, setModel] = useState<AIModel | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [fetchingSchema, setFetchingSchema] = useState(false)
 
-  // Form state
+  // Basic Form State
   const [displayName, setDisplayName] = useState("")
   const [credits, setCredits] = useState("5")
   const [isActive, setIsActive] = useState(false)
-
-  // Advanced Config state
   const [modelRef, setModelRef] = useState("")
-  const [capabilities, setCapabilities] = useState<any>(null)
-  const [fetchingSchema, setFetchingSchema] = useState(false)
 
-  // Unified Config State
-  type UIConfigState = {
-    parameters: Record<string, ExposureConfig>
-  }
-  const [uiConfig, setUiConfig] = useState<UIConfigState>({
-    parameters: {}
-  })
+  // Advanced State Hook
+  const {
+    parameters,
+    configs,
+    values,
+    updateValue,
+    loadSchema,
+    resetValues,
+    setParameters,
+    setConfigs,
+    setValues
+  } = useModelConfig({ modelId: modelId || "" })
 
   useEffect(() => {
     if (!modelId) return
@@ -57,8 +65,6 @@ export function ModelConfig() {
     try {
       setLoading(true)
       const res = await apiService.getAdminModel(id)
-      console.log("Loaded Model Data:", res)
-
       const m = (res as any).model || res
       setModel(m)
 
@@ -68,51 +74,46 @@ export function ModelConfig() {
       setIsActive(m.is_active)
       setModelRef(m.model_ref || "")
 
-      // Load UI config with defensive parsing
-      let savedConfig = m.ui_config || {}
-      if (typeof savedConfig === 'string') {
-        try { savedConfig = JSON.parse(savedConfig) } catch (e) { console.error("Failed to parse ui_config", e); savedConfig = {} }
+      // Load UI Config (Legacy or New)
+      let uiConfig = m.ui_config || {}
+      if (typeof uiConfig === 'string') {
+        try { uiConfig = JSON.parse(uiConfig) } catch { }
       }
 
-      if (savedConfig.parameters) {
-        setUiConfig({ parameters: savedConfig.parameters })
-      } else {
-        setUiConfig({ parameters: {} })
-      }
-
-      // Load Capabilities with defensive parsing
+      // Load Parameters (Backend Norm Caps)
       let caps = m.normalized_caps_json
       if (typeof caps === 'string') {
-        try { caps = JSON.parse(caps) } catch (e) { console.error("Failed to parse normalized_caps_json", e); caps = null }
+        try { caps = JSON.parse(caps) } catch { }
       }
 
-      setCapabilities(caps || { inputs: [] })
+      // Restore State
+      if (caps && caps._parameters) {
+        // New Format: stored in normalized_caps_json._parameters
+        setParameters(caps._parameters)
+      }
+
+      if (uiConfig.parameter_configs) {
+        setConfigs(uiConfig.parameter_configs)
+      }
+
+      if (uiConfig.default_values) {
+        setValues(uiConfig.default_values)
+      } else {
+        // Try to init values from params if no defaults saved
+        if (caps && caps._parameters) {
+          const defaults: any = {}
+          caps._parameters.forEach((p: any) => {
+            if (p.default_value !== null) defaults[p.id] = p.default_value
+          })
+          setValues(defaults)
+        }
+      }
 
     } catch (e) {
       console.error(e)
       toast({ title: "Error loading model", variant: "destructive" })
     } finally {
       setLoading(false)
-    }
-  }
-
-  async function handleSave() {
-    if (!modelId) return
-    try {
-      setSaving(true)
-      await apiService.updateModel(modelId, {
-        display_name: displayName,
-        credits: parseInt(credits),
-        is_active: isActive,
-        model_ref: modelRef,
-        ui_config: uiConfig, // Save the whole structure
-        normalized_caps_json: capabilities
-      })
-      toast({ title: "Changes saved" })
-    } catch (e) {
-      toast({ title: "Failed to save", variant: "destructive" })
-    } finally {
-      setSaving(false)
     }
   }
 
@@ -124,17 +125,69 @@ export function ModelConfig() {
     setFetchingSchema(true)
     try {
       const res = await apiService.fetchModelSchema(modelRef)
-      setCapabilities(res.normalized_caps)
-      toast({ title: "Schema fetched successfully" })
 
-      if (!displayName && res.normalized_caps.title) {
-        setDisplayName(res.normalized_caps.title)
+      // Process Schema
+      // The API returns the raw schema or normalized caps. 
+      // Assuming it returns the raw schema in a field like 'schema' or 'openapi_schema'
+      // If the backend already normalizes, we might need to adjust.
+      // For now, let's assume we get the raw Replicate schema structure in `res.schema` or `res` itself.
+
+      const rawSchema = res.schema || res // Adjust based on actual API response
+
+      loadSchema(rawSchema, modelRef)
+
+      toast({ title: "Schema fetched and parsed successfully" })
+
+      if (!displayName && res.schema?.title) {
+        setDisplayName(res.schema.title)
       }
     } catch (e: any) {
       console.error(e)
       toast({ title: "Failed to fetch schema", description: e.message || "Unknown error", variant: "destructive" })
     } finally {
       setFetchingSchema(false)
+    }
+  }
+
+  async function handleSave() {
+    if (!modelId) return
+    try {
+      setSaving(true)
+
+      // Construct Payload
+      const payload = {
+        display_name: displayName,
+        credits: parseInt(credits),
+        is_active: isActive,
+        model_ref: modelRef,
+
+        // Save Configs and Defaults in ui_config
+        ui_config: {
+          parameter_configs: configs,
+          default_values: values,
+          // Legacy for compatibility if needed
+          parameters: configs.reduce((acc, c) => ({ ...acc, [c.parameter_id]: c }), {})
+        },
+
+        // Save Parameters definition in normalized_caps_json for validation/parsing on backend
+        normalized_caps_json: {
+          _parameters: parameters, // Store our parsed structure
+          // Also store legacy simple input list if needed for backend compat
+          inputs: parameters.map(p => ({
+            name: p.name,
+            type: p.type,
+            required: p.required,
+            default: p.default_value
+          }))
+        }
+      }
+
+      await apiService.updateModel(modelId, payload)
+      toast({ title: "Changes saved successfully" })
+    } catch (e) {
+      toast({ title: "Failed to save", variant: "destructive" })
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -149,25 +202,7 @@ export function ModelConfig() {
     }
   }
 
-  // Helper to extract config for a specific parameter
-  function getParamConfig(paramName: string): ExposureConfig {
-    return uiConfig.parameters[paramName] || {
-      enabled: true, // Default to true if not present
-    }
-  }
-
-  // Helper to update config for a specific parameter
-  function updateParamConfig(paramName: string, newConfig: ExposureConfig) {
-    setUiConfig(prev => ({
-      ...prev,
-      parameters: {
-        ...prev.parameters,
-        [paramName]: newConfig
-      }
-    }))
-  }
-
-  if (loading) return <div className="p-8">Loading...</div>
+  if (loading) return <div className="p-8 flex items-center justify-center h-96">Loading...</div>
 
   if (!model) {
     return (
@@ -183,9 +218,9 @@ export function ModelConfig() {
   }
 
   return (
-    <div className="container mx-auto p-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="container mx-auto p-8 space-y-6 pb-24">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4 -mx-8 px-8 border-b flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link to="/admin">
             <Button variant="ghost" size="icon">
@@ -193,16 +228,45 @@ export function ModelConfig() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="text-2xl font-bold tracking-tight">
               {model.display_name}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {model.provider} / {modelRef}
             </p>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="destructive" onClick={handleDelete}>Delete Model</Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <FileJsonIcon className="w-4 h-4 mr-2" />
+                Export JSON
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Model Configuration Export</DialogTitle>
+              </DialogHeader>
+              <pre className="bg-muted p-4 rounded-md text-xs font-mono whitespace-pre-wrap overflow-auto max-h-96">
+                {JSON.stringify({
+                  parameters,
+                  configs,
+                  values
+                }, null, 2)}
+              </pre>
+            </DialogContent>
+          </Dialog>
+
+          <Button variant="outline" onClick={resetValues}>
+            <RefreshCwIcon className="w-4 h-4 mr-2" />
+            Reset Defaults
+          </Button>
+
+          <Button onClick={handleSave} disabled={saving}>
+            <SaveIcon className="w-4 h-4 mr-2" />
+            {saving ? "Saving..." : "Save Changes"}
+          </Button>
         </div>
       </div>
 
@@ -212,38 +276,44 @@ export function ModelConfig() {
           {/* Replicate Configuration */}
           <Card>
             <CardHeader>
-              <CardTitle>Model Parameters</CardTitle>
-              <CardDescription>Fetch schema from Replicate to configure inputs</CardDescription>
+              <CardTitle>Parameter Schema</CardTitle>
+              <CardDescription>
+                Configure how this model's inputs are exposed to users.
+                Fetch schema from Replicate to auto-populate.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex gap-4 items-end">
+              <div className="flex gap-4 items-end bg-muted/20 p-4 rounded-lg">
                 <div className="flex-1 space-y-2">
-                  <Label>Model Ref (owner/name)</Label>
-                  <Input value={modelRef} onChange={e => setModelRef(e.target.value)} placeholder="stability-ai/sdxl" />
+                  <Label>Replicate Model ID (owner/name)</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={modelRef}
+                      onChange={e => setModelRef(e.target.value)}
+                      placeholder="stability-ai/sdxl"
+                      className="font-mono"
+                    />
+                    <div className="text-xs text-muted-foreground self-center whitespace-nowrap">
+                      {parameters.length > 0 ? `${parameters.length} params loaded` : "No schema loaded"}
+                    </div>
+                  </div>
                 </div>
                 <Button onClick={handleFetchSchema} disabled={fetchingSchema} variant="secondary">
+                  <DownloadIcon className="w-4 h-4 mr-2" />
                   {fetchingSchema ? "Fetching..." : "Fetch Schema"}
                 </Button>
               </div>
 
-              {capabilities && (
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h4 className="font-semibold text-sm">Detected Inputs ({capabilities.inputs.length})</h4>
-                    <Badge variant="outline">Schema Loaded</Badge>
-                  </div>
-
-                  {/* Parameter Editors List */}
-                  <div className="space-y-2">
-                    {Array.isArray(capabilities.inputs) && capabilities.inputs.map((input: any) => (
-                      <ParameterConfigEditor
-                        key={input.name}
-                        parameter={input}
-                        config={getParamConfig(input.name)}
-                        onChange={(newConfig) => updateParamConfig(input.name, newConfig)}
-                      />
-                    ))}
-                  </div>
+              {parameters.length > 0 ? (
+                <ModelParametersGroup
+                  parameters={parameters}
+                  configs={configs}
+                  values={values}
+                  onChange={updateValue}
+                />
+              ) : (
+                <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">
+                  Enter a model reference and click "Fetch Schema" to configure parameters.
                 </div>
               )}
             </CardContent>
@@ -255,51 +325,54 @@ export function ModelConfig() {
           {/* Basic Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Basic Configuration</CardTitle>
+              <CardTitle>Basic Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-2">
-                  <Label>Display Name</Label>
-                  <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select value={isActive ? "active" : "inactive"} onValueChange={v => setIsActive(v === "active")}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Cost (Credits per run)</Label>
-                  <Input type="number" value={credits} onChange={(e) => setCredits(e.target.value)} />
-                </div>
+              <div className="space-y-2">
+                <Label>Display Name</Label>
+                <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={isActive ? "active" : "inactive"} onValueChange={v => setIsActive(v === "active")}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Cost (Credits/run)</Label>
+                <Input type="number" value={credits} onChange={(e) => setCredits(e.target.value)} />
               </div>
             </CardContent>
           </Card>
 
-          {/* Actions */}
           <Card>
-            <CardContent className="p-4">
-              <Button size="lg" className="w-full" onClick={handleSave} disabled={saving}>
-                <SaveIcon className="w-4 h-4 mr-2" />
-                {saving ? "Saving..." : "Save Changes"}
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle className="text-sm">Info</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">Metadata</CardTitle></CardHeader>
             <CardContent>
-              <div className="text-sm">
-                <p><strong>ID:</strong> {model.id}</p>
-                <p><strong>Created:</strong> {model.created_at ? new Date(model.created_at).toLocaleDateString() : "-"}</p>
+              <div className="text-sm space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">ID</span>
+                  <span className="font-mono text-xs">{model.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Created</span>
+                  <span>{model.created_at ? new Date(model.created_at).toLocaleDateString() : "-"}</span>
+                </div>
               </div>
+              <Button
+                variant="destructive"
+                variant="outline"
+                size="sm"
+                className="w-full mt-6 text-destructive hover:text-destructive"
+                onClick={handleDelete}
+              >
+                Delete Model
+              </Button>
             </CardContent>
           </Card>
         </div>
