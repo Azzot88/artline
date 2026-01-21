@@ -256,7 +256,7 @@ export function Workbench() {
       console.error(err)
       toast.error(t('workbench.toasts.genFailed'), { description: err.message || t('workbench.toasts.unknownError') })
     } finally {
-      setLoading(false) # Unblock immediately
+      setLoading(false) // Unblock immediately
     }
   }
 
