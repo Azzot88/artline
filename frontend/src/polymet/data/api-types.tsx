@@ -72,6 +72,8 @@ export interface AdminStats {
   total_jobs: number
   active_jobs: number
   total_credits: number
+  avg_predict_time_24h?: number
+  est_cost_24h?: number
 }
 
 export interface ModelPerformanceStats {

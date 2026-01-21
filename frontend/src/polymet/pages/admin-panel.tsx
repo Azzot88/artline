@@ -34,8 +34,8 @@ export function AdminPanel() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <StatsCard title="Total Users" value={stats?.total_users} />
                 <StatsCard title="Total Jobs" value={stats?.total_jobs} />
-                <StatsCard title="Active Jobs" value={stats?.active_jobs} />
-                <StatsCard title="Total Credits" value={stats?.total_credits} />
+                <StatsCard title="24h Speed (Avg)" value={stats?.avg_predict_time_24h ? `${stats.avg_predict_time_24h}s` : "0s"} />
+                <StatsCard title="24h Est. Cost" value={stats?.est_cost_24h ? `$${stats.est_cost_24h}` : "$0.00"} />
             </div>
 
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
@@ -74,7 +74,7 @@ export function AdminPanel() {
     )
 }
 
-function StatsCard({ title, value }: { title: string, value?: number }) {
+function StatsCard({ title, value }: { title: string, value?: number | string }) {
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

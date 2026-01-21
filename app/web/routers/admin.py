@@ -43,11 +43,31 @@ async def get_admin_stats(
     active_jobs = (await db.execute(select(func.count(Job.id)).where(Job.status == "running"))).scalar() or 0
     total_credits = (await db.execute(select(func.sum(LedgerEntry.amount)))).scalar() or 0
     
+    # Global Performance (24h)
+    one_day_ago = datetime.utcnow() - datetime.timedelta(days=1)
+    
+    # Avg Time
+    q_time = select(func.avg(Job.predict_time))\
+        .where(Job.created_at >= one_day_ago)\
+        .where(Job.predict_time.is_not(None))
+    avg_time = (await db.execute(q_time)).scalar()
+    
+    # Total Runs (succeeded/failed with cost)
+    # Estimate cost = sum(predict_time) * 0.002 (blended rate) or sum(provider_cost) if we had it
+    # We will just use a blended rate of $0.002/s (A100 price) for estimation
+    q_sum_time = select(func.sum(Job.predict_time))\
+        .where(Job.created_at >= one_day_ago)\
+        .where(Job.predict_time.is_not(None))
+    total_time = (await db.execute(q_sum_time)).scalar() or 0.0
+    est_cost = total_time * 0.002
+    
     return AdminStats(
         total_users=total_users,
         total_jobs=total_jobs,
         active_jobs=active_jobs,
-        total_credits=total_credits or 0
+        total_credits=total_credits or 0,
+        avg_predict_time_24h=round(avg_time, 2) if avg_time else 0.0,
+        est_cost_24h=round(est_cost, 2)
     )
 
 # ============================================================================

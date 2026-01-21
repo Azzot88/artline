@@ -83,6 +83,10 @@ class AdminStats(BaseModel):
     total_jobs: int
     active_jobs: int
     total_credits: int
+    
+    # Global Performance
+    avg_predict_time_24h: Optional[float] = None
+    est_cost_24h: Optional[float] = None
 
 class UserWithBalance(UserRead):
     balance: int
