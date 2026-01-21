@@ -132,7 +132,7 @@ export function ModelConfig() {
       // If the backend already normalizes, we might need to adjust.
       // For now, let's assume we get the raw Replicate schema structure in `res.schema` or `res` itself.
 
-      const rawSchema = res.schema || res // Adjust based on actual API response
+      const rawSchema = res.raw_response || res.schema || res // Adjust based on actual API response
 
       loadSchema(rawSchema, modelRef)
 

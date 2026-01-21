@@ -33,19 +33,37 @@ export function parseReplicateSchema(
     modelId: string,
     modelRef: string
 ): { parameters: ModelParameter[]; configs: ModelParameterConfig[] } {
-    if (!schema?.properties) {
+    // 0. Locate the actual Schema object (Input definition)
+    let root = schema
+
+    // Check for standard Replicate API response structure
+    if (schema?.latest_version?.openapi_schema) {
+        root = schema.latest_version.openapi_schema
+    } else if (schema?.openapi_schema) {
+        root = schema.openapi_schema
+    }
+
+    // Check for components definition (OpenAPI)
+    if (root?.components?.schemas?.Input) {
+        root = root.components.schemas.Input
+    }
+
+    if (!root?.properties) {
+        console.warn("Schema parser: No properties found in object", schema)
         return { parameters: [], configs: [] }
     }
+
+    const props = root.properties
 
     const parameters: ModelParameter[] = []
     const configs: ModelParameterConfig[] = []
 
     // Extract all properties
-    Object.entries(schema.properties).forEach(([key, prop]) => {
+    Object.entries(props).forEach(([key, prop]) => {
         // Skip internal fields often found in replicate schemas but not useful for users
         if (key === "version" || key === "created_at") return
 
-        const isRequired = schema.required?.includes(key) || false
+        const isRequired = root.required?.includes(key) || false
         const paramId = `${modelRef}-${key}`.replace(/[^a-zA-Z0-9-]/g, "-").toLowerCase()
 
         // 1. Determine Type
