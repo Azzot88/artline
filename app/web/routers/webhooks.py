@@ -12,6 +12,8 @@ import httpx
 import os
 import boto3
 import asyncio
+import io
+from PIL import Image
 from app.core.config import settings
 
 # ...
@@ -63,20 +65,41 @@ async def replicate_webhook(
                         file_content = resp.content
                         print(f"DEBUG: Downloaded {len(file_content)} bytes", flush=True)
                         
-                        # 2. Upload to S3
+                        # 2. Normalize & Upload to S3
                         if settings.AWS_ACCESS_KEY_ID and settings.AWS_BUCKET_NAME:
-                            ext = "png" # Default
+                            ext = "jpg" # Default normalized format
+                            content_to_upload = file_content
+                            content_type = "image/jpeg"
+
                             if job.kind == "video":
                                 ext = "mp4"
-                            elif ".webp" in download_url:
-                                ext = "webp"
-                            elif ".jpg" in download_url:
-                                ext = "jpg"
-                                
+                                content_type = "video/mp4"
+                            else:
+                                # Normalize Image to JPG
+                                try:
+                                    print("DEBUG: Normalizing image to JPG...", flush=True)
+                                    with Image.open(io.BytesIO(file_content)) as img:
+                                        # Convert RGBA to RGB if needed
+                                        if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info):
+                                            img = img.convert('RGB')
+                                        else:
+                                            # Ensure generic RGB
+                                            img = img.convert('RGB')
+                                            
+                                        output_buffer = io.BytesIO()
+                                        img.save(output_buffer, format='JPEG', quality=95)
+                                        content_to_upload = output_buffer.getvalue()
+                                        print(f"DEBUG: Normalization complete. Size: {len(content_to_upload)} bytes", flush=True)
+                                except Exception as e:
+                                    print(f"DEBUG: Image normalization failed: {e}, using original.", flush=True)
+                                    # Fallback to original if PIL fails
+                                    if ".png" in download_url: ext = "png"; content_type="image/png"
+                                    elif ".webp" in download_url: ext = "webp"; content_type="image/webp"
+                                    
                             filename = f"generations/{job.id}.{ext}"
                             print(f"DEBUG: Attempting S3 upload to {filename}", flush=True)
                             
-                            def upload_s3(content, bucket, key):
+                            def upload_s3(content, bucket, key, mime_type):
                                 try:
                                     s3 = boto3.client(
                                         's3',
@@ -88,7 +111,7 @@ async def replicate_webhook(
                                         Bucket=bucket,
                                         Key=key,
                                         Body=content,
-                                        ContentType=f"image/{ext}" if ext != "mp4" else "video/mp4",
+                                        ContentType=mime_type,
 
                                     )
                                     return f"https://{bucket}.s3.{settings.AWS_REGION}.amazonaws.com/{key}"
@@ -100,9 +123,10 @@ async def replicate_webhook(
                             s3_url = await loop.run_in_executor(
                                 None, 
                                 upload_s3, 
-                                file_content, 
+                                content_to_upload, 
                                 settings.AWS_BUCKET_NAME, 
-                                filename
+                                filename,
+                                content_type
                             )
                             
                             job.result_url = s3_url
