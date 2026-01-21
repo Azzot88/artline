@@ -44,28 +44,27 @@ export function Workbench() {
 
   // Handle Cross-Page Prompt Reuse
   useEffect(() => {
-    // Check if prompt was passed via navigation state (old way)
-    if (history.state?.usr?.appendPrompt) {
-      const textToAppend = history.state.usr.appendPrompt
+    // Check if prompt was passed via navigation state (old way history.state)
+    const historyState = window.history.state as any
+    if (historyState?.usr?.appendPrompt) {
+      const textToAppend = historyState.usr.appendPrompt
       setPrompt(prev => {
         const spacer = prev.trim().length > 0 ? " " : ""
         return prev + spacer + textToAppend
       })
-      // Clear state to prevent double-append on refresh?
-      // Actually history.replaceState is better but accessing it directly in React Router context is tricky without hook.
-      // For now, let's assume it's one-off.
       window.history.replaceState({}, '')
     }
 
     // Also check react-router location state (new way)
-    if (location.state && (location.state as any).appendPrompt) {
-      const text = (location.state as any).appendPrompt
+    const locState = location.state as any
+    if (locState?.appendPrompt) {
+      const text = locState.appendPrompt
       setPrompt(prev => {
         const spacer = prev.trim().length > 0 ? "\n" : ""
         return prev + spacer + text
       })
       // Clear state
-      window.history.replaceState({}, document.title)
+      window.history.replaceState({}, '')
     }
   }, [location])
 
