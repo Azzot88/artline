@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
 import { apiService } from "@/polymet/data/api-service"
 import { AIModel } from "@/polymet/data/models-data"
+import { ModelPerformanceStats } from "@/polymet/data/api-types"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,7 +16,9 @@ import {
   SaveIcon,
   RefreshCwIcon,
   FileJsonIcon,
-  DownloadIcon
+  DownloadIcon,
+  ActivityIcon,
+  RefreshCcw
 } from "lucide-react"
 import {
   Select,
@@ -37,6 +40,8 @@ export function ModelConfig() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [fetchingSchema, setFetchingSchema] = useState(false)
+  const [stats, setStats] = useState<ModelPerformanceStats | null>(null)
+  const [syncingStats, setSyncingStats] = useState(false)
 
   // Basic Form State
   const [displayName, setDisplayName] = useState("")
@@ -203,6 +208,21 @@ export function ModelConfig() {
     }
   }
 
+  async function handleSyncStats() {
+    if (!modelId) return
+    setSyncingStats(true)
+    try {
+      const s = await apiService.syncModelStats(modelId)
+      setStats(s)
+      toast({ title: "Stats synced successfully" })
+    } catch (e) {
+      console.error(e)
+      toast({ title: "Failed to sync stats", variant: "destructive" })
+    } finally {
+      setSyncingStats(false)
+    }
+  }
+
   async function handleDelete() {
     if (!modelId || !confirm("Delete this model permanently?")) return
     try {
@@ -350,22 +370,67 @@ export function ModelConfig() {
                   "text-to-audio",
                   "inpainting",
                   "upscale"
-                ].map(cap => (
-                  <div key={cap} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`cap-${cap}`}
-                      checked={capabilities?.includes(cap) || false}
-                      onCheckedChange={() => toggleCapability(cap)}
-                    />
-                    <label
-                      htmlFor={`cap-${cap}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {cap.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')}
-                    </label>
-                  </div>
-                ))}
+                ].map(cap => {
+                  const isEnabled = capabilities?.includes(cap) || false
+                  return (
+                    <div key={cap} className={`flex items-center space-x-2 transition-opacity ${isEnabled ? "opacity-100" : "opacity-50"}`}>
+                      <Checkbox
+                        id={`cap-${cap}`}
+                        checked={isEnabled}
+                        onCheckedChange={() => toggleCapability(cap)}
+                      />
+                      <label
+                        htmlFor={`cap-${cap}`}
+                        className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${!isEnabled && "line-through text-muted-foreground"}`}
+                      >
+                        {cap.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')}
+                      </label>
+                    </div>
+                  )
+                })}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Performance Stats */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-medium">Performance</CardTitle>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleSyncStats} disabled={syncingStats}>
+                {syncingStats ? <RefreshCcw className="h-3 w-3 animate-spin" /> : <ActivityIcon className="h-3 w-3" />}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {stats ? (
+                <div className="space-y-4 text-xs">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <div className="text-muted-foreground">Avg Time (24h)</div>
+                      <div className="font-mono font-medium">{stats.avg_predict_time_24h ? `${stats.avg_predict_time_24h.toFixed(1)}s` : "-"}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-muted-foreground">Avg Time (7d)</div>
+                      <div className="font-mono font-medium">{stats.avg_predict_time_7d ? `${stats.avg_predict_time_7d.toFixed(1)}s` : "-"}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-muted-foreground">Runs (7d)</div>
+                      <div className="font-mono font-medium">{stats.total_runs_7d}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-muted-foreground">Est. Cost</div>
+                      <div className="font-mono font-medium text-green-600">
+                        {stats.est_cost_per_run ? `$${stats.est_cost_per_run.toFixed(4)}` : "-"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <Button variant="outline" size="sm" onClick={handleSyncStats} disabled={syncingStats}>
+                    Sync Stats
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 

@@ -146,6 +146,10 @@ export const apiService = {
     return api.get<any[]>("/admin/jobs/broken")
   },
 
+  async syncModelStats(modelId: string) {
+    return api.post<ModelPerformanceStats>(`/admin/models/${modelId}/sync-stats`, {})
+  },
+
   async getAdminUsers(limit = 50, offset = 0) {
     return api.get<UserWithBalance[]>(`/admin/users?limit=${limit}&offset=${offset}`)
   },

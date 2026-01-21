@@ -63,6 +63,10 @@ class Job(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
     completed_at: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     
+    # Performance & Cost
+    predict_time: Mapped[float | None] = mapped_column(nullable=True) # Seconds
+    provider_cost: Mapped[float | None] = mapped_column(nullable=True) # USD
+    
     @property
     def credits_spent(self) -> int:
         return self.cost_credits

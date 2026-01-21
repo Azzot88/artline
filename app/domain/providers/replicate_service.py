@@ -248,9 +248,9 @@ class ReplicateService:
         url = f"{self.BASE_URL}/predictions/{prediction_id}"
         with httpx.Client(timeout=10.0) as client:
             resp = client.get(url, headers=self.headers)
-            if resp.status_code != 200: return "unknown", None
+            if resp.status_code != 200: return "unknown", None, {}
             data = resp.json()
-            return data["status"], data.get("output")
+            return data["status"], data.get("output"), data.get("metrics", {})
 
     def build_payload(self, input_data: Dict[str, Any], allowed_inputs: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
@@ -319,7 +319,8 @@ class ReplicateService:
                 "status": data.get("status"),
                 "output": data.get("output"),
                 "error": data.get("error"),
-                "logs": data.get("logs")
+                "logs": data.get("logs"),
+                "metrics": data.get("metrics", {})
             }
 
     def parse_input_string(self, raw_text: str) -> tuple[str, Dict[str, Any], str]:

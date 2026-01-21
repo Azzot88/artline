@@ -58,8 +58,19 @@ class JobRead(BaseModel):
     
     created_at: datetime
     completed_at: Optional[datetime] = None
+    
+    # Performance
+    predict_time: Optional[float] = None
+    provider_cost: Optional[float] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+class ModelPerformanceStats(BaseModel):
+    avg_predict_time_24h: Optional[float] = None
+    avg_predict_time_7d: Optional[float] = None
+    total_runs_24h: int = 0
+    total_runs_7d: int = 0
+    est_cost_per_run: Optional[float] = None # Calculated average cost
 
 # Ledger/Balance
 class BalanceRead(BaseModel):

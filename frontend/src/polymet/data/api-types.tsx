@@ -74,6 +74,14 @@ export interface AdminStats {
   total_credits: number
 }
 
+export interface ModelPerformanceStats {
+  avg_predict_time_24h: number | null
+  avg_predict_time_7d: number | null
+  total_runs_24h: number
+  total_runs_7d: number
+  est_cost_per_run: number | null
+}
+
 export interface UserWithBalance {
   id: string
   email: string

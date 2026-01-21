@@ -346,3 +346,81 @@ async def get_broken_jobs(
     )
     res = await db.execute(stmt)
     return res.scalars().all()
+
+@router.post("/models/{model_id}/sync-stats", response_model=ModelPerformanceStats)
+async def sync_model_stats(
+    model_id: str,
+    user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Syncs performance stats for a model by checking recent jobs.
+    Backfills missing predict_time from Replicate API if needed.
+    """
+    try:
+        uid = uuid.UUID(model_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid UUID")
+
+    # 1. Fetch recent jobs
+    stmt = select(Job).where(Job.model_id == uid).order_by(Job.created_at.desc()).limit(50)
+    jobs = (await db.execute(stmt)).scalars().all()
+    
+    if not jobs:
+        return ModelPerformanceStats()
+
+    service = await get_replicate_client(db)
+    
+    # 2. Backfill missing metrics
+    updated_count = 0
+    for job in jobs:
+        if job.provider_job_id and job.predict_time is None and job.status in ["succeeded", "failed"]:
+            try:
+                # Fetch detailed status from Replicate
+                details = await service.get_prediction(job.provider_job_id)
+                if details and "metrics" in details:
+                    metrics = details["metrics"] or {}
+                    pt = metrics.get("predict_time")
+                    
+                    if pt:
+                        job.predict_time = float(pt)
+                        updated_count += 1
+                        
+            except Exception as e:
+                logger.error(f"Failed to sync job {job.id}: {e}")
+                
+    if updated_count > 0:
+        await db.commit()
+
+    # 3. Calculate Stats
+    # Re-fetch to get all data (including older ones stored in DB) to compute accurate stats
+    # Actually we can just use SQL for aggregation
+    
+    now = datetime.utcnow()
+    one_day_ago = now - datetime.timedelta(days=1)
+    seven_days_ago = now - datetime.timedelta(days=7)
+    
+    # helper for avg
+    async def get_avg_time(since: datetime):
+        q = select(func.avg(Job.predict_time), func.count(Job.id))\
+            .where(Job.model_id == uid)\
+            .where(Job.created_at >= since)\
+            .where(Job.predict_time.is_not(None))
+        res = (await db.execute(q)).first()
+        return res[0] or 0.0, res[1] or 0
+
+    avg_24h, count_24h = await get_avg_time(one_day_ago)
+    avg_7d, count_7d = await get_avg_time(seven_days_ago)
+    
+    # Estimate Cost: Default T4 ($0.00055/s) to A100 ($0.0023/s)
+    # This is rough. Ideally we store 'hardware' on the job.
+    # We'll use a conservative $0.001/s estimate for now or just return 0 if unknown.
+    est_cost = avg_7d * 0.001 
+
+    return ModelPerformanceStats(
+        avg_predict_time_24h=round(avg_24h, 2),
+        avg_predict_time_7d=round(avg_7d, 2),
+        total_runs_24h=count_24h,
+        total_runs_7d=count_7d,
+        est_cost_per_run=round(est_cost, 4)
+    )
