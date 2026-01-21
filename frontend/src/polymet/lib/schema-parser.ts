@@ -32,7 +32,7 @@ export function parseReplicateSchema(
     schema: ReplicateSchema,
     modelId: string,
     modelRef: string
-): { parameters: ModelParameter[]; configs: ModelParameterConfig[] } {
+): { parameters: ModelParameter[]; configs: ModelParameterConfig[]; suggested_capabilities: string[] } {
     // 0. Locate the actual Schema object (Input definition)
     let root = schema
 
@@ -146,7 +146,38 @@ export function parseReplicateSchema(
         return (ca?.display_order ?? 999) - (cb?.display_order ?? 999)
     })
 
-    return { parameters, configs }
+    // 5. Suggest Capabilities
+    const suggestedCapabilities = new Set<string>()
+    const paramNames = parameters.map(p => p.name.toLowerCase())
+
+    const hasVideoParams = paramNames.some(p =>
+        p.includes("fps") || p.includes("frame") || p.includes("video") || p.includes("duration") || p.includes("seconds")
+    )
+    const hasAudioParams = paramNames.some(p =>
+        p.includes("audio") || p.includes("music") || p.includes("speech") || p.includes("voice") || p.includes("melody")
+    )
+    const hasInputImage = paramNames.some(p =>
+        p.includes("image") || p.includes("file") || p.includes("input")
+    )
+
+    if (hasVideoParams) {
+        if (hasInputImage) suggestedCapabilities.add("image-to-video")
+        suggestedCapabilities.add("text-to-video")
+    } else if (hasAudioParams) {
+        suggestedCapabilities.add("text-to-audio")
+        if (hasInputImage) suggestedCapabilities.add("image-to-audio")
+    } else {
+        // Default to image
+        suggestedCapabilities.add("text-to-image")
+        if (hasInputImage) suggestedCapabilities.add("image-to-image")
+    }
+
+    // Refinement: Inpainting
+    if (paramNames.some(p => p.includes("mask") || p.includes("inpainting"))) {
+        suggestedCapabilities.add("inpainting")
+    }
+
+    return { parameters, configs, suggested_capabilities: Array.from(suggestedCapabilities) }
 }
 
 /**

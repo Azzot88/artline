@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   ArrowLeftIcon,
   SaveIcon,
@@ -48,12 +49,15 @@ export function ModelConfig() {
     parameters,
     configs,
     values,
+    capabilities,
     updateValue,
+    toggleCapability,
     loadSchema,
     resetValues,
     setParameters,
     setConfigs,
-    setValues
+    setValues,
+    setCapabilities
   } = useModelConfig({ modelId: modelId || "" })
 
   useEffect(() => {
@@ -105,278 +109,322 @@ export function ModelConfig() {
           caps._parameters.forEach((p: any) => {
             if (p.default_value !== null) defaults[p.id] = p.default_value
           })
-          setValues(defaults)
-        }
+        })
+        setValues(defaults)
       }
-
-    } catch (e) {
-      console.error(e)
-      toast({ title: "Error loading model", variant: "destructive" })
-    } finally {
-      setLoading(false)
     }
+
+      // Restore Capabilities
+      if (m.capabilities) {
+      setCapabilities(m.capabilities)
+    } else if (m.modes) {
+      setCapabilities(m.modes)
+    }
+
+  } catch (e) {
+    console.error(e)
+    toast({ title: "Error loading model", variant: "destructive" })
+  } finally {
+    setLoading(false)
   }
+}
 
-  async function handleFetchSchema() {
-    if (!modelRef) {
-      toast({ title: "Enter a Model Ref first", variant: "destructive" })
-      return
+async function handleFetchSchema() {
+  if (!modelRef) {
+    toast({ title: "Enter a Model Ref first", variant: "destructive" })
+    return
+  }
+  setFetchingSchema(true)
+  try {
+    const res = await apiService.fetchModelSchema(modelRef)
+
+    // Process Schema
+    // The API returns the raw schema or normalized caps. 
+    // Assuming it returns the raw schema in a field like 'schema' or 'openapi_schema'
+    // If the backend already normalizes, we might need to adjust.
+    // For now, let's assume we get the raw Replicate schema structure in `res.schema` or `res` itself.
+
+    const rawSchema = res.raw_response || res.schema || res // Adjust based on actual API response
+
+    loadSchema(rawSchema, modelRef)
+
+    toast({ title: "Schema fetched and parsed successfully" })
+
+    if (!displayName && res.schema?.title) {
+      setDisplayName(res.schema.title)
     }
-    setFetchingSchema(true)
-    try {
-      const res = await apiService.fetchModelSchema(modelRef)
+  } catch (e: any) {
+    console.error(e)
+    toast({ title: "Failed to fetch schema", description: e.message || "Unknown error", variant: "destructive" })
+  } finally {
+    setFetchingSchema(false)
+  }
+}
 
-      // Process Schema
-      // The API returns the raw schema or normalized caps. 
-      // Assuming it returns the raw schema in a field like 'schema' or 'openapi_schema'
-      // If the backend already normalizes, we might need to adjust.
-      // For now, let's assume we get the raw Replicate schema structure in `res.schema` or `res` itself.
+async function handleSave() {
+  if (!modelId) return
+  try {
+    setSaving(true)
 
-      const rawSchema = res.raw_response || res.schema || res // Adjust based on actual API response
+    // Construct Payload
+    const payload = {
+      display_name: displayName,
+      credits: parseInt(credits),
+      is_active: isActive,
+      model_ref: modelRef,
 
-      loadSchema(rawSchema, modelRef)
+      // Save Configs and Defaults in ui_config
+      capabilities: capabilities,
+      ui_config: {
+        parameter_configs: configs,
+        default_values: values,
+        // Legacy for compatibility if needed
+        parameters: configs.reduce((acc, c) => ({ ...acc, [c.parameter_id]: c }), {})
+      },
 
-      toast({ title: "Schema fetched and parsed successfully" })
-
-      if (!displayName && res.schema?.title) {
-        setDisplayName(res.schema.title)
+      // Save Parameters definition in normalized_caps_json for validation/parsing on backend
+      normalized_caps_json: {
+        _parameters: parameters, // Store our parsed structure
+        // Also store legacy simple input list if needed for backend compat
+        inputs: parameters.map(p => ({
+          name: p.name,
+          type: p.type,
+          required: p.required,
+          default: p.default_value
+        }))
       }
-    } catch (e: any) {
-      console.error(e)
-      toast({ title: "Failed to fetch schema", description: e.message || "Unknown error", variant: "destructive" })
-    } finally {
-      setFetchingSchema(false)
     }
+
+    await apiService.updateModel(modelId, payload)
+    toast({ title: "Changes saved successfully" })
+  } catch (e) {
+    toast({ title: "Failed to save", variant: "destructive" })
+  } finally {
+    setSaving(false)
   }
+}
 
-  async function handleSave() {
-    if (!modelId) return
-    try {
-      setSaving(true)
-
-      // Construct Payload
-      const payload = {
-        display_name: displayName,
-        credits: parseInt(credits),
-        is_active: isActive,
-        model_ref: modelRef,
-
-        // Save Configs and Defaults in ui_config
-        ui_config: {
-          parameter_configs: configs,
-          default_values: values,
-          // Legacy for compatibility if needed
-          parameters: configs.reduce((acc, c) => ({ ...acc, [c.parameter_id]: c }), {})
-        },
-
-        // Save Parameters definition in normalized_caps_json for validation/parsing on backend
-        normalized_caps_json: {
-          _parameters: parameters, // Store our parsed structure
-          // Also store legacy simple input list if needed for backend compat
-          inputs: parameters.map(p => ({
-            name: p.name,
-            type: p.type,
-            required: p.required,
-            default: p.default_value
-          }))
-        }
-      }
-
-      await apiService.updateModel(modelId, payload)
-      toast({ title: "Changes saved successfully" })
-    } catch (e) {
-      toast({ title: "Failed to save", variant: "destructive" })
-    } finally {
-      setSaving(false)
-    }
+async function handleDelete() {
+  if (!modelId || !confirm("Delete this model permanently?")) return
+  try {
+    await apiService.deleteModel(modelId)
+    navigate("/admin")
+    toast({ title: "Model deleted" })
+  } catch (e) {
+    toast({ title: "Failed to delete", variant: "destructive" })
   }
+}
 
-  async function handleDelete() {
-    if (!modelId || !confirm("Delete this model permanently?")) return
-    try {
-      await apiService.deleteModel(modelId)
-      navigate("/admin")
-      toast({ title: "Model deleted" })
-    } catch (e) {
-      toast({ title: "Failed to delete", variant: "destructive" })
-    }
-  }
+if (loading) return <div className="p-8 flex items-center justify-center h-96">Loading...</div>
 
-  if (loading) return <div className="p-8 flex items-center justify-center h-96">Loading...</div>
-
-  if (!model) {
-    return (
-      <div className="space-y-6 container mx-auto p-8">
-        <Card className="p-12 text-center">
-          <h3 className="text-lg font-semibold">Model not found</h3>
-          <Link to="/admin">
-            <Button variant="outline" className="mt-4">Back to Admin</Button>
-          </Link>
-        </Card>
-      </div>
-    )
-  }
-
+if (!model) {
   return (
-    <div className="container mx-auto p-8 space-y-6 pb-24">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4 -mx-8 px-8 border-b flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link to="/admin?tab=models">
-            <Button variant="ghost" size="icon">
-              <ArrowLeftIcon className="w-5 h-5" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              {model.display_name}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {model.provider} / {modelRef}
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <FileJsonIcon className="w-4 h-4 mr-2" />
-                Export JSON
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Model Configuration Export</DialogTitle>
-              </DialogHeader>
-              <pre className="bg-muted p-4 rounded-md text-xs font-mono whitespace-pre-wrap overflow-auto max-h-96">
-                {JSON.stringify({
-                  parameters,
-                  configs,
-                  values
-                }, null, 2)}
-              </pre>
-            </DialogContent>
-          </Dialog>
+    <div className="space-y-6 container mx-auto p-8">
+      <Card className="p-12 text-center">
+        <h3 className="text-lg font-semibold">Model not found</h3>
+        <Link to="/admin">
+          <Button variant="outline" className="mt-4">Back to Admin</Button>
+        </Link>
+      </Card>
+    </div>
+  )
+}
 
-          <Button variant="outline" onClick={resetValues}>
-            <RefreshCwIcon className="w-4 h-4 mr-2" />
-            Reset Defaults
+return (
+  <div className="container mx-auto p-8 space-y-6 pb-24">
+    {/* Sticky Header */}
+    <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4 -mx-8 px-8 border-b flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        <Link to="/admin?tab=models">
+          <Button variant="ghost" size="icon">
+            <ArrowLeftIcon className="w-5 h-5" />
           </Button>
-
-          <Button onClick={handleSave} disabled={saving}>
-            <SaveIcon className="w-4 h-4 mr-2" />
-            {saving ? "Saving..." : "Save Changes"}
-          </Button>
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {model.display_name}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {model.provider} / {modelRef}
+          </p>
         </div>
       </div>
+      <div className="flex gap-2">
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline">
+              <FileJsonIcon className="w-4 h-4 mr-2" />
+              Export JSON
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Model Configuration Export</DialogTitle>
+            </DialogHeader>
+            <pre className="bg-muted p-4 rounded-md text-xs font-mono whitespace-pre-wrap overflow-auto max-h-96">
+              {JSON.stringify({
+                parameters,
+                configs,
+                values
+              }, null, 2)}
+            </pre>
+          </DialogContent>
+        </Dialog>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Configuration */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Replicate Configuration */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Parameter Schema</CardTitle>
-              <CardDescription>
-                Configure how this model's inputs are exposed to users.
-                Fetch schema from Replicate to auto-populate.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex gap-4 items-end bg-muted/20 p-4 rounded-lg">
-                <div className="flex-1 space-y-2">
-                  <Label>Replicate Model ID (owner/name)</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={modelRef}
-                      onChange={e => setModelRef(e.target.value)}
-                      placeholder="stability-ai/sdxl"
-                      className="font-mono"
-                    />
-                    <div className="text-xs text-muted-foreground self-center whitespace-nowrap">
-                      {parameters.length > 0 ? `${parameters.length} params loaded` : "No schema loaded"}
-                    </div>
+        <Button variant="outline" onClick={resetValues}>
+          <RefreshCwIcon className="w-4 h-4 mr-2" />
+          Reset Defaults
+        </Button>
+
+        <Button onClick={handleSave} disabled={saving}>
+          <SaveIcon className="w-4 h-4 mr-2" />
+          {saving ? "Saving..." : "Save Changes"}
+        </Button>
+      </div>
+    </div>
+
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Left Column - Configuration */}
+      <div className="lg:col-span-2 space-y-6">
+        {/* Replicate Configuration */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Parameter Schema</CardTitle>
+            <CardDescription>
+              Configure how this model's inputs are exposed to users.
+              Fetch schema from Replicate to auto-populate.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex gap-4 items-end bg-muted/20 p-4 rounded-lg">
+              <div className="flex-1 space-y-2">
+                <Label>Replicate Model ID (owner/name)</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={modelRef}
+                    onChange={e => setModelRef(e.target.value)}
+                    placeholder="stability-ai/sdxl"
+                    className="font-mono"
+                  />
+                  <div className="text-xs text-muted-foreground self-center whitespace-nowrap">
+                    {parameters.length > 0 ? `${parameters.length} params loaded` : "No schema loaded"}
                   </div>
                 </div>
-                <Button onClick={handleFetchSchema} disabled={fetchingSchema} variant="secondary">
-                  <DownloadIcon className="w-4 h-4 mr-2" />
-                  {fetchingSchema ? "Fetching..." : "Fetch Schema"}
-                </Button>
               </div>
-
-              {parameters.length > 0 ? (
-                <ModelParametersGroup
-                  parameters={parameters}
-                  configs={configs}
-                  values={values}
-                  onChange={updateValue}
-                />
-              ) : (
-                <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">
-                  Enter a model reference and click "Fetch Schema" to configure parameters.
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Column - Basic Info */}
-        <div className="space-y-6">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Display Name</Label>
-                <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select value={isActive ? "active" : "inactive"} onValueChange={v => setIsActive(v === "active")}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Cost (Credits/run)</Label>
-                <Input type="number" value={credits} onChange={(e) => setCredits(e.target.value)} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle className="text-sm">Metadata</CardTitle></CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">ID</span>
-                  <span className="font-mono text-xs">{model.id}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Created</span>
-                  <span>{model.created_at ? new Date(model.created_at).toLocaleDateString() : "-"}</span>
-                </div>
-              </div>
-              <Button
-                variant="destructive"
-                variant="outline"
-                size="sm"
-                className="w-full mt-6 text-destructive hover:text-destructive"
-                onClick={handleDelete}
-              >
-                Delete Model
+              <Button onClick={handleFetchSchema} disabled={fetchingSchema} variant="secondary">
+                <DownloadIcon className="w-4 h-4 mr-2" />
+                {fetchingSchema ? "Fetching..." : "Fetch Schema"}
               </Button>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+
+            {parameters.length > 0 ? (
+              <ModelParametersGroup
+                parameters={parameters}
+                configs={configs}
+                values={values}
+                onChange={updateValue}
+              />
+            ) : (
+              <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">
+                Enter a model reference and click "Fetch Schema" to configure parameters.
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
-    </div >
-  )
+
+      {/* Right Column - Basic Info */}
+      <div className="space-y-6">
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Capabilities</CardTitle>
+            <CardDescription>Select supported generation modes</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-2">
+              {[
+                "text-to-image",
+                "image-to-image",
+                "text-to-video",
+                "image-to-video",
+                "text-to-audio",
+                "inpainting",
+                "upscale"
+              ].map(cap => (
+                <div key={cap} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`cap-${cap}`}
+                    checked={capabilities?.includes(cap) || false}
+                    onCheckedChange={() => toggleCapability(cap)}
+                  />
+                  <label
+                    htmlFor={`cap-${cap}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    {cap.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Basic Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Basic Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Display Name</Label>
+              <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={isActive ? "active" : "inactive"} onValueChange={v => setIsActive(v === "active")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Cost (Credits/run)</Label>
+              <Input type="number" value={credits} onChange={(e) => setCredits(e.target.value)} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Metadata</CardTitle></CardHeader>
+          <CardContent>
+            <div className="text-sm space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">ID</span>
+                <span className="font-mono text-xs">{model.id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Created</span>
+                <span>{model.created_at ? new Date(model.created_at).toLocaleDateString() : "-"}</span>
+              </div>
+            </div>
+            <Button
+              variant="destructive"
+              variant="outline"
+              size="sm"
+              className="w-full mt-6 text-destructive hover:text-destructive"
+              onClick={handleDelete}
+            >
+              Delete Model
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  </div >
+)
 }

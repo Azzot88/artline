@@ -271,6 +271,7 @@ function AddProviderForm({ onComplete }: { onComplete: () => void }) {
 function ModelsTab() {
     const [models, setModels] = useState<AIModel[]>([])
     const [showAdd, setShowAdd] = useState(false)
+    const navigate = useNavigate()
 
     useEffect(() => { load() }, [])
 
@@ -311,7 +312,11 @@ function ModelsTab() {
                         </TableHeader>
                         <TableBody>
                             {models.map(m => (
-                                <TableRow key={m.id}>
+                                <TableRow
+                                    key={m.id}
+                                    className="cursor-pointer hover:bg-muted/50"
+                                    onClick={() => navigate(`/model-config/${m.id}`)}
+                                >
                                     <TableCell>
                                         <div className="w-10 h-10 rounded bg-muted overflow-hidden relative">
                                             {m.cover_image_url ? (
@@ -341,7 +346,7 @@ function ModelsTab() {
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
+                                        <div className="flex justify-end gap-2" onClick={e => e.stopPropagation()}>
                                             <Link to={`/model-config/${m.id}`}>
                                                 <Button variant="ghost" size="sm">
                                                     <PencilIcon className="w-4 h-4 mr-2" /> Configure
