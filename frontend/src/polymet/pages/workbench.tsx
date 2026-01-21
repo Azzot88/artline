@@ -145,30 +145,26 @@ export function Workbench() {
       attempts++
       if (attempts > maxAttempts) {
         clearInterval(interval)
-        setIsGenerating(false)
-        setCurrentJobStatus("failed")
         toast.error("Generation timed out")
         return
       }
 
       try {
         const job: any = await api.get(`/jobs/${jobId}`)
-        setCurrentJobStatus(job.status)
-        if (job.logs) setCurrentJobLogs(job.logs)
 
+        // Update status in background if needed, but primarily we wait for terminal
         if (job.status === 'succeeded') {
           clearInterval(interval)
-          setIsGenerating(false)
-          toast.success(t('workbench.toasts.jobStarted')) // Actually finished now
+          toast.success(t('workbench.toasts.jobStarted'))
 
-          // Map job to Generation for immediate display
+          // Map final job to Generation
           const width = job.format === "portrait" ? 768 : (job.format === "landscape" ? 1024 : 1024);
           const height = job.format === "portrait" ? 1024 : (job.format === "landscape" ? 768 : 1024);
           let cleanPrompt = job.prompt || "";
           if (cleanPrompt.includes("|")) cleanPrompt = cleanPrompt.split("|").pop().trim();
           else if (cleanPrompt.startsWith("[")) cleanPrompt = cleanPrompt.replace(/\[.*?\]\s*/, "").trim();
 
-          const newGen: Generation = {
+          const finalGen: Generation = {
             id: job.id,
             url: job.result_url || job.image,
             image: job.result_url || job.image,
@@ -185,15 +181,17 @@ export function Workbench() {
             type: job.kind as any,
             kind: job.kind as any,
             timestamp: job.created_at,
-            status: job.status
+            status: 'succeeded'
           }
-          setLastGeneration(newGen)
+          // Update the specific card (LibraryWidget handles updates by ID usually?)
+          // We trigger LastGeneration update again with final data
+          setLastGeneration(finalGen)
           setRefreshLibrary(prev => prev + 1)
 
         } else if (job.status === 'failed') {
           clearInterval(interval)
-          setIsGenerating(false)
           toast.error("Generation failed", { description: job.error_message })
+          // Optionally update card to failed state
         }
       } catch (e) {
         console.error("Poll error", e)
@@ -208,9 +206,8 @@ export function Workbench() {
     }
 
     setLoading(true)
-    setIsGenerating(true)
-    setCurrentJobStatus("queued")
-    setCurrentJobLogs("")
+    // We do NOT set isGenerating(true) to block UI anymore
+    // setIsGenerating(true) 
 
     try {
       const payload = {
@@ -221,16 +218,45 @@ export function Workbench() {
       }
 
       const res: any = await api.post<any>("/jobs", payload)
-      // Start polling
+
+      // Optimistic UI: Create specific "Queued" Generation
+      const width = 1024; // Default/Estimated
+      const height = 1024;
+      const optimisticGen: Generation = {
+        id: res.id,
+        url: "", // Empty for queuing
+        image: "",
+        prompt: prompt,
+        model: model,
+        provider: "replicate",
+        credits: 1,
+        likes: 0,
+        views: 0,
+        userName: "Me",
+        userAvatar: "https://github.com/shadcn.png",
+        width: width,
+        height: height,
+        type: creationType as any,
+        kind: creationType as any,
+        timestamp: new Date().toISOString(),
+        status: 'queued'
+      }
+
+      setLastGeneration(optimisticGen)
+      // We don't increment refreshLibrary yet, we want to inject this directly if possible.
+      // But LibraryWidget might need refresh to fetch it if it relies on API.
+      // Actually, LibraryWidget appends `newGeneration` to its list.
+
+      toast.info("Generation started...")
+
+      // Start polling in background
       pollJobStatus(res.id)
 
     } catch (err: any) {
       console.error(err)
       toast.error(t('workbench.toasts.genFailed'), { description: err.message || t('workbench.toasts.unknownError') })
-      setIsGenerating(false)
-      setCurrentJobStatus("idle")
     } finally {
-      setLoading(false)
+      setLoading(false) # Unblock immediately
     }
   }
 
@@ -239,7 +265,7 @@ export function Workbench() {
     if (inputType === "image" && !file) return true
     if (!model) return true
     if (modelsLoading) return true
-    if (isGenerating) return true
+    // if (isGenerating) return true // ALLOW PARALLEL GENERATIONS
 
     // Check required parameters
     const requiredParams = allParameters.filter(p => p.required)
@@ -288,12 +314,12 @@ export function Workbench() {
           {/* Large Main Textarea Area */}
           <div className="relative">
 
-            {/* OVERLAY */}
-            <GenerationOverlay
+            {/* OVERLAY REMOVED FOR OPTIMISTIC UI */}
+            {/* <GenerationOverlay
               isVisible={isGenerating}
               status={currentJobStatus}
               logs={currentJobLogs}
-            />
+            /> */}
 
             {/* Top Controls Bar - Input Type Toggle */}
             <div className="absolute top-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-b border-border p-4 z-10">

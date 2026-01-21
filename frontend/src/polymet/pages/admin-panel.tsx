@@ -496,8 +496,12 @@ function ReportsTab() {
                     <TableBody>
                         {jobs.map(job => (
                             <>
-                                <TableRow key={job.id} className={expandedId === job.id ? "bg-muted/50 border-b-0" : ""}>
-                                    <TableCell>
+                                <TableRow
+                                    key={job.id}
+                                    className={`cursor-pointer transition-colors hover:bg-muted/50 ${expandedId === job.id ? "bg-muted/50 border-b-0" : ""}`}
+                                    onClick={() => toggleExpand(job.id)}
+                                >
+                                    <TableCell onClick={e => e.stopPropagation()}>
                                         <Checkbox
                                             checked={selectedIds.has(job.id)}
                                             onCheckedChange={() => toggleSelect(job.id)}
@@ -513,7 +517,12 @@ function ReportsTab() {
                                     </TableCell>
                                     <TableCell className="text-xs">{new Date(job.created_at).toLocaleString()}</TableCell>
                                     <TableCell>
-                                        <Button variant="ghost" size="icon" onClick={() => toggleExpand(job.id)}>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="hover:text-primary hover:bg-primary/10"
+                                            onClick={(e) => { e.stopPropagation(); toggleExpand(job.id) }}
+                                        >
                                             {expandedId === job.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                                         </Button>
                                     </TableCell>
