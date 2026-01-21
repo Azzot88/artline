@@ -16,7 +16,7 @@ from app.schemas import (
 )
 from app.domain.billing.service import get_user_balance, add_ledger_entry
 from app.domain.providers.service import encrypt_key
-from datetime import datetime
+from datetime import datetime, timedelta
 
 router = APIRouter()
 
@@ -44,7 +44,7 @@ async def get_admin_stats(
     total_credits = (await db.execute(select(func.sum(LedgerEntry.amount)))).scalar() or 0
     
     # Global Performance (24h)
-    one_day_ago = datetime.utcnow() - datetime.timedelta(days=1)
+    one_day_ago = datetime.utcnow() - timedelta(days=1)
     
     # Avg Time
     q_time = select(func.avg(Job.predict_time))\
