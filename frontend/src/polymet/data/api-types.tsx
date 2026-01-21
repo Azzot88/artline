@@ -74,6 +74,7 @@ export interface AdminStats {
   total_credits: number
   avg_predict_time_24h?: number
   est_cost_24h?: number
+  breakdown?: Record<string, { count: number, avg_time: number, cost: number }>
 }
 
 export interface ModelPerformanceStats {

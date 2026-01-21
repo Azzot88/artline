@@ -61,13 +61,42 @@ async def get_admin_stats(
     total_time = (await db.execute(q_sum_time)).scalar() or 0.0
     est_cost = total_time * 0.002
     
+    # Breakdown by Type
+    # We group by input_type (which is "image" or "video") or maybe we check model type?
+    # Job has "kind" or "input_type" ? Checks schemas.py -> JobCreate kind="image"/"video"
+    # But Job model has 'type' on AIModel, but Job itself doesn't duplicate it reliably?
+    # Actually Job table does NOT have 'kind' column in some versions, spread from JobRequest.
+    # Let's check Job model definition in models.py
+    # Ah, Job has `kind` (Mapped[str]).
+    
+    breakdown = {}
+    for k in ["image", "video", "audio"]:
+        # Count & Avg Time
+        q = select(func.count(Job.id), func.avg(Job.predict_time), func.sum(Job.predict_time))\
+            .where(Job.kind == k)\
+            .where(Job.created_at >= one_day_ago)\
+            .where(Job.status == 'succeeded')
+            
+        res = (await db.execute(q)).first()
+        count = res[0] or 0
+        avg = res[1] or 0.0
+        sum_time = res[2] or 0.0
+        
+        if count > 0:
+            breakdown[k] = {
+                "count": count,
+                "avg_time": round(avg, 2),
+                "cost": round(sum_time * 0.002, 3) 
+            }
+    
     return AdminStats(
         total_users=total_users,
         total_jobs=total_jobs,
         active_jobs=active_jobs,
         total_credits=total_credits or 0,
         avg_predict_time_24h=round(avg_time, 2) if avg_time else 0.0,
-        est_cost_24h=round(est_cost, 2)
+        est_cost_24h=round(est_cost, 2),
+        breakdown=breakdown
     )
 
 # ============================================================================

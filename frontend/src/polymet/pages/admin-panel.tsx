@@ -41,6 +41,35 @@ export function AdminPanel() {
                 <StatsCard title="24h Est. Cost" value={stats?.est_cost_24h ? `$${stats.est_cost_24h}` : "$0.00"} />
             </div>
 
+            {/* Breakdown Cards */}
+            {stats?.breakdown && Object.keys(stats.breakdown).length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {Object.entries(stats.breakdown).map(([key, data]) => (
+                        <Card key={key} className="bg-muted/30">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">{key} Gen</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex justify-between items-end">
+                                    <div>
+                                        <div className="text-2xl font-bold">{data.count}</div>
+                                        <div className="text-xs text-muted-foreground">Runs (24h)</div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-sm font-mono font-medium">{data.avg_time}s</div>
+                                        <div className="text-xs text-muted-foreground">Avg Time</div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-sm font-mono font-medium">${data.cost}</div>
+                                        <div className="text-xs text-muted-foreground">Est. Cost</div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            )}
+
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                 <TabsList className="grid w-full grid-cols-5 lg:w-[500px]">
                     <TabsTrigger value="users">Users</TabsTrigger>

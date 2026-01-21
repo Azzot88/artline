@@ -87,6 +87,16 @@ class AdminStats(BaseModel):
     # Global Performance
     avg_predict_time_24h: Optional[float] = None
     est_cost_24h: Optional[float] = None
+    
+    # Breakdown
+    breakdown: Optional[dict[str, dict]] = None 
+    # { "image": { "count": 10, "avg_time": 5.5, "cost": 0.1 }, ... }
+
+class TypeStats(BaseModel):
+    label: str
+    count: int
+    avg_time: float
+    total_cost: float
 
 class UserWithBalance(UserRead):
     balance: int
