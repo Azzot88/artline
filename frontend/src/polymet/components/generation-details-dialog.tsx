@@ -106,21 +106,21 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-6xl p-0 overflow-hidden bg-background/95 backdrop-blur-xl gap-0 border-border/40 shadow-2xl md:h-[85vh] h-[95vh] flex flex-col md:flex-row ring-1 ring-white/10" aria-describedby={undefined}>
+            <DialogContent className="max-w-6xl p-0 overflow-hidden bg-background/98 gap-0 border-border/40 shadow-2xl md:h-[85vh] h-[95vh] flex flex-col md:flex-row ring-1 ring-white/10" aria-describedby={undefined}>
                 <DialogTitle className="sr-only">Details for generation {generation.id}</DialogTitle>
 
                 {/* --- LEFT: Media Viewport --- */}
-                <div className="flex-1 bg-black/95 flex items-center justify-center p-4 relative overflow-hidden md:h-full h-[45vh] group-media">
-                    {/* Atmospheric Background Blur - Optimized */}
-                    {/* Using will-change-transform and limiting blur radius helps performance */}
+                <div className="flex-1 bg-black flex items-center justify-center p-4 relative overflow-hidden md:h-full h-[45vh] group-media">
+                    {/* Atmospheric Background - Optimized (No active blur) */}
                     <div
-                        className="absolute inset-0 opacity-20 blur-2xl pointer-events-none"
+                        className="absolute inset-0 opacity-10 pointer-events-none"
                         style={{
                             backgroundImage: `url(${generation.thumbnailUrl || generation.url})`,
                             backgroundSize: 'cover',
                             backgroundPosition: 'center',
                         }}
                     />
+                    <div className="absolute inset-0 bg-black/60 pointer-events-none" />
 
                     {/* ... rest of content ... */}
 
