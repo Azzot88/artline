@@ -408,10 +408,6 @@ function ReportsTab() {
     async function load() {
         setLoading(true)
         try {
-            // Import normalizer
-            import { normalizeGeneration } from "@/polymet/data/transformers"
-
-            // ... (in load function)
             const res = await apiService.getBrokenJobs()
             // Normalize to get derived fields like user_name/params
             const normalized = res.map(normalizeGeneration)
