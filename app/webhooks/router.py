@@ -77,7 +77,7 @@ async def replicate_webhook(request: Request, db: AsyncSession = Depends(get_db)
         elif isinstance(output, str):
             download_url = output
 
-                if download_url:
+        if download_url:
             try:
                 # 1. Download Content
                 async with httpx.AsyncClient() as client:
