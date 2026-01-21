@@ -23,6 +23,9 @@ export function Library() {
                 const data = await api.get<any[]>("/jobs")
 
                 if (Array.isArray(data)) {
+                    // Sort by creation date desc
+                    data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
                     const mapped = data.map((job: any) => normalizeGeneration(job))
                     setGenerations(mapped)
                 }

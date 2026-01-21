@@ -33,7 +33,7 @@ export function LibraryWidget({ refreshTrigger, newGeneration, onUsePrompt }: Li
 
                 if (Array.isArray(data)) {
                     // Sort by creation date desc if not already
-                    // data.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                    data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
                     const mapped = data.map((job: any) => {
                         // 1. Prefer Real DB Dimensions
