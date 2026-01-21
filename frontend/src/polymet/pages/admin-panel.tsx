@@ -407,9 +407,15 @@ function ReportsTab() {
     async function load() {
         setLoading(true)
         try {
+            // Import normalizer
+            import { normalizeGeneration } from "@/polymet/data/transformers"
+
+            // ... (in load function)
             const res = await apiService.getBrokenJobs()
-            setJobs(res)
-            setSelectedIds(new Set()) // Reset selection on reload
+            // Normalize to get derived fields like user_name/params
+            const normalized = res.map(normalizeGeneration)
+            setJobs(normalized)
+            setSelectedIds(new Set())
         } catch (e) {
             console.error(e)
         } finally {
@@ -487,6 +493,7 @@ function ReportsTab() {
                             </TableHead>
                             <TableHead>ID</TableHead>
                             <TableHead>User</TableHead>
+                            <TableHead>Model</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Reason</TableHead>
                             <TableHead>Date</TableHead>
@@ -508,7 +515,14 @@ function ReportsTab() {
                                         />
                                     </TableCell>
                                     <TableCell className="font-mono text-xs">{job.id.slice(0, 8)}...</TableCell>
-                                    <TableCell className="text-xs">{job.user_id || job.guest_id || 'Unknown'}</TableCell>
+                                    {/* User Column: Show Name (Status) */}
+                                    <TableCell className="text-xs font-medium">
+                                        {job.user_name || (job.user_id ? "User" : "Guest")}
+                                        <div className="text-[10px] text-muted-foreground font-mono">{job.user_id ? "Registered" : "Anonymous"}</div>
+                                    </TableCell>
+                                    <TableCell className="text-xs">
+                                        {job.model_name || job.model_id || "Unknown"}
+                                    </TableCell>
                                     <TableCell>
                                         <Badge variant="destructive">{job.status}</Badge>
                                     </TableCell>
@@ -529,10 +543,17 @@ function ReportsTab() {
                                 </TableRow>
                                 {expandedId === job.id && (
                                     <TableRow className="bg-muted/50 hover:bg-muted/50">
-                                        <TableCell colSpan={7} className="p-4 pt-0">
-                                            <div className="text-xs font-mono bg-background p-4 rounded border whitespace-pre-wrap overflow-x-auto">
-                                                <div className="font-bold mb-2 text-primary">Job Details</div>
-                                                {JSON.stringify(job, null, 2)}
+                                        <TableCell colSpan={8} className="p-4 pt-0">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="text-xs font-mono bg-background p-4 rounded border whitespace-pre-wrap overflow-x-auto">
+                                                    <div className="font-bold mb-2 text-primary">Parameters</div>
+                                                    {/* Explicitly show params if available, else standard JSON dump */}
+                                                    {job.params ? JSON.stringify(job.params, null, 2) : "No specific parameters recorded"}
+                                                </div>
+                                                <div className="text-xs font-mono bg-background p-4 rounded border whitespace-pre-wrap overflow-x-auto">
+                                                    <div className="font-bold mb-2 text-primary">Raw Job Data</div>
+                                                    {JSON.stringify(job, null, 2)}
+                                                </div>
                                             </div>
                                         </TableCell>
                                     </TableRow>

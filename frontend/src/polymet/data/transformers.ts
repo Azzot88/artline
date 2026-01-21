@@ -85,6 +85,7 @@ export function normalizeGeneration(raw: any): Generation {
         provider: raw.provider || "replicate",
         duration: duration,
         credits_spent: cost,
+        params: raw.params, // Pass through raw parameters
 
         // Social
         is_public: !!raw.is_public,
@@ -98,7 +99,7 @@ export function normalizeGeneration(raw: any): Generation {
 
         // User
         user_id: raw.user_id,
-        user_name: raw.user_name || raw.userName || "User",
+        user_name: raw.user_name || raw.userName || (raw.user_id ? "User" : "Guest"),
         user_avatar: raw.user_avatar || raw.userAvatar,
 
         // Inputs (Legacy/Pass-through)

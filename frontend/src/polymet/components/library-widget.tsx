@@ -144,7 +144,10 @@ export function LibraryWidget({ refreshTrigger, newGeneration, onUsePrompt }: Li
                 ) : (
                     <div className="relative">
                         {/* Horizontal Scroll Container - Filmstrip Mode */}
-                        <div className="flex items-start overflow-x-auto pb-6 gap-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 h-[320px]">
+                        <div
+                            className="flex items-start overflow-x-auto pb-6 gap-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 h-[320px]"
+                            style={{ overflowAnchor: 'none' }}
+                        >
                             {generations.slice(0, 10).map((gen) => {
                                 // Calculate strict width for 280px height to avoid CSS layout issues
                                 const aspect = gen.width / gen.height;
