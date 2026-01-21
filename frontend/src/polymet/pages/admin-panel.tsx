@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useSearchParams, Link } from "react-router-dom"
 import { apiService } from "@/polymet/data/api-service"
 import { AdminStats, UserWithBalance, ProviderConfig } from "@/polymet/data/api-types"
 import { AIModel } from "@/polymet/data/models-data"
@@ -9,16 +10,21 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Link } from "react-router-dom"
 import { TrashIcon, PencilIcon, ChevronDown, ChevronUp, CheckSquare, Square } from "lucide-react"
 import { normalizeGeneration } from "@/polymet/data/transformers"
 
 export function AdminPanel() {
+    const [searchParams, setSearchParams] = useSearchParams()
+    const activeTab = searchParams.get("tab") || "users"
     const [stats, setStats] = useState<AdminStats | null>(null)
 
     useEffect(() => {
         apiService.getAdminStats().then(setStats)
     }, [])
+
+    const handleTabChange = (val: string) => {
+        setSearchParams({ tab: val })
+    }
 
     return (
         <div className="container mx-auto p-8 space-y-8">
@@ -32,8 +38,8 @@ export function AdminPanel() {
                 <StatsCard title="Total Credits" value={stats?.total_credits} />
             </div>
 
-            <Tabs defaultValue="users" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+                <TabsList className="grid w-full grid-cols-5 lg:w-[500px]">
                     <TabsTrigger value="users">Users</TabsTrigger>
                     <TabsTrigger value="models">Models</TabsTrigger>
                     <TabsTrigger value="providers">Providers</TabsTrigger>
@@ -289,42 +295,69 @@ function ModelsTab() {
 
             {showAdd && <AddModelForm onComplete={() => { setShowAdd(false); load() }} />}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {models.map(m => (
-                    <Card key={m.id} className="overflow-hidden">
-                        <div className="h-32 bg-muted relative">
-                            {m.cover_image_url && (
-                                <img src={m.cover_image_url} className="w-full h-full object-cover" alt={m.display_name} />
-                            )}
-                            <div className="absolute top-2 right-2">
-                                <Badge variant={m.is_active ? "default" : "secondary"}>
-                                    {m.is_active ? "Active" : "Inactive"}
-                                </Badge>
-                            </div>
-                        </div>
-                        <CardContent className="p-4">
-                            <div className="flex justify-between items-start mb-2">
-                                <div>
-                                    <h4 className="font-bold truncate">{m.display_name}</h4>
-                                    <p className="text-xs text-muted-foreground">{m.provider} / {m.model_ref}</p>
-                                </div>
-                                <Badge variant="outline">{m.type}</Badge>
-                            </div>
-
-                            <div className="flex gap-2 mt-4">
-                                <Link to={`/model-config/${m.id}`} className="flex-1">
-                                    <Button variant="outline" className="w-full" size="sm">
-                                        <PencilIcon className="w-3 h-3 mr-2" /> Configure
-                                    </Button>
-                                </Link>
-                                <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => deleteM(m.id)}>
-                                    <TrashIcon className="w-3 h-3" />
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
+            <Card>
+                <CardContent className="p-0">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-[60px]">Image</TableHead>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Provider</TableHead>
+                                <TableHead>Type</TableHead>
+                                <TableHead>Cost</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {models.map(m => (
+                                <TableRow key={m.id}>
+                                    <TableCell>
+                                        <div className="w-10 h-10 rounded bg-muted overflow-hidden relative">
+                                            {m.cover_image_url ? (
+                                                <img src={m.cover_image_url} className="w-full h-full object-cover" alt="" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">?</div>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="font-medium">{m.display_name}</div>
+                                        <div className="text-xs text-muted-foreground font-mono">{m.model_ref}</div>
+                                    </TableCell>
+                                    <TableCell>{m.provider}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline" className="uppercase text-[10px]">{m.type}</Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="font-medium flex items-center gap-1">
+                                            {m.credits_per_generation ?? 5}
+                                            <span className="text-xs text-muted-foreground">cr</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant={m.is_active ? "default" : "secondary"}>
+                                            {m.is_active ? "Active" : "Inactive"}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <Link to={`/model-config/${m.id}`}>
+                                                <Button variant="ghost" size="sm">
+                                                    <PencilIcon className="w-4 h-4 mr-2" /> Configure
+                                                </Button>
+                                            </Link>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteM(m.id)}>
+                                                <TrashIcon className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
         </div>
     )
 }
