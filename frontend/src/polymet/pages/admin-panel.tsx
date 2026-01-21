@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Link } from "react-router-dom"
 import { TrashIcon, PencilIcon, ChevronDown, ChevronUp, CheckSquare, Square } from "lucide-react"
+import { normalizeGeneration } from "@/polymet/data/transformers"
 
 export function AdminPanel() {
     const [stats, setStats] = useState<AdminStats | null>(null)
