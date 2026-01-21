@@ -364,7 +364,7 @@ async def sync_model_stats(
         raise HTTPException(status_code=400, detail="Invalid UUID")
 
     # 1. Fetch recent jobs
-    stmt = select(Job).where(Job.model_id == uid).order_by(Job.created_at.desc()).limit(50)
+    stmt = select(Job).where(Job.model_id == uid).order_by(Job.created_at.desc()).limit(200)
     jobs = (await db.execute(stmt)).scalars().all()
     
     if not jobs:
