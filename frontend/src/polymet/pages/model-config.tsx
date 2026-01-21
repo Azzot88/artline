@@ -38,6 +38,7 @@ export function ModelConfig() {
   // Advanced Config state
   const [modelRef, setModelRef] = useState("")
   const [capabilities, setCapabilities] = useState<any>(null)
+  const [fetchingSchema, setFetchingSchema] = useState(false)
 
   // Unified Config State
   type UIConfigState = {
