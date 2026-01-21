@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Link } from "react-router-dom"
-import { TrashIcon, PencilIcon } from "lucide-react"
+import { TrashIcon, PencilIcon, ChevronDown, ChevronUp, CheckSquare, Square } from "lucide-react"
 
 export function AdminPanel() {
     const [stats, setStats] = useState<AdminStats | null>(null)
@@ -398,16 +399,17 @@ function AddModelForm({ onComplete }: { onComplete: () => void }) {
 function ReportsTab() {
     const [jobs, setJobs] = useState<any[]>([])
     const [loading, setLoading] = useState(false)
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+    const [expandedId, setExpandedId] = useState<string | null>(null) // Single expansion for simplicity, or Set for multiple
 
     useEffect(() => { load() }, [])
 
     async function load() {
         setLoading(true)
         try {
-            // Direct fetch or via apiService (we will add to apiService next)
-            // For now direct axios/fetch via api helper
             const res = await apiService.getBrokenJobs()
             setJobs(res)
+            setSelectedIds(new Set()) // Reset selection on reload
         } catch (e) {
             console.error(e)
         } finally {
@@ -415,38 +417,118 @@ function ReportsTab() {
         }
     }
 
+    // Toggle Selection
+    const toggleSelect = (id: string) => {
+        const next = new Set(selectedIds)
+        if (next.has(id)) next.delete(id)
+        else next.add(id)
+        setSelectedIds(next)
+    }
+
+    const toggleAll = () => {
+        if (selectedIds.size > 0) {
+            // Deselect All
+            setSelectedIds(new Set())
+        } else {
+            // Select All
+            setSelectedIds(new Set(jobs.map(j => j.id)))
+        }
+    }
+
+    const handleDeleteSelected = async () => {
+        if (!confirm(`Delete ${selectedIds.size} jobs permanently?`)) return
+        setLoading(true)
+        try {
+            // Parallel delete
+            await Promise.all(Array.from(selectedIds).map(id => apiService.deleteJob(id)))
+            await load()
+        } catch (e) {
+            console.error("Bulk delete failed", e)
+            alert("Some items failed to delete")
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const toggleExpand = (id: string) => {
+        setExpandedId(expandedId === id ? null : id)
+    }
+
     return (
         <Card>
-            <CardHeader>
-                <CardTitle>Broken Jobs Report</CardTitle>
-                <CardDescription>
-                    Listing jobs that are failed or missing content (orphaned).
-                </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Broken Jobs Report</CardTitle>
+                    <CardDescription>
+                        Listing jobs that are failed or missing content (orphaned).
+                    </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={toggleAll}>
+                        {selectedIds.size > 0 ? (
+                            <><Square className="w-4 h-4 mr-2" /> Deselect All</>
+                        ) : (
+                            <><CheckSquare className="w-4 h-4 mr-2" /> Select All</>
+                        )}
+                    </Button>
+                    {selectedIds.size > 0 && (
+                        <Button variant="destructive" size="sm" onClick={handleDeleteSelected}>
+                            <TrashIcon className="w-4 h-4 mr-2" /> Delete ({selectedIds.size})
+                        </Button>
+                    )}
+                </div>
             </CardHeader>
             <CardContent>
                 <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead className="w-[50px]">
+                                {/* Header Checkbox optional, button covers it */}
+                            </TableHead>
                             <TableHead>ID</TableHead>
                             <TableHead>User</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Reason</TableHead>
                             <TableHead>Date</TableHead>
+                            <TableHead className="w-[50px]"></TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {jobs.map(job => (
-                            <TableRow key={job.id}>
-                                <TableCell className="font-mono text-xs">{job.id}</TableCell>
-                                <TableCell className="text-xs">{job.user_id || job.guest_id || 'Unknown'}</TableCell>
-                                <TableCell>
-                                    <Badge variant="destructive">{job.status}</Badge>
-                                </TableCell>
-                                <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
-                                    {job.error_message || (job.result_url ? "Missing URL content" : "Empty Result URL")}
-                                </TableCell>
-                                <TableCell className="text-xs">{new Date(job.created_at).toLocaleString()}</TableCell>
-                            </TableRow>
+                            <>
+                                <TableRow key={job.id} className={expandedId === job.id ? "bg-muted/50 border-b-0" : ""}>
+                                    <TableCell>
+                                        <Checkbox
+                                            checked={selectedIds.has(job.id)}
+                                            onCheckedChange={() => toggleSelect(job.id)}
+                                        />
+                                    </TableCell>
+                                    <TableCell className="font-mono text-xs">{job.id.slice(0, 8)}...</TableCell>
+                                    <TableCell className="text-xs">{job.user_id || job.guest_id || 'Unknown'}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="destructive">{job.status}</Badge>
+                                    </TableCell>
+                                    <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
+                                        {job.error_message || (job.result_url ? "Missing URL content" : "Empty Result URL")}
+                                    </TableCell>
+                                    <TableCell className="text-xs">{new Date(job.created_at).toLocaleString()}</TableCell>
+                                    <TableCell>
+                                        <Button variant="ghost" size="icon" onClick={() => toggleExpand(job.id)}>
+                                            {expandedId === job.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                                {expandedId === job.id && (
+                                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                                        <TableCell colSpan={7} className="p-4 pt-0">
+                                            <div className="text-xs font-mono bg-background p-4 rounded border whitespace-pre-wrap overflow-x-auto">
+                                                <div className="font-bold mb-2 text-primary">Job Details</div>
+                                                {JSON.stringify(job, null, 2)}
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </>
                         ))}
                     </TableBody>
                 </Table>
