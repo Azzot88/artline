@@ -311,6 +311,7 @@ async def fetch_model_schema_endpoint(
             
         return result
         
+    except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 # ============================================================================
