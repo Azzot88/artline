@@ -30,6 +30,7 @@ import type { ParameterValues, ImageFormatType, VideoFormatType, Generation } fr
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
+import { useLocation } from "react-router-dom"
 
 export function Workbench() {
   const { t } = useLanguage()
