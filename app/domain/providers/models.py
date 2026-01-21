@@ -62,7 +62,7 @@ class AIModel(Base):
     # Pricing & Stats
     credits_per_generation: Mapped[int] = mapped_column(Integer, default=5)
     total_generations: Mapped[int] = mapped_column(Integer, default=0)
-    average_rating: Mapped[float | None] = mapped_column(JSON, nullable=True) # or Float
+    average_rating: Mapped[float | None] = mapped_column(nullable=True) # Defaults to Float in PG
 
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     # updated_at is already in file at line 61
