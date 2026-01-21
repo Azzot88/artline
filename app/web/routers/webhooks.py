@@ -93,8 +93,17 @@ async def replicate_webhook(
                                 except Exception as e:
                                     print(f"DEBUG: Image normalization failed: {e}, using original.", flush=True)
                                     # Fallback to original if PIL fails
-                                    if ".png" in download_url: ext = "png"; content_type="image/png"
-                                    elif ".webp" in download_url: ext = "webp"; content_type="image/webp"
+                                    content_type = resp.headers.get("content-type", "image/png")
+                                    if "webp" in content_type: ext = "webp"
+                                    elif "png" in content_type: ext = "png"
+                                    elif "jpeg" in content_type: ext = "jpg"
+                                    else:
+                                        # Emergency fallback to URL check
+                                        if ".png" in download_url: ext = "png"; content_type="image/png"
+                                        elif ".webp" in download_url: ext = "webp"; content_type="image/webp"
+                                        # If all else fails, keep ext="jpg" but this might be risky. 
+                                        # Better to default to webp if that is the common failure case?
+                                        else: ext = "webp"; content_type="image/webp"
                                     
                             filename = f"generations/{job.id}.{ext}"
                             print(f"DEBUG: Attempting S3 upload to {filename}", flush=True)
@@ -149,9 +158,34 @@ async def replicate_webhook(
         job.status = "failed"
         job.error_message = str(error) if error else "Unknown error from provider"
         
+        # REFUND LOGIC
+        if job.cost_credits > 0:
+            # We need to fetch the user to refund
+            # Since 'job' is attached to session, we can try accessing job.user if lazy loading works, 
+            # or we might need to query. Let's explicit query to be safe/explicit in async code if needed, 
+            # but usually accessing relation triggers lazy load if not await-compatible.
+            # Ideally we should have joined loaded user, but let's just fetch user by ID to be safe and atomic.
+            if job.user_id:
+                user_result = await db.execute(select(User).where(User.id == job.user_id))
+                user = user_result.scalar_one_or_none()
+                if user:
+                    user.balance += job.cost_credits
+                    job.error_message += f" (Refunded {job.cost_credits} credits)"
+                    logger.info(f"Refunded {job.cost_credits} credits to user {user.id} for failed job {job.id}")
+
     elif status == "canceled":
         job.status = "failed"
         job.error_message = "Canceled by provider/user"
+        
+        # REFUND LOGIC
+        if job.cost_credits > 0:
+             if job.user_id:
+                user_result = await db.execute(select(User).where(User.id == job.user_id))
+                user = user_result.scalar_one_or_none()
+                if user:
+                    user.balance += job.cost_credits
+                    job.error_message += f" (Refunded {job.cost_credits} credits)"
+                    logger.info(f"Refunded {job.cost_credits} credits to user {user.id} for canceled job {job.id}")
         
     await db.commit()
     

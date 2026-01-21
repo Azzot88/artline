@@ -55,6 +55,14 @@ export function LibraryWidget({ refreshTrigger, newGeneration }: LibraryWidgetPr
                             cleanPrompt = cleanPrompt.replace(/\[.*?\]\s*/, "").trim();
                         }
 
+                        // Fix stuck status for old jobs (older than 5 mins)
+                        const createdAt = new Date(job.created_at).getTime();
+                        const now = Date.now();
+                        let status = job.status;
+                        if (['starting', 'processing', 'queued'].includes(status) && (now - createdAt > 5 * 60 * 1000)) {
+                            status = 'failed';
+                        }
+
                         return {
                             id: job.id,
                             url: job.result_url || job.image,
@@ -74,7 +82,7 @@ export function LibraryWidget({ refreshTrigger, newGeneration }: LibraryWidgetPr
                             type: job.kind,
                             kind: job.kind,
                             timestamp: job.created_at,
-                            status: job.status
+                            status: status
                         }
                     })
                     setGenerations(mapped)

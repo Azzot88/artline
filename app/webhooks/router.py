@@ -77,7 +77,7 @@ async def replicate_webhook(request: Request, db: AsyncSession = Depends(get_db)
         elif isinstance(output, str):
             download_url = output
 
-        if download_url:
+                if download_url:
             try:
                 # 1. Download Content
                 async with httpx.AsyncClient() as client:
@@ -86,34 +86,53 @@ async def replicate_webhook(request: Request, db: AsyncSession = Depends(get_db)
                     if resp.status_code == 200:
                         file_content = resp.content
                         
-                        # 1.1 Read Real Dimensions (Pillow)
-                        # We do this before upload to save metadata
-                        try:
-                            if job.kind == "image" or not job.kind:
-                                from PIL import Image
-                                import io
-                                with Image.open(io.BytesIO(file_content)) as img:
-                                    job.width, job.height = img.size
-                                    # print(f"DEBUG: Scanned Image Size: {job.width}x{job.height}", flush=True)
-                        except Exception as e:
-                            logger.error(f"Failed to scan image dimensions: {e}")
-                            # Non-fatal, proceed to upload
-
-                        # 2. Upload to S3
+                        # 2. Normalize & Upload to S3
                         if settings.AWS_ACCESS_KEY_ID and settings.AWS_BUCKET_NAME:
-                            ext = "png" # Default
+                            ext = "jpg" # Default normalized format
+                            content_to_upload = file_content
+                            content_type = "image/jpeg"
+
                             if job.kind == "video" or ".mp4" in download_url:
                                 ext = "mp4"
-                                job.kind = "video" # Auto-correct kind if detected
-                            elif ".webp" in download_url:
-                                ext = "webp"
-                            elif ".jpg" in download_url:
-                                ext = "jpg"
-                                
+                                content_type = "video/mp4"
+                                job.kind = "video"
+                                # TODO: Extract video dimensions if possible
+                            else:
+                                # Normalize Image to JPG
+                                try:
+                                    # print("DEBUG: Normalizing image to JPG...", flush=True)
+                                    from PIL import Image
+                                    import io
+                                    with Image.open(io.BytesIO(file_content)) as img:
+                                        # Convert RGBA to RGB if needed
+                                        if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info):
+                                            img = img.convert('RGB')
+                                        else:
+                                            img = img.convert('RGB')
+                                        
+                                        # Save Dimensions
+                                        job.width, job.height = img.size
+                                            
+                                        output_buffer = io.BytesIO()
+                                        img.save(output_buffer, format='JPEG', quality=95)
+                                        content_to_upload = output_buffer.getvalue()
+                                        # print(f"DEBUG: Normalization complete. Size: {len(content_to_upload)} bytes", flush=True)
+                                except Exception as e:
+                                    logger.error(f"Image normalization failed: {e}, using original.")
+                                    # Fallback to original if PIL fails
+                                    content_type = resp.headers.get("content-type", "image/png")
+                                    if "webp" in content_type: ext = "webp"
+                                    elif "png" in content_type: ext = "png"
+                                    elif "jpeg" in content_type: ext = "jpg"
+                                    else:
+                                        # Emergency fallback to URL check
+                                        if ".png" in download_url: ext = "png"; content_type="image/png"
+                                        elif ".webp" in download_url: ext = "webp"; content_type="image/webp"
+                                        else: ext = "webp"; content_type="image/webp"
+
                             filename = f"generations/{job.id}.{ext}"
-                            # print(f"[Generation Flow] Webhook: Uploading to S3 -> {filename}", flush=True)
                             
-                            def upload_s3(content, bucket, key):
+                            def upload_s3(content, bucket, key, mime_type):
                                 s3 = boto3.client(
                                     's3',
                                     aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
@@ -124,7 +143,7 @@ async def replicate_webhook(request: Request, db: AsyncSession = Depends(get_db)
                                     Bucket=bucket,
                                     Key=key,
                                     Body=content,
-                                    ContentType=f"image/{ext}" if ext != "mp4" else "video/mp4"
+                                    ContentType=mime_type
                                 )
                                 return f"https://{bucket}.s3.{settings.AWS_REGION}.amazonaws.com/{key}"
 
@@ -132,9 +151,10 @@ async def replicate_webhook(request: Request, db: AsyncSession = Depends(get_db)
                             s3_url = await loop.run_in_executor(
                                 None, 
                                 upload_s3, 
-                                file_content, 
+                                content_to_upload, 
                                 settings.AWS_BUCKET_NAME, 
-                                filename
+                                filename,
+                                content_type
                             )
                             
                             job.result_url = s3_url

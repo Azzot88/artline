@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { PlusIcon, SparklesIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/polymet/components/language-provider"
+import { useAuth } from "@/polymet/components/auth-provider" // Import Auth Hook
 import { useModels } from "@/hooks/use-models" // New Hook
 import { api } from "@/lib/api" // API Client
 import { toast } from "sonner" // Toast
@@ -32,6 +33,7 @@ import { AlertCircle } from "lucide-react"
 
 export function Workbench() {
   const { t } = useLanguage()
+  const { refreshUser } = useAuth() // Get refreshUser
   const [creationType, setCreationType] = useState<CreationType>("image")
   const [inputType, setInputType] = useState<InputType>("text")
   const [prompt, setPrompt] = useState("")
@@ -190,7 +192,9 @@ export function Workbench() {
 
         } else if (job.status === 'failed') {
           clearInterval(interval)
-          toast.error("Generation failed", { description: job.error_message })
+          // Refresh user balance to show refund if any
+          await refreshUser()
+          toast.error("Generation failed", { description: job.error_message || "Credits have been refunded." })
           // Optionally update card to failed state
         }
       } catch (e) {

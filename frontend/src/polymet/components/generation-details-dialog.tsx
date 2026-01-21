@@ -114,12 +114,11 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                     {/* Atmospheric Background Blur - Optimized */}
                     {/* Using will-change-transform and limiting blur radius helps performance */}
                     <div
-                        className="absolute inset-0 opacity-20 blur-[60px] scale-110 pointer-events-none"
+                        className="absolute inset-0 opacity-20 blur-2xl pointer-events-none"
                         style={{
                             backgroundImage: `url(${generation.thumbnailUrl || generation.url})`,
                             backgroundSize: 'cover',
                             backgroundPosition: 'center',
-                            willChange: 'transform, opacity'
                         }}
                     />
 
