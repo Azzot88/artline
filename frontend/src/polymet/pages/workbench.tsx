@@ -37,34 +37,35 @@ export function Workbench() {
   const { refreshUser } = useAuth() // Get refreshUser
   const [creationType, setCreationType] = useState<CreationType>("image")
   const [inputType, setInputType] = useState<InputType>("text")
-  const [prompt, setPrompt] = useState("")
-  const [file, setFile] = useState<File | null>(null)
+  const [prompt, setPrompt] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('workbench_prompt') || ""
+    }
+    return ""
+  })
+
+  // Persist prompt
+  useEffect(() => {
+    localStorage.setItem('workbench_prompt', prompt)
+  }, [prompt])
 
   const location = useLocation()
 
-  // Handle Cross-Page Prompt Reuse
+  // Handle Cross-Page Prompt Reuse and Deduplication
   useEffect(() => {
-    // Check if prompt was passed via navigation state (old way history.state)
-    const historyState = window.history.state as any
-    if (historyState?.usr?.appendPrompt) {
-      const textToAppend = historyState.usr.appendPrompt
-      setPrompt(prev => {
-        const spacer = prev.trim().length > 0 ? " " : ""
-        return prev + spacer + textToAppend
-      })
-      window.history.replaceState({}, '')
-    }
-
-    // Also check react-router location state (new way)
     const locState = location.state as any
     if (locState?.appendPrompt) {
       const text = locState.appendPrompt
+
+      // Prevent duplicate append if the text is already at the end
       setPrompt(prev => {
+        if (prev.trim().endsWith(text.trim())) return prev
+
         const spacer = prev.trim().length > 0 ? "\n" : ""
+        // Clear history state immediately after use
+        window.history.replaceState({}, '')
         return prev + spacer + text
       })
-      // Clear state
-      window.history.replaceState({}, '')
     }
   }, [location])
 
@@ -292,7 +293,10 @@ export function Workbench() {
     } finally {
       setLoading(false) // Unblock immediately
       // Clear input state immediately
-      if (inputType === "text") setPrompt("")
+      if (inputType === "text") {
+        setPrompt("")
+        localStorage.removeItem('workbench_prompt')
+      }
       if (inputType === "image") setFile(null)
     }
   }
