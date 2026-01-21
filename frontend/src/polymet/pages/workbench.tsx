@@ -257,6 +257,9 @@ export function Workbench() {
       toast.error(t('workbench.toasts.genFailed'), { description: err.message || t('workbench.toasts.unknownError') })
     } finally {
       setLoading(false) // Unblock immediately
+      // Clear input state immediately
+      if (inputType === "text") setPrompt("")
+      if (inputType === "image") setFile(null)
     }
   }
 

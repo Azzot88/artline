@@ -27,7 +27,7 @@ export function LibraryWidget({ refreshTrigger, newGeneration }: LibraryWidgetPr
     useEffect(() => {
         const fetchMyJobs = async () => {
             try {
-                setLoading(true)
+                if (generations.length === 0) setLoading(true)
                 const data = await api.get<any[]>("/jobs")
 
                 if (Array.isArray(data)) {
