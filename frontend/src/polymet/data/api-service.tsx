@@ -142,6 +142,10 @@ export const apiService = {
     return api.get<AdminStats>("/admin/stats")
   },
 
+  async syncGlobalStats() {
+    return api.post<AdminStats>("/admin/stats/sync", {})
+  },
+
   async getBrokenJobs() {
     return api.get<any[]>("/admin/jobs/broken")
   },

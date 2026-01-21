@@ -28,7 +28,10 @@ export function AdminPanel() {
 
     return (
         <div className="container mx-auto p-8 space-y-8">
-            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+            <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+                <SyncButton onSynced={setStats} />
+            </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -71,6 +74,26 @@ export function AdminPanel() {
                 </TabsContent>
             </Tabs>
         </div>
+    )
+}
+
+function SyncButton({ onSynced }: { onSynced: (s: AdminStats) => void }) {
+    const [loading, setLoading] = useState(false)
+
+    async function handle() {
+        setLoading(true)
+        try {
+            const fresh = await apiService.syncGlobalStats()
+            onSynced(fresh)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <Button variant="outline" size="sm" onClick={handle} disabled={loading}>
+            {loading ? "Syncing..." : "Sync Health Stats"}
+        </Button>
     )
 }
 

@@ -445,3 +445,50 @@ async def sync_model_stats(
         total_runs_7d=count_7d,
         est_cost_per_run=round(est_cost, 4)
     )
+
+@router.post("/stats/sync", response_model=AdminStats)
+async def sync_global_stats(
+    user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Global Backfill: Checks LAST 100 successful jobs (regardless of model)
+    and fetches missing metrics from Replicate.
+    """
+    # 1. Fetch candidates for backfill
+    stmt = (
+        select(Job)
+        .where(Job.provider_job_id.is_not(None))
+        .where(Job.predict_time.is_(None))
+        .where(Job.status.in_(['succeeded', 'failed']))
+        .order_by(Job.created_at.desc())
+        .limit(100) # Process max 100 at a time to avoid timeout
+    )
+    jobs = (await db.execute(stmt)).scalars().all()
+    
+    updated_count = 0
+    if jobs:
+        service = await get_replicate_client(db)
+        for job in jobs:
+            try:
+                # Fetch detailed status
+                details = await service.get_prediction(job.provider_job_id)
+                if details and "metrics" in details:
+                    metrics = details["metrics"] or {}
+                    pt = metrics.get("predict_time")
+                    
+                    if pt:
+                        job.predict_time = float(pt)
+                        updated_count += 1
+            except Exception as e:
+                print(f"Global sync failed for job {job.id}: {e}")
+                pass
+    
+    if updated_count > 0:
+        await db.commit()
+        
+    # 2. Return fresh stats (re-use existing logic by calling the function directly?)
+    # We can just call the endpoint handler logic, but it needs dependencies.
+    # Let's just create a quick internal helper or copy-paste the minimal calc logic.
+    # Calling get_admin_stats directly is cleaner if we mock deps, but easier to just Recalc here.
+    return await get_admin_stats(user, db)
