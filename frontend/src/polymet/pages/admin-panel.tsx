@@ -391,3 +391,68 @@ function AddModelForm({ onComplete }: { onComplete: () => void }) {
         </Card>
     )
 }
+
+// ------------------------------------------------------------------
+// REPORTS TAB
+// ------------------------------------------------------------------
+function ReportsTab() {
+    const [jobs, setJobs] = useState<any[]>([])
+    const [loading, setLoading] = useState(false)
+
+    useEffect(() => { load() }, [])
+
+    async function load() {
+        setLoading(true)
+        try {
+            // Direct fetch or via apiService (we will add to apiService next)
+            // For now direct axios/fetch via api helper
+            const res = await apiService.getBrokenJobs()
+            setJobs(res)
+        } catch (e) {
+            console.error(e)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Broken Jobs Report</CardTitle>
+                <CardDescription>
+                    Listing jobs that are failed or missing content (orphaned).
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>ID</TableHead>
+                            <TableHead>User</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Reason</TableHead>
+                            <TableHead>Date</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {jobs.map(job => (
+                            <TableRow key={job.id}>
+                                <TableCell className="font-mono text-xs">{job.id}</TableCell>
+                                <TableCell className="text-xs">{job.user_id || job.guest_id || 'Unknown'}</TableCell>
+                                <TableCell>
+                                    <Badge variant="destructive">{job.status}</Badge>
+                                </TableCell>
+                                <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
+                                    {job.error_message || (job.result_url ? "Missing URL content" : "Empty Result URL")}
+                                </TableCell>
+                                <TableCell className="text-xs">{new Date(job.created_at).toLocaleString()}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+                {loading && <div className="p-4 text-center text-muted-foreground">Loading...</div>}
+                {!loading && jobs.length === 0 && <div className="p-4 text-center text-muted-foreground">No broken jobs found. Great!</div>}
+            </CardContent>
+        </Card>
+    )
+}
