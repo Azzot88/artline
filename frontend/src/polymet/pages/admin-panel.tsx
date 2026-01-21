@@ -35,6 +35,7 @@ export function AdminPanel() {
                     <TabsTrigger value="users">Users</TabsTrigger>
                     <TabsTrigger value="models">Models</TabsTrigger>
                     <TabsTrigger value="providers">Providers</TabsTrigger>
+                    <TabsTrigger value="reports">Reports</TabsTrigger>
                     <TabsTrigger value="system">System</TabsTrigger>
                 </TabsList>
 
@@ -48,6 +49,10 @@ export function AdminPanel() {
 
                 <TabsContent value="providers" className="mt-6">
                     <ProvidersTab />
+                </TabsContent>
+
+                <TabsContent value="reports" className="mt-6">
+                    <ReportsTab />
                 </TabsContent>
 
                 <TabsContent value="system" className="mt-6">

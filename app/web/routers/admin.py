@@ -10,7 +10,8 @@ from app.models import User, Job, AIModel, ProviderConfig, LedgerEntry
 from app.schemas import (
     AdminStats, UserWithBalance, CreditGrantRequest,
     ProviderRead, ProviderCreate, ProviderUpdate,
-    AIModelRead, AIModelCreate, AIModelUpdate
+    AIModelRead, AIModelCreate, AIModelUpdate,
+    JobRead
 )
 from app.domain.billing.service import get_user_balance, add_ledger_entry
 from app.domain.providers.service import encrypt_key
@@ -310,5 +311,37 @@ async def fetch_model_schema_endpoint(
             
         return result
         
-    except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+# ============================================================================
+# REPORTS (New)
+# ============================================================================
+
+from sqlalchemy import or_, and_
+
+@router.get("/jobs/broken", response_model=List[JobRead])
+async def get_broken_jobs(
+    user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+    limit: int = 100
+):
+    """
+    List jobs that are technically 'broken' (failed or succeeded but missing content).
+    This helps admin identify systemic issues or refund candidates.
+    """
+    stmt = (
+        select(Job)
+        .where(
+            or_(
+                Job.status == 'failed',
+                and_(
+                    Job.status == 'succeeded',
+                    or_(Job.result_url.is_(None), Job.result_url == '')
+                )
+            )
+        )
+        .order_by(Job.created_at.desc())
+        .limit(limit)
+    )
+    res = await db.execute(stmt)
+    return res.scalars().all()

@@ -129,6 +129,8 @@ async def get_user_jobs(db: AsyncSession, user: User | object, limit: int = 50):
     # Determine if guest
     is_guest = not isinstance(user, User)
     
+    from sqlalchemy import or_, and_
+
     stmt = select(Job).order_by(Job.created_at.desc()).limit(limit)
     
     if is_guest:
@@ -136,7 +138,24 @@ async def get_user_jobs(db: AsyncSession, user: User | object, limit: int = 50):
     else:
         stmt = stmt.where(Job.user_id == user.id)
         
-    stmt = stmt.where(Job.status != 'deleted')
+    # Strict Availability Filter
+    # Show only:
+    # 1. Active jobs (queued, running)
+    # 2. Succeeded jobs WITH a result_url
+    # Hide: failed, deleted, or succeeded-but-broken
+    
+    stmt = stmt.where(
+        or_(
+            Job.status.in_(['queued', 'running']),
+            and_(
+                Job.status == 'succeeded',
+                Job.result_url.isnot(None),
+                Job.result_url != ''
+            )
+        )
+    )
+    # We implicitly exclude 'deleted' and 'failed' by not including them in the OR
+    # But wait, original code excluded 'deleted'. This logic covers it (deleted is not queued/running/succeeded).
         
     result = await db.execute(stmt)
     return result.scalars().all()
