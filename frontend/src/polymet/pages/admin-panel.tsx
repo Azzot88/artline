@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useSearchParams, Link } from "react-router-dom"
+import { useSearchParams, Link, useNavigate } from "react-router-dom"
 import { apiService } from "@/polymet/data/api-service"
 import { AdminStats, UserWithBalance, ProviderConfig } from "@/polymet/data/api-types"
 import { AIModel } from "@/polymet/data/models-data"
