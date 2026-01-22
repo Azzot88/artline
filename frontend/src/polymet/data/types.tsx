@@ -16,13 +16,15 @@ export type {
   ResolutionType
 } from "@/polymet/data/generations-data"
 
+import type { AIModel, Provider, ModelStatus, ModelKind } from "@/polymet/data/models-data"
+
 export type {
   // Model types
   AIModel,
   Provider,
   ModelStatus,
   ModelKind
-} from "@/polymet/data/models-data"
+}
 
 export type {
   // User types
