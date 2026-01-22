@@ -87,6 +87,11 @@ export function Workbench() {
   const [refreshLibrary, setRefreshLibrary] = useState(0)
   const [lastGeneration, setLastGeneration] = useState<Generation | null>(null)
 
+  // Get model credits from dynamic list or fallback
+  const selectedModel = models.find(m => m.id === model)
+  // Backend doesn't send credits yet? Default to 5
+  const modelCredits = 5
+
 
   // Dynamic parameters state
   const [modelParameters, setModelParameters] = useState<any[]>([])
