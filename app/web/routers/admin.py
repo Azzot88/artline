@@ -421,10 +421,40 @@ async def fetch_model_schema_endpoint(
         stmt = select(AIModel).where(AIModel.model_ref == req.model_ref)
         existing_models = (await db.execute(stmt)).scalars().all()
         
+        # Parse detected capabilities (technical potential)
+        from app.domain.providers.replicate_capabilities import ReplicateCapabilitiesService
+        cap_service = ReplicateCapabilitiesService()
+        
+        # structure from fetch_model_capabilities: { raw_response: ..., normalized_caps: { inputs: ... } }
+        # ReplicateCapabilitiesService needs 'properties' dict from schema
+        
+        detected_modes = []
+        try:
+            raw = result.get("raw_response", {})
+            # Try to locate Input properties deep in schema
+            latest = raw.get("latest_version", {})
+            schema = latest.get("openapi_schema", {})
+            # Fallback path if direct schema
+            if "components" not in schema and "properties" in schema:
+                 props = schema.get("properties")
+            else:
+                 props = schema.get("components", {}).get("schemas", {}).get("Input", {}).get("properties", {})
+                 
+            if props:
+                parsed = cap_service.parse_capabilities(props)
+                detected_modes = parsed.get("modes", [])
+        except Exception as e:
+            print(f"Error parsing capabilities: {e}")
+
         if existing_models:
             for m in existing_models:
                 m.raw_schema_json = result.get("raw_response")
                 m.normalized_caps_json = result.get("normalized_caps")
+                
+                # UPDATE MODES from detected technical potential
+                if detected_modes:
+                    m.modes = detected_modes
+                
                 # Also update version_id if available
                 latest = result.get("raw_response", {}).get("latest_version", {})
                 if latest and "id" in latest:
