@@ -64,7 +64,7 @@ export function parseReplicateSchema(
         if (key === "version" || key === "created_at") return
 
         const isRequired = root.required?.includes(key) || false
-        const paramId = `${modelRef}-${key}`.replace(/[^a-zA-Z0-9-]/g, "-").toLowerCase()
+        const paramId = key // Use the parameter name as the ID for consistency
 
         // 1. Determine Type
         let type = prop.type

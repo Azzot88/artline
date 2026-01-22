@@ -105,7 +105,6 @@ export function Workbench() {
 
     // Guard against missing inputs
     if (!selectedModel.inputs || !Array.isArray(selectedModel.inputs)) {
-      console.warn("Model has no inputs or invalid inputs", selectedModel)
       setModelParameters([])
       setModelConfigs([])
       return
@@ -121,30 +120,37 @@ export function Workbench() {
         if (type === 'integer') type = 'integer'
         if (type === 'number') type = 'number'
 
+        // Check for UI Config overrides immediately to set correct enum/type
+        let allowedValues = input.enum || input.allowed_values
+        let uiConfig = null
+
+        if (selectedModel.ui_config?.parameter_configs) {
+          uiConfig = selectedModel.ui_config.parameter_configs.find(
+            (c: any) => c.parameter_id === input.name
+          )
+          if (uiConfig?.allowed_values && Array.isArray(uiConfig.allowed_values) && uiConfig.allowed_values.length > 0) {
+            allowedValues = uiConfig.allowed_values
+          }
+        }
+
         return {
           id: input.name, // Use name as ID for simplicity in dynamic land
           name: input.name,
           type: type,
           default_value: input.default,
           required: input.required || false,
-          enum: input.enum || input.allowed_values, // Check both typical fields
+          enum: allowedValues, // Set matched or overridden values
           min: input.min,
           max: input.max,
-          ui_group: 'other' // We can refine this later
+          ui_group: 'other', // We can refine this later
+          _config: uiConfig // Pass config for filter step
         }
       }).filter(Boolean)
         .filter((p: any) => p.name !== 'prompt')
         .filter((p: any) => {
-          // Respect Admin UI Config
-          if (selectedModel.ui_config?.parameter_configs) {
-            const config = selectedModel.ui_config.parameter_configs.find((c: any) => c.parameter_id === p.id)
-
-            // DEBUG LOG
-            if (p.name.includes('image')) {
-              console.log(`[Workbench] Filtering param ${p.name} (id=${p.id}). Config match:`, config)
-            }
-
-            if (config && config.enabled === false) return false
+          // Filter by enabled status from the looked-up config
+          if (p._config && p._config.enabled === false) {
+            return false
           }
           return true
         })
