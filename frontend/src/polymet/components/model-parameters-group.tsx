@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react"
 import { ChevronDownIcon, ChevronRightIcon, SearchIcon, XIcon } from "lucide-react"
-import { ModelParameterControl } from "@/polymet/components/model-parameter-control"
+import { ModelParameterAdminControl } from "@/polymet/components/model-parameter-admin-control"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import type { ModelParameter, ModelParameterConfig, UIGroup, ParameterValues } from "@/polymet/data/types"
@@ -12,6 +12,7 @@ interface ModelParametersGroupProps {
   configs: ModelParameterConfig[]
   values: ParameterValues
   onChange: (parameterId: string, value: any) => void
+  onConfigChange: (parameterId: string, updates: Partial<ModelParameterConfig>) => void
   disabled?: boolean
 }
 
@@ -32,6 +33,7 @@ export function ModelParametersGroup({
   configs,
   values,
   onChange,
+  onConfigChange,
   disabled = false
 }: ModelParametersGroupProps) {
   const [searchTerm, setSearchTerm] = useState("")
@@ -159,14 +161,16 @@ export function ModelParametersGroup({
                   const config = configs.find(c => c.parameter_id === param.id)
 
                   return (
-                    <ModelParameterControl
+                  return (
+                    <ModelParameterAdminControl
                       key={param.id}
                       parameter={param}
                       config={config}
-                      value={values[param.id]}
-                      onChange={(value) => onChange(param.id, value)}
-                      disabled={disabled}
+                      currentValue={values[param.id]}
+                      onConfigChange={(updates) => onConfigChange(param.id, updates)}
+                      onValueChange={(value) => onChange(param.id, value)}
                     />
+                  )
                   )
                 })}
               </div>

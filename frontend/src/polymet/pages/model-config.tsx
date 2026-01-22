@@ -56,6 +56,7 @@ export function ModelConfig() {
     values,
     capabilities,
     updateValue,
+    updateConfig,
     toggleCapability,
     loadSchema,
     resetValues,
@@ -377,6 +378,7 @@ export function ModelConfig() {
                   configs={configs}
                   values={values}
                   onChange={updateValue}
+                  onConfigChange={updateConfig}
                 />
               ) : (
                 <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">
