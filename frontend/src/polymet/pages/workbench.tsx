@@ -19,9 +19,6 @@ import { GenerationOverlay } from "@/polymet/components/generation-overlay" // I
 import { LibraryWidget } from "@/polymet/components/library-widget"
 
 
-import {
-  getEffectiveDefault
-} from "@/polymet/data/model-parameters-data"
 import { formatToResolutions } from "@/polymet/data/types"
 
 import type { ParameterValues, ImageFormatType, VideoFormatType, Generation } from "@/polymet/data/types"

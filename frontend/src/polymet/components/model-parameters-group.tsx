@@ -4,7 +4,7 @@ import { ModelParameterAdminControl } from "@/polymet/components/model-parameter
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import type { ModelParameter, ModelParameterConfig, UIGroup, ParameterValues } from "@/polymet/data/types"
-import { getParameterLabel } from "@/polymet/data/model-parameters-data"
+import { getParameterLabel } from "@/polymet/data/types"
 import { cn } from "@/lib/utils"
 
 interface ModelParametersGroupProps {
