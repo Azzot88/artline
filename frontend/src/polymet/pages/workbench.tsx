@@ -96,7 +96,15 @@ export function Workbench() {
 
   // Parse parameters when model changes
   useEffect(() => {
-    if (!selectedModel || !selectedModel.inputs) {
+    if (!selectedModel) {
+      setModelParameters([])
+      setModelConfigs([])
+      return
+    }
+
+    // Guard against missing inputs
+    if (!selectedModel.inputs || !Array.isArray(selectedModel.inputs)) {
+      console.warn("Model has no inputs or invalid inputs", selectedModel)
       setModelParameters([])
       setModelConfigs([])
       return
@@ -105,6 +113,8 @@ export function Workbench() {
     try {
       // Temporary parser to convert backend inputs array to frontend ModelParameter shape
       const params = selectedModel.inputs.map((input: any) => {
+        if (!input) return null // Skip nulls
+
         let type = input.type || 'string'
         // Fix numeric types often coming as string/number in generic JSON
         if (type === 'integer') type = 'integer'
@@ -121,7 +131,7 @@ export function Workbench() {
           max: input.max,
           ui_group: 'other' // We can refine this later
         }
-      })
+      }).filter(Boolean) // Remove nulls
 
       // Sort: Format -> Size -> Quality -> Others
       // We can infer this!
@@ -157,6 +167,8 @@ export function Workbench() {
 
     } catch (e) {
       console.error("Failed to parse dynamic inputs", e)
+      // Do not crash UI, just show no parameters
+      setModelParameters([])
     }
 
   }, [selectedModel])
@@ -378,12 +390,18 @@ export function Workbench() {
         </Alert>
       )}
 
-      {modelsLoading && (
-        <div className="flex items-center justify-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="ml-3 text-muted-foreground">{t('workbench.loading')}</span>
-        </div>
+      {modelsError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>{t('workbench.errorLoading')}</AlertTitle>
+          <AlertDescription>
+            {modelsError}. {t('workbench.errorLoadingDesc')}
+          </AlertDescription>
+        </Alert>
       )}
+
+      {/* Moved loading spinner inside selector or hidden initially to avoid layout shift */}
+      {/* {modelsLoading && ...} REMOVED from top */}
 
       {/* Main Unified Card - Large Textarea with Controls Inside */}
       <Card className="overflow-hidden">
