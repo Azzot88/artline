@@ -223,7 +223,6 @@ export interface AIModelCreateRequest {
   type: "image" | "video"
   credits: number
   is_active?: boolean
-  is_pro?: boolean
   cover_image_url?: string
   capabilities?: string[]
 }

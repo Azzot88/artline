@@ -171,14 +171,13 @@ class AIModelRead(BaseModel):
 
 class AIModelCreate(BaseModel):
     # 'name' in request is mapped to display_name (or just use display_name)
-    # Frontend sends 'name' usually? No, frontend likely sends display_name if we designed it well.
-    # But let's support both or standardized.
     display_name: str
     
     provider: str
     model_ref: str
     version_id: Optional[str] = None
-    type: str = "image"
+    
+    type: str = "image" # Default to image
     credits_per_generation: int = 5
     is_active: bool = True
     

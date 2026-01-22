@@ -430,7 +430,16 @@ function AddModelForm({ onComplete }: { onComplete: () => void }) {
     })
 
     async function submit() {
-        await apiService.createModel(data)
+        // Map frontend state to API request
+        await apiService.createModel({
+            name: data.name,
+            display_name: data.display_name,
+            provider: data.provider,
+            model_ref: data.model_ref,
+            type: data.type,
+            credits: data.credits,
+            is_active: true
+        })
         onComplete()
     }
 
@@ -440,42 +449,45 @@ function AddModelForm({ onComplete }: { onComplete: () => void }) {
             <CardContent className="grid gap-4">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-sm">Internal Name</label>
+                        <label className="text-sm font-medium">Internal Name</label>
                         <Input placeholder="flux-schnell" value={data.name} onChange={e => setData({ ...data, name: e.target.value })} />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-sm">Display Name</label>
+                        <label className="text-sm font-medium">Display Name</label>
                         <Input placeholder="Flux Schnell" value={data.display_name} onChange={e => setData({ ...data, display_name: e.target.value })} />
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-sm">Provider</label>
-                        <Input value={data.provider} onChange={e => setData({ ...data, provider: e.target.value })} />
+                        <label className="text-sm font-medium">Provider</label>
+                        <select
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                            value={data.provider}
+                            onChange={e => setData({ ...data, provider: e.target.value })}
+                        >
+                            <option value="replicate">Replicate</option>
+                            <option value="openai" disabled>OpenAI (Coming Soon)</option>
+                            <option value="fal" disabled>Fal.ai (Coming Soon)</option>
+                        </select>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-sm">Model Ref (Owner/Name)</label>
-                        <Input placeholder="black-forest-labs/flux-schnell" value={data.model_ref} onChange={e => setData({ ...data, model_ref: e.target.value })} />
+                        <label className="text-sm font-medium">Link / Model Identifier</label>
+                        <Input
+                            placeholder="e.g. black-forest-labs/flux-schnell"
+                            value={data.model_ref}
+                            onChange={e => setData({ ...data, model_ref: e.target.value })}
+                        />
+                        <p className="text-[10px] text-muted-foreground">Owner/Name or Owner/Name:Version</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-sm">Type</label>
-                        <select
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                            value={data.type}
-                            onChange={e => setData({ ...data, type: e.target.value as any })}
-                        >
-                            <option value="image">Image</option>
-                            <option value="video">Video</option>
-                        </select>
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-sm">Cost (Credits)</label>
+                        <label className="text-sm font-medium">Cost (Credits)</label>
                         <Input type="number" value={data.credits} onChange={e => setData({ ...data, credits: Number(e.target.value) })} />
                     </div>
+                    {/* Type is hidden, defaults to image */}
                 </div>
 
                 <Button onClick={submit}>Create Model</Button>
