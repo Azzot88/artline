@@ -1,3 +1,5 @@
+import { CapabilityType } from "@/polymet/data/capabilities"
+
 // Backend-aligned types
 export type ModelStatus = "active" | "inactive" | "maintenance"
 export type ModelKind = "image" | "video"
@@ -24,9 +26,9 @@ export interface AIModel {
   cover_image_url?: string               // Model cover image
 
   // Capabilities
-  modes?: string[]                       // Available modes (JSON in backend)
+  modes?: CapabilityType[]               // Available modes (JSON in backend)
   resolutions?: string[]                 // Available resolutions (JSON in backend)
-  capabilities: string[]                 // ["text-to-image", "image-to-image", "video"]
+  capabilities: CapabilityType[]         // ["text-to-image", "image-to-image", "video"]
 
   // Pricing
   credits_per_generation: number         // Cost per generation

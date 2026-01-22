@@ -7,12 +7,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+import { CapabilityType } from "@/polymet/data/capabilities"
+
 export interface AIModel {
   id: string
   name: string
   description: string
   category: "image" | "video" | "both"
-  capabilities?: string[]
+  capabilities?: CapabilityType[]
   inputs?: any[]
   credits?: number
 }

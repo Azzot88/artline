@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { CAPABILITY_SCHEMA } from "@/polymet/data/capabilities"
 import { CreationTypeToggle, CreationType } from "@/polymet/components/creation-type-toggle"
 import { InputTypeToggle, InputType } from "@/polymet/components/input-type-toggle"
 import { ModelSelector } from "@/polymet/components/model-selector"
@@ -513,15 +514,16 @@ export function Workbench() {
                     onChange={setModel}
                     creationType={creationType}
                     models={models.filter(m => {
-                      // 1. Filter by Creation Type (Image vs Video) - if we had that data in backend
-                      // For now, allow all or rely on 'category' prop if mapped.
+                      // 1. Filter by Creation Type is handled inside ModelSelector via 'category'
 
                       // 2. Filter by Input Type (Text vs Image)
                       if (inputType === 'image') {
-                        // Must support image input
-                        return m.capabilities?.includes('image')
+                        // Must support 'init_image' input
+                        return m.capabilities?.some(cap =>
+                          CAPABILITY_SCHEMA[cap]?.requiredInputs.includes('init_image')
+                        )
                       }
-                      return true // Text input is usually supported by all listed models, or check 'text'
+                      return true
                     })}
                     loading={modelsLoading}
                   />

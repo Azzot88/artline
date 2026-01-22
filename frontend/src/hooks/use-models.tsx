@@ -22,55 +22,62 @@ export function useModels() {
             try {
                 const data = await api.get<BackendModel[]>("/models")
 
+                import { CAPABILITY_SCHEMA, CapabilityType } from "@/polymet/data/capabilities"
+
+                // ...
+
                 // Map Backend to Frontend Shape
                 const mapped: SelectorModel[] = data.map(m => {
-                    // 1. Resolve inputs from various possible locations
+                    // 1. Resolve inputs
                     let inputs = m.inputs || []
-
-                    // Fallback: Check normalized_caps_json
                     if ((!inputs || inputs.length === 0) && (m as any).normalized_caps_json) {
                         const caps = (m as any).normalized_caps_json
-                        if (caps.inputs && Array.isArray(caps.inputs)) {
-                            inputs = caps.inputs
-                        } else if (caps._parameters && Array.isArray(caps._parameters)) {
-                            // Convert _parameters to simple inputs if needed, or use directly
-                            // Workbench expects simple input shape usually, but let's pass it through
-                            inputs = caps._parameters
-                        }
+                        if (caps.inputs && Array.isArray(caps.inputs)) inputs = caps.inputs
+                        else if (caps._parameters && Array.isArray(caps._parameters)) inputs = caps._parameters
                     }
 
-                    // 2. Infer capabilities
-                    const caps: string[] = []
-                    if (inputs.some((i: any) => i.name === 'prompt' || i.type === 'string')) caps.push('text')
-                    if (inputs.some((i: any) => i.name === 'image' || i.name === 'init_image' || i.type === 'image')) caps.push('image')
+                    // 2. Resolve Capabilities (Strict Typing)
+                    const rawModes = (m as any).modes || []
+                    // Cast strings to CapabilityType if they match schema
+                    const capabilities: CapabilityType[] = rawModes.filter((mode: string) =>
+                        Object.prototype.hasOwnProperty.call(CAPABILITY_SCHEMA, mode)
+                    ) as CapabilityType[]
 
-                    // 3. Resolve credits
+                    // 3. Resolve Category based on Capabilities
+                    let isImage = false
+                    let isVideo = false
+
+                    if (capabilities.length > 0) {
+                        capabilities.forEach(cap => {
+                            const cat = CAPABILITY_SCHEMA[cap].category
+                            if (cat === 'image') isImage = true
+                            if (cat === 'video') isVideo = true
+                        })
+                    } else {
+                        // Fallback inference if capabilities missing
+                        if (inputs.some((i: any) => i.name === 'prompt')) isImage = true // Assume image default
+                        // Check provider names known for video?
+                        if (m.provider.toLowerCase().includes('runway') || m.provider.toLowerCase().includes('pika')) isVideo = true
+                    }
+
+                    let category: "image" | "video" | "both" = "both"
+                    if (isImage && isVideo) category = "both"
+                    else if (isImage) category = "image"
+                    else if (isVideo) category = "video"
+
+                    // 4. Resolve credits
                     const credits = (m as any).credits_per_generation ?? (m as any).credits ?? 5
-
-                    // 4. Resolve Category (Image vs Video) from 'modes'
-                    // specific backend field 'modes': ["text-to-image", "text-to-video"]
-                    const modes = (m as any).modes || []
-                    let category: "image" | "video" | "both" = "both" // Default
-
-                    const hasImage = modes.some((mode: string) => mode.includes("image"))
-                    const hasVideo = modes.some((mode: string) => mode.includes("video"))
-
-                    if (hasImage && hasVideo) category = "both"
-                    else if (hasImage) category = "image"
-                    else if (hasVideo) category = "video"
-                    // If neither (e.g. empty modes), keep "both" or infer from capabilities? 
-                    // Let's stick to "both" as safe default for now so we don't hide everything.
 
                     return {
                         id: m.id,
-                        name: m.name || m.display_name, // Fallback to display_name
+                        name: m.name || m.display_name,
                         description: (m as any).description || `${m.provider} model`,
                         provider: m.provider,
-                        cover_image: m.cover_image, // or cover_image_url
+                        cover_image: m.cover_image,
                         category: category,
-                        capabilities: caps,
+                        capabilities: capabilities, // Use strictly typed array
                         inputs: inputs,
-                        credits: credits // Expose credits
+                        credits: credits
                     }
                 })
 
