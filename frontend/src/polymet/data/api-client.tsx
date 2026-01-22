@@ -17,13 +17,13 @@ export interface ApiSuccessResponse<T> {
 }
 
 export interface ApiErrorResponse {
-  detail: 
-    | string 
-    | {
-        code: string
-        message: string
-        details?: Record<string, any>
-      }
+  detail:
+  | string
+  | {
+    code: string
+    message: string
+    details?: Record<string, any>
+  }
 }
 
 export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse
@@ -73,31 +73,43 @@ const DEFAULT_HEADERS = {
 // Core Fetch Wrapper
 // ============================================================================
 
+// ============================================================================
+// Core Fetch Wrapper
+// ============================================================================
+
 async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`
-  
+
+  const isFormData = options.body instanceof FormData
+
+  const headers: Record<string, string> = {
+    ...DEFAULT_HEADERS,
+    ...(options.headers as Record<string, string>),
+  }
+
+  if (isFormData) {
+    delete headers["Content-Type"]
+  }
+
   const config: RequestInit = {
     ...options,
-    headers: {
-      ...DEFAULT_HEADERS,
-      ...options.headers,
-    },
+    headers,
     credentials: "include", // CRITICAL: Send HttpOnly cookies
   }
 
   try {
     const response = await fetch(url, config)
-    
+
     // Parse JSON response
     const data = await response.json()
 
     // Handle error responses
     if (!response.ok) {
       const errorData = data as ApiErrorResponse
-      
+
       // Extract error details
       if (typeof errorData.detail === "string") {
         throw new ApiError(
@@ -114,7 +126,7 @@ async function apiFetch<T>(
           response.status
         )
       }
-      
+
       throw new ApiError(
         "unknown",
         "An unknown error occurred",
@@ -158,26 +170,29 @@ export const api = {
   },
 
   post<T>(endpoint: string, body?: any, options?: RequestInit) {
+    const isFormData = body instanceof FormData
     return apiFetch<T>(endpoint, {
       ...options,
       method: "POST",
-      body: body ? JSON.stringify(body) : undefined,
+      body: isFormData ? body : (body ? JSON.stringify(body) : undefined),
     })
   },
 
   put<T>(endpoint: string, body?: any, options?: RequestInit) {
+    const isFormData = body instanceof FormData
     return apiFetch<T>(endpoint, {
       ...options,
       method: "PUT",
-      body: body ? JSON.stringify(body) : undefined,
+      body: isFormData ? body : (body ? JSON.stringify(body) : undefined),
     })
   },
 
   patch<T>(endpoint: string, body?: any, options?: RequestInit) {
+    const isFormData = body instanceof FormData
     return apiFetch<T>(endpoint, {
       ...options,
       method: "PATCH",
-      body: body ? JSON.stringify(body) : undefined,
+      body: isFormData ? body : (body ? JSON.stringify(body) : undefined),
     })
   },
 
