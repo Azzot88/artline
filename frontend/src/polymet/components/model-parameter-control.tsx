@@ -14,7 +14,7 @@ import { FileUploader } from "@/polymet/components/smart-inputs/file-uploader"
 import { DualSlider } from "@/polymet/components/smart-inputs/dual-slider"
 
 import type { ModelParameter, ModelParameterConfig, ImageFormatType, VideoFormatType } from "@/polymet/data/types"
-import { getEffectiveDefault, getAllowedValues, getParameterLabel } from "@/polymet/data/model-parameters-data"
+import { getEffectiveDefault, getAllowedValues, getParameterLabel } from "@/polymet/data/types"
 
 interface ModelParameterControlProps {
   parameter: ModelParameter

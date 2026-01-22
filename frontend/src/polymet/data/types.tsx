@@ -285,4 +285,30 @@ export interface CostCalculation {
 // Import types for convenience
 import type { JobStatus, JobKind } from "@/polymet/data/generations-data"
 import type { LanguageCode } from "@/polymet/data/user-data"
-import type { AIModel } from "@/polymet/data/models-data"
+// Helper functions for Parameters
+export function getEffectiveDefault(
+  parameter: ModelParameter,
+  config?: ModelParameterConfig
+): any {
+  if (config?.override_default !== undefined) {
+    return config.override_default
+  }
+  return parameter.default_value
+}
+
+export function getAllowedValues(
+  parameter: ModelParameter,
+  config?: ModelParameterConfig
+): any[] | undefined {
+  if (config?.allowed_values && config.allowed_values.length > 0) {
+    return config.allowed_values
+  }
+  return parameter.enum
+}
+
+export function getParameterLabel(
+  parameter: ModelParameter,
+  config?: ModelParameterConfig
+): string {
+  return config?.custom_label || parameter.name
+}
