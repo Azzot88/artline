@@ -337,256 +337,259 @@ export function ModelConfig() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Configuration */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Replicate Configuration */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Parameter Schema</CardTitle>
-              <CardDescription>
-                Configure how this model's inputs are exposed to users.
-                Fetch schema from Replicate to auto-populate.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex gap-4 items-end bg-muted/20 p-4 rounded-lg">
-                <div className="flex-1 space-y-2">
-                  <Label>Replicate Model ID (owner/name)</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={modelRef}
-                      onChange={e => setModelRef(e.target.value)}
-                      placeholder="stability-ai/sdxl"
-                      className="font-mono"
+      <div className="space-y-6">
+        {/* Top Section: Basic Info & Stats */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* Main Column: Basic Settings */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Basic Settings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Display Name</Label>
+                  <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <div className="relative">
+                    <textarea
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Enter model description..."
                     />
-                    <div className="text-xs text-muted-foreground self-center whitespace-nowrap">
-                      {parameters.length > 0 ? `${parameters.length} params loaded` : "No schema loaded"}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Model Logo / Cover</Label>
+                  <div className="flex items-center gap-4">
+                    {coverImageUrl ? (
+                      <div className="relative w-24 h-24 rounded-lg overflow-hidden border bg-muted group">
+                        <img src={coverImageUrl} alt="Logo" className="w-full h-full object-cover" />
+                        <button
+                          onClick={() => setCoverImageUrl("")}
+                          className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-24 h-24 rounded-lg border-2 border-dashed flex items-center justify-center bg-muted/30 text-muted-foreground">
+                        <span className="text-xs">No Logo</span>
+                      </div>
+                    )}
+
+                    <div className="flex-1">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        className="text-xs"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          try {
+                            const res = await apiService.uploadModelImage(file)
+                            setCoverImageUrl(res.url)
+                            toast({ title: "Logo uploaded" })
+                          } catch (err) {
+                            toast({ title: "Upload failed", variant: "destructive" })
+                          }
+                        }}
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Upload a PNG/JPG. Will be stored in S3.
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex gap-2">
-                  <Button onClick={handleFetchSchema} disabled={fetchingSchema} variant="secondary">
-                    <DownloadIcon className="w-4 h-4 mr-2" />
-                    {fetchingSchema ? "Fetching..." : "Fetch 1.0"}
-                  </Button>
-                  <Button onClick={handleAnalyzeModel} disabled={fetchingSchema} variant="default">
-                    <ActivityIcon className="w-4 h-4 mr-2" />
-                    Fetch 2.0
-                  </Button>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select value={isActive ? "active" : "inactive"} onValueChange={v => setIsActive(v === "active")}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cost (Credits/run)</Label>
+                    <Input type="number" value={credits} onChange={(e) => setCredits(e.target.value)} />
+                  </div>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
+          </div>
 
-              {parameters.length > 0 ? (
-                <ModelParametersGroup
-                  parameters={parameters}
-                  configs={configs}
-                  values={values}
-                  onChange={updateValue}
-                  onConfigChange={updateConfig}
-                />
-              ) : (
-                <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">
-                  Enter a model reference and click "Fetch Schema" to configure parameters.
+          {/* Sidebar Column: Capabilities & Stats */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Capabilities</CardTitle>
+                <CardDescription>Supported generation modes</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 gap-2">
+                  {[
+                    "text-to-image",
+                    "image-to-image",
+                    "text-to-video",
+                    "image-to-video",
+                    "text-to-audio",
+                    "inpainting",
+                    "upscale"
+                  ].map(cap => {
+                    const isEnabled = capabilities?.includes(cap) || false
+                    return (
+                      <div key={cap} className={`flex items-center space-x-2 transition-opacity ${isEnabled ? "opacity-100" : "opacity-50"}`}>
+                        <Checkbox
+                          id={`cap-${cap}`}
+                          checked={isEnabled}
+                          onCheckedChange={() => toggleCapability(cap)}
+                        />
+                        <label
+                          htmlFor={`cap-${cap}`}
+                          className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${!isEnabled && "line-through text-muted-foreground"}`}
+                        >
+                          {cap.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')}
+                        </label>
+                      </div>
+                    )
+                  })}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
 
-        {/* Right Column - Basic Info */}
-        <div className="space-y-6">
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Capabilities</CardTitle>
-              <CardDescription>Select supported generation modes</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 gap-2">
-                {[
-                  "text-to-image",
-                  "image-to-image",
-                  "text-to-video",
-                  "image-to-video",
-                  "text-to-audio",
-                  "inpainting",
-                  "upscale"
-                ].map(cap => {
-                  const isEnabled = capabilities?.includes(cap) || false
-                  return (
-                    <div key={cap} className={`flex items-center space-x-2 transition-opacity ${isEnabled ? "opacity-100" : "opacity-50"}`}>
-                      <Checkbox
-                        id={`cap-${cap}`}
-                        checked={isEnabled}
-                        onCheckedChange={() => toggleCapability(cap)}
-                      />
-                      <label
-                        htmlFor={`cap-${cap}`}
-                        className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${!isEnabled && "line-through text-muted-foreground"}`}
-                      >
-                        {cap.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')}
-                      </label>
-                    </div>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Performance Stats */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium">Performance</CardTitle>
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleSyncStats} disabled={syncingStats}>
-                {syncingStats ? <RefreshCcw className="h-3 w-3 animate-spin" /> : <ActivityIcon className="h-3 w-3" />}
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {stats ? (
-                <div className="space-y-4 text-xs">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <div className="text-muted-foreground">Avg Time (24h)</div>
-                      <div className="font-mono font-medium">{stats.avg_predict_time_24h ? `${stats.avg_predict_time_24h.toFixed(1)}s` : "-"}</div>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-muted-foreground">Avg Time (7d)</div>
-                      <div className="font-mono font-medium">{stats.avg_predict_time_7d ? `${stats.avg_predict_time_7d.toFixed(1)}s` : "-"}</div>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-muted-foreground">Runs (7d)</div>
-                      <div className="font-mono font-medium">{stats.total_runs_7d}</div>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-muted-foreground">Est. Cost</div>
-                      <div className="font-mono font-medium text-green-600">
-                        {stats.est_cost_per_run ? `$${stats.est_cost_per_run.toFixed(4)}` : "-"}
+            {/* Performance Stats */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                <CardTitle className="text-sm font-medium">Performance</CardTitle>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleSyncStats} disabled={syncingStats}>
+                  {syncingStats ? <RefreshCcw className="h-3 w-3 animate-spin" /> : <ActivityIcon className="h-3 w-3" />}
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {stats ? (
+                  <div className="space-y-4 text-xs">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <div className="text-muted-foreground">Avg Time (24h)</div>
+                        <div className="font-mono font-medium">{stats.avg_predict_time_24h ? `${stats.avg_predict_time_24h.toFixed(1)}s` : "-"}</div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-muted-foreground">Avg Time (7d)</div>
+                        <div className="font-mono font-medium">{stats.avg_predict_time_7d ? `${stats.avg_predict_time_7d.toFixed(1)}s` : "-"}</div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-muted-foreground">Runs (7d)</div>
+                        <div className="font-mono font-medium">{stats.total_runs_7d}</div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-muted-foreground">Est. Cost</div>
+                        <div className="font-mono font-medium text-green-600">
+                          {stats.est_cost_per_run ? `$${stats.est_cost_per_run.toFixed(4)}` : "-"}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <Button variant="outline" size="sm" onClick={handleSyncStats} disabled={syncingStats}>
-                    Sync Stats
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                ) : (
+                  <div className="text-center py-4">
+                    <Button variant="outline" size="sm" onClick={handleSyncStats} disabled={syncingStats}>
+                      Sync Stats
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Display Name</Label>
-                <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-              </div>
+            <Card>
+              <CardHeader><CardTitle className="text-sm">Metadata</CardTitle></CardHeader>
+              <CardContent>
+                <div className="text-sm space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">ID</span>
+                    <span className="font-mono text-xs">{model.id}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Created</span>
+                    <span>{model.created_at ? new Date(model.created_at).toLocaleDateString() : "-"}</span>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-6 text-destructive hover:text-destructive"
+                  onClick={handleDelete}
+                >
+                  Delete Model
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <div className="relative">
-                  <textarea
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Enter model description..."
+        {/* Bottom Section: Parameter Schema (Full Width) */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Parameter Schema</CardTitle>
+            <CardDescription>
+              Configure how this model's inputs are exposed to users.
+              Fetch schema from Replicate to auto-populate.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex gap-4 items-end bg-muted/20 p-4 rounded-lg">
+              <div className="flex-1 space-y-2">
+                <Label>Replicate Model ID (owner/name)</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={modelRef}
+                    onChange={e => setModelRef(e.target.value)}
+                    placeholder="stability-ai/sdxl"
+                    className="font-mono"
                   />
-                  {/* Auto-fill from schema option? */}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Model Logo / Cover</Label>
-                <div className="flex items-center gap-4">
-                  {coverImageUrl ? (
-                    <div className="relative w-20 h-20 rounded-lg overflow-hidden border bg-muted group">
-                      <img src={coverImageUrl} alt="Logo" className="w-full h-full object-cover" />
-                      <button
-                        onClick={() => setCoverImageUrl("")}
-                        className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="w-20 h-20 rounded-lg border-2 border-dashed flex items-center justify-center bg-muted/30 text-muted-foreground">
-                      <span className="text-[10px]">No Logo</span>
-                    </div>
-                  )}
-
-                  <div className="flex-1">
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      className="text-xs"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0]
-                        if (!file) return
-                        try {
-                          const res = await apiService.uploadModelImage(file)
-                          setCoverImageUrl(res.url)
-                          toast({ title: "Logo uploaded" })
-                        } catch (err) {
-                          toast({ title: "Upload failed", variant: "destructive" })
-                        }
-                      }}
-                    />
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      Upload a PNG/JPG. Will be stored in S3.
-                    </p>
+                  <div className="text-xs text-muted-foreground self-center whitespace-nowrap">
+                    {parameters.length > 0 ? `${parameters.length} params loaded` : "No schema loaded"}
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select value={isActive ? "active" : "inactive"} onValueChange={v => setIsActive(v === "active")}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex gap-2">
+                <Button onClick={handleFetchSchema} disabled={fetchingSchema} variant="secondary">
+                  <DownloadIcon className="w-4 h-4 mr-2" />
+                  {fetchingSchema ? "Fetching..." : "Fetch 1.0"}
+                </Button>
+                <Button onClick={handleAnalyzeModel} disabled={fetchingSchema} variant="default">
+                  <ActivityIcon className="w-4 h-4 mr-2" />
+                  Fetch 2.0
+                </Button>
               </div>
-              <div className="space-y-2">
-                <Label>Cost (Credits/run)</Label>
-                <Input type="number" value={credits} onChange={(e) => setCredits(e.target.value)} />
-              </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card>
-            <CardHeader><CardTitle className="text-sm">Metadata</CardTitle></CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">ID</span>
-                  <span className="font-mono text-xs">{model.id}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Created</span>
-                  <span>{model.created_at ? new Date(model.created_at).toLocaleDateString() : "-"}</span>
-                </div>
+            {parameters.length > 0 ? (
+              <ModelParametersGroup
+                parameters={parameters}
+                configs={configs}
+                values={values}
+                onChange={updateValue}
+                onConfigChange={updateConfig}
+              />
+            ) : (
+              <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">
+                Enter a model reference and click "Fetch Schema" to configure parameters.
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full mt-6 text-destructive hover:text-destructive"
-                onClick={handleDelete}
-              >
-                Delete Model
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
