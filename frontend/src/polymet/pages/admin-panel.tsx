@@ -493,9 +493,18 @@ function AddModelForm({ onComplete }: { onComplete: () => void }) {
                 provider: data.provider,
                 model_ref: data.model_ref,
                 type: data.type,
-                credits: data.credits,
+                credits: Number(data.credits),
                 is_active: true
             })
+
+            // Auto-fetch schema/capabilities to populate icons
+            try {
+                await apiService.fetchModelSchema(data.model_ref)
+            } catch (err) {
+                console.error("Failed to auto-fetch schema:", err)
+                // Don't block creation success
+            }
+
             onComplete()
         } catch (e: any) {
             console.error(e)
