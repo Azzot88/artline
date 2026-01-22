@@ -472,8 +472,8 @@ function AddModelForm({ onComplete }: { onComplete: () => void }) {
 
     async function submit() {
         try {
-            if (!data.display_name || !data.model_ref) {
-                alert("Display Name and Model Ref are required")
+            if (!data.model_ref) {
+                alert("Model Ref is required")
                 return
             }
 
