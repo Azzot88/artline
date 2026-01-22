@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { TrashIcon, PencilIcon, ChevronDown, ChevronUp, CheckSquare, Square } from "lucide-react"
+import { TrashIcon, PencilIcon, ChevronDown, ChevronUp, CheckSquare, Square, FileTextIcon, ImageIcon, VideoIcon, MicIcon, MusicIcon, BrushIcon, ScalingIcon } from "lucide-react"
 import { normalizeGeneration } from "@/polymet/data/transformers"
 
 export function AdminPanel() {
@@ -384,7 +384,9 @@ function ModelsTab() {
                                     </TableCell>
                                     <TableCell>{m.provider}</TableCell>
                                     <TableCell>
-                                        <Badge variant="outline" className="uppercase text-[10px]">{m.type}</Badge>
+                                        <div className="flex flex-col justify-center">
+                                            <CapabilitiesIcons model={m} />
+                                        </div>
                                     </TableCell>
                                     <TableCell>
                                         <div className="font-medium flex items-center gap-1">
@@ -415,6 +417,45 @@ function ModelsTab() {
                     </Table>
                 </CardContent>
             </Card>
+        </div>
+    )
+}
+
+function CapabilitiesIcons({ model }: { model: AIModel }) {
+    const caps = (model.capabilities || []).map(c => c.toLowerCase())
+    const type = model.type?.toLowerCase() || ""
+
+    // Helper to check if active
+    const isActive = (keys: string[]) => {
+        // If caps exist, rely on them
+        // If caps empty, fallback to type
+        if (caps.length > 0) {
+            return keys.some(k => caps.some(c => c.includes(k)))
+        }
+        return keys.some(k => type.includes(k))
+    }
+
+    const icons = [
+        { label: "Text", keys: ["text-generation", "llm"], icon: FileTextIcon, color: "text-blue-500" },
+        { label: "Image", keys: ["image", "text-to-image"], icon: ImageIcon, color: "text-rose-500" },
+        { label: "Video", keys: ["video"], icon: VideoIcon, color: "text-purple-500" },
+        { label: "Speech", keys: ["speech", "tts", "audio"], icon: MicIcon, color: "text-yellow-500" },
+        { label: "Music", keys: ["music"], icon: MusicIcon, color: "text-green-500" },
+        { label: "Inpaint", keys: ["inpaint"], icon: BrushIcon, color: "text-indigo-500" },
+        { label: "Upscale", keys: ["upscale"], icon: ScalingIcon, color: "text-cyan-500" },
+    ]
+
+    return (
+        <div className="flex flex-wrap gap-1 max-w-[80px]">
+            {icons.map((item, i) => {
+                const active = isActive(item.keys)
+                const Icon = item.icon
+                return (
+                    <div key={i} title={item.label} className={`${active ? item.color : "text-muted-foreground/20"}`}>
+                        <Icon className="w-3 h-3" />
+                    </div>
+                )
+            })}
         </div>
     )
 }

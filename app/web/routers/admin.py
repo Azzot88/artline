@@ -240,10 +240,22 @@ async def create_model(
     user: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
+    # Auto-fill display_name if missing
+    display_name = req.display_name
+    if not display_name:
+        # Try to parse from model_ref (e.g. "owner/name" -> "Name")
+        parts = req.model_ref.split('/')
+        if len(parts) >= 2:
+            # "owner/model-name:ver" -> "Model Name" (capitalize, repl dashes)
+            raw_name = parts[1].split(':')[0]
+            display_name = raw_name.replace('-', ' ').title()
+        else:
+            display_name = req.model_ref
+
     new_model = AIModel(
         id=uuid.uuid4(),
         # name field does not exist in DB model
-        display_name=req.display_name,
+        display_name=display_name,
         provider=req.provider,
         model_ref=req.model_ref,
         version_id=req.version_id,

@@ -171,7 +171,7 @@ class AIModelRead(BaseModel):
 
 class AIModelCreate(BaseModel):
     # 'name' in request is mapped to display_name (or just use display_name)
-    display_name: str
+    display_name: Optional[str] = None
     
     provider: str
     model_ref: str
