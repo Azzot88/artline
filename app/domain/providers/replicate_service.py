@@ -137,6 +137,62 @@ class ReplicateService:
         if t == "array": return "list"
         return "string"
 
+    async def analyze_model_schema(self, model_ref: str, version_id: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Fetch 2.0: Deep analysis of model schema using Replicate's version endpoint.
+        """
+        if "/" not in model_ref:
+             raise ValueError(f"Invalid model_ref '{model_ref}'. Expected 'owner/name'")
+        
+        owner, name = model_ref.split("/", 1)
+        if ":" in name: # Handle owner/name:version if passed in ref
+            name, ver = name.split(":", 1)
+            if not version_id: version_id = ver
+            
+        base_url = self.BASE_URL
+        headers = self.headers
+        
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            # Step 1: Get Model Info (if no version provided)
+            target_version = version_id
+            if not target_version:
+                model_url = f"{base_url}/models/{owner}/{name}"
+                resp = await client.get(model_url, headers=headers)
+                if resp.status_code != 200:
+                    raise IOError(f"Failed to fetch model info: {resp.status_code} {resp.text}")
+                model_data = resp.json()
+                target_version = model_data.get("latest_version", {}).get("id")
+                
+            if not target_version:
+                 raise ValueError("Could not determine version ID from model info.")
+
+            # Step 2: Get Version Details (Schema)
+            version_url = f"{base_url}/models/{owner}/{name}/versions/{target_version}"
+            resp = await client.get(version_url, headers=headers)
+            if resp.status_code != 200:
+                 raise IOError(f"Failed to fetch version info: {resp.status_code} {resp.text}")
+            
+            version_data = resp.json()
+            schema = version_data.get("openapi_schema", {})
+            
+            # Extract Components
+            components = schema.get("components", {}).get("schemas", {})
+            input_schema = components.get("Input", {}).get("properties", {})
+            output_schema = components.get("Output", {})
+            
+            # Helper to extract formats
+            all_formats = []
+            if output_schema.get("properties", {}).get("format", {}).get("enum"):
+                 all_formats = output_schema["properties"]["format"]["enum"]
+
+            return {
+                "version_id": target_version,
+                "inputs": input_schema,
+                "outputs": output_schema,
+                "allFormats": all_formats,
+                "full_schema": schema # Include full schema just in case
+            }
+
     def submit_prediction(self, model_ref: str, input_data: Dict[str, Any], webhook_url: Optional[str] = None) -> str:
         """
         Submits a prediction job to Replicate.

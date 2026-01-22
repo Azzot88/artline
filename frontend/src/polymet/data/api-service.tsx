@@ -209,6 +209,10 @@ export const apiService = {
   async fetchModelSchema(modelRef: string) {
     return api.post<any>("/admin/fetch-model-schema", { model_ref: modelRef })
   },
+
+  async analyzeModel(modelRef: string) {
+    return api.post<any>("/admin/analyze-model", { model_ref: modelRef })
+  },
 }
 
 

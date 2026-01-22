@@ -334,6 +334,24 @@ async def delete_model(
     await db.commit()
     return {"ok": True}
 
+@router.post("/analyze-model")
+async def analyze_model(
+    req: ModelSchemaRequest,
+    user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Fetch 2.0: Deep analysis of a model to extract exact schema, formats, and I/O.
+    """
+    try:
+        # Lazy import or assuming it's imported at top
+        from app.domain.providers.replicate_service import get_replicate_client
+        service = await get_replicate_client(db)
+        data = await service.analyze_model_schema(req.model_ref)
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 # ============================================================================
 # REMOTE SCHEMA FETCHING (New)
 # ============================================================================
