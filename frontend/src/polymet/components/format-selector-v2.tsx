@@ -1,13 +1,13 @@
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select"
-import { 
-  SquareIcon, 
-  RectangleVerticalIcon, 
+import {
+  SquareIcon,
+  RectangleVerticalIcon,
   RectangleHorizontalIcon,
   MonitorIcon,
   SmartphoneIcon
@@ -20,6 +20,7 @@ interface FormatSelectorV2Props {
   type: "image" | "video"
   disabled?: boolean
   compact?: boolean
+  allowedValues?: any[]
 }
 
 const IMAGE_FORMATS: { value: ImageFormatType; label: string; icon: React.ReactNode }[] = [
@@ -36,14 +37,20 @@ const VIDEO_FORMATS: { value: VideoFormatType; label: string; icon: React.ReactN
   { value: "1:1", label: "1:1 Квадратное", icon: <SquareIcon className="w-4 h-4" /> }
 ]
 
-export function FormatSelectorV2({ 
-  value, 
-  onChange, 
-  type, 
+export function FormatSelectorV2({
+  value,
+  onChange,
+  type,
   disabled = false,
-  compact = false
+  compact = false,
+  allowedValues
 }: FormatSelectorV2Props) {
-  const formats = type === "image" ? IMAGE_FORMATS : VIDEO_FORMATS
+  let formats = type === "image" ? IMAGE_FORMATS : VIDEO_FORMATS
+
+  if (allowedValues && allowedValues.length > 0) {
+    formats = formats.filter(f => allowedValues.includes(f.value))
+  }
+
   const selectedFormat = formats.find(f => f.value === value)
 
   return (

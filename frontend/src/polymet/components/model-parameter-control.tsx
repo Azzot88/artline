@@ -77,6 +77,7 @@ export function ModelParameterControl({
           type={type}
           disabled={disabled}
           compact={compact}
+          allowedValues={allowedValues}
         />
       </div>
     )
@@ -110,6 +111,31 @@ export function ModelParameterControl({
   // --- Standard Types ---
 
   // 4. Enumerations (Select)
+  if (parameter.enum || allowedValues) {
+    const options = allowedValues || parameter.enum || []
+
+    return (
+      <div className="space-y-2">
+        {!compact && <LabelWithTooltip />}
+        <Select
+          value={String(currentValue)}
+          onValueChange={onChange}
+          disabled={disabled}
+        >
+          <SelectTrigger className="h-9">
+            <SelectValue placeholder={`Select ${label}...`} />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((opt: any) => (
+              <SelectItem key={String(opt)} value={String(opt)}>
+                {String(opt)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    )
+  }
 
 
   // 5. Booleans (Switch)
