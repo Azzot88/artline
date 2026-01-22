@@ -207,7 +207,7 @@ export function ModelConfig() {
       const payload = {
         display_name: displayName,
         description: description,
-        credits: parseInt(credits),
+        credits_per_generation: parseInt(credits),
         is_active: isActive,
         cover_image_url: coverImageUrl,
         model_ref: modelRef,
