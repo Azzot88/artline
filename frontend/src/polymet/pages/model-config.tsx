@@ -358,172 +358,172 @@ export function ModelConfig() {
                     </div>
                   </div>
                 </div>
+
+                <div className="flex gap-2">
+                  <Button onClick={handleFetchSchema} disabled={fetchingSchema} variant="secondary">
+                    <DownloadIcon className="w-4 h-4 mr-2" />
+                    {fetchingSchema ? "Fetching..." : "Fetch 1.0"}
+                  </Button>
+                  <Button onClick={handleAnalyzeModel} disabled={fetchingSchema} variant="default">
+                    <ActivityIcon className="w-4 h-4 mr-2" />
+                    Fetch 2.0
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Button onClick={handleFetchSchema} disabled={fetchingSchema} variant="secondary">
-                  <DownloadIcon className="w-4 h-4 mr-2" />
-                  {fetchingSchema ? "Fetching..." : "Fetch 1.0"}
-                </Button>
-                <Button onClick={handleAnalyzeModel} disabled={fetchingSchema} variant="default">
-                  <ActivityIcon className="w-4 h-4 mr-2" />
-                  Fetch 2.0
-                </Button>
+
+              {parameters.length > 0 ? (
+                <ModelParametersGroup
+                  parameters={parameters}
+                  configs={configs}
+                  values={values}
+                  onChange={updateValue}
+                />
+              ) : (
+                <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">
+                  Enter a model reference and click "Fetch Schema" to configure parameters.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column - Basic Info */}
+        <div className="space-y-6">
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Capabilities</CardTitle>
+              <CardDescription>Select supported generation modes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 gap-2">
+                {[
+                  "text-to-image",
+                  "image-to-image",
+                  "text-to-video",
+                  "image-to-video",
+                  "text-to-audio",
+                  "inpainting",
+                  "upscale"
+                ].map(cap => {
+                  const isEnabled = capabilities?.includes(cap) || false
+                  return (
+                    <div key={cap} className={`flex items-center space-x-2 transition-opacity ${isEnabled ? "opacity-100" : "opacity-50"}`}>
+                      <Checkbox
+                        id={`cap-${cap}`}
+                        checked={isEnabled}
+                        onCheckedChange={() => toggleCapability(cap)}
+                      />
+                      <label
+                        htmlFor={`cap-${cap}`}
+                        className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${!isEnabled && "line-through text-muted-foreground"}`}
+                      >
+                        {cap.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')}
+                      </label>
+                    </div>
+                  )
+                })}
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {parameters.length > 0 ? (
-              <ModelParametersGroup
-                parameters={parameters}
-                configs={configs}
-                values={values}
-                onChange={updateValue}
-              />
-            ) : (
-              <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">
-                Enter a model reference and click "Fetch Schema" to configure parameters.
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Right Column - Basic Info */}
-      <div className="space-y-6">
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Capabilities</CardTitle>
-            <CardDescription>Select supported generation modes</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-2">
-              {[
-                "text-to-image",
-                "image-to-image",
-                "text-to-video",
-                "image-to-video",
-                "text-to-audio",
-                "inpainting",
-                "upscale"
-              ].map(cap => {
-                const isEnabled = capabilities?.includes(cap) || false
-                return (
-                  <div key={cap} className={`flex items-center space-x-2 transition-opacity ${isEnabled ? "opacity-100" : "opacity-50"}`}>
-                    <Checkbox
-                      id={`cap-${cap}`}
-                      checked={isEnabled}
-                      onCheckedChange={() => toggleCapability(cap)}
-                    />
-                    <label
-                      htmlFor={`cap-${cap}`}
-                      className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${!isEnabled && "line-through text-muted-foreground"}`}
-                    >
-                      {cap.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')}
-                    </label>
-                  </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Performance Stats */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Performance</CardTitle>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleSyncStats} disabled={syncingStats}>
-              {syncingStats ? <RefreshCcw className="h-3 w-3 animate-spin" /> : <ActivityIcon className="h-3 w-3" />}
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {stats ? (
-              <div className="space-y-4 text-xs">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <div className="text-muted-foreground">Avg Time (24h)</div>
-                    <div className="font-mono font-medium">{stats.avg_predict_time_24h ? `${stats.avg_predict_time_24h.toFixed(1)}s` : "-"}</div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-muted-foreground">Avg Time (7d)</div>
-                    <div className="font-mono font-medium">{stats.avg_predict_time_7d ? `${stats.avg_predict_time_7d.toFixed(1)}s` : "-"}</div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-muted-foreground">Runs (7d)</div>
-                    <div className="font-mono font-medium">{stats.total_runs_7d}</div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-muted-foreground">Est. Cost</div>
-                    <div className="font-mono font-medium text-green-600">
-                      {stats.est_cost_per_run ? `$${stats.est_cost_per_run.toFixed(4)}` : "-"}
+          {/* Performance Stats */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-medium">Performance</CardTitle>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleSyncStats} disabled={syncingStats}>
+                {syncingStats ? <RefreshCcw className="h-3 w-3 animate-spin" /> : <ActivityIcon className="h-3 w-3" />}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {stats ? (
+                <div className="space-y-4 text-xs">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <div className="text-muted-foreground">Avg Time (24h)</div>
+                      <div className="font-mono font-medium">{stats.avg_predict_time_24h ? `${stats.avg_predict_time_24h.toFixed(1)}s` : "-"}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-muted-foreground">Avg Time (7d)</div>
+                      <div className="font-mono font-medium">{stats.avg_predict_time_7d ? `${stats.avg_predict_time_7d.toFixed(1)}s` : "-"}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-muted-foreground">Runs (7d)</div>
+                      <div className="font-mono font-medium">{stats.total_runs_7d}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-muted-foreground">Est. Cost</div>
+                      <div className="font-mono font-medium text-green-600">
+                        {stats.est_cost_per_run ? `$${stats.est_cost_per_run.toFixed(4)}` : "-"}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <Button variant="outline" size="sm" onClick={handleSyncStats} disabled={syncingStats}>
-                  Sync Stats
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              ) : (
+                <div className="text-center py-4">
+                  <Button variant="outline" size="sm" onClick={handleSyncStats} disabled={syncingStats}>
+                    Sync Stats
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-        {/* Basic Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Basic Settings</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Display Name</Label>
-              <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select value={isActive ? "active" : "inactive"} onValueChange={v => setIsActive(v === "active")}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Cost (Credits/run)</Label>
-              <Input type="number" value={credits} onChange={(e) => setCredits(e.target.value)} />
-            </div>
-          </CardContent>
-        </Card>
+          {/* Basic Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Basic Settings</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Display Name</Label>
+                <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={isActive ? "active" : "inactive"} onValueChange={v => setIsActive(v === "active")}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Cost (Credits/run)</Label>
+                <Input type="number" value={credits} onChange={(e) => setCredits(e.target.value)} />
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader><CardTitle className="text-sm">Metadata</CardTitle></CardHeader>
-          <CardContent>
-            <div className="text-sm space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">ID</span>
-                <span className="font-mono text-xs">{model.id}</span>
+          <Card>
+            <CardHeader><CardTitle className="text-sm">Metadata</CardTitle></CardHeader>
+            <CardContent>
+              <div className="text-sm space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">ID</span>
+                  <span className="font-mono text-xs">{model.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Created</span>
+                  <span>{model.created_at ? new Date(model.created_at).toLocaleDateString() : "-"}</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Created</span>
-                <span>{model.created_at ? new Date(model.created_at).toLocaleDateString() : "-"}</span>
-              </div>
-            </div>
-            <Button
-              variant="destructive"
-              variant="outline"
-              size="sm"
-              className="w-full mt-6 text-destructive hover:text-destructive"
-              onClick={handleDelete}
-            >
-              Delete Model
-            </Button>
-          </CardContent>
-        </Card>
+              <Button
+                variant="destructive"
+                variant="outline"
+                size="sm"
+                className="w-full mt-6 text-destructive hover:text-destructive"
+                onClick={handleDelete}
+              >
+                Delete Model
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
-    </div >
   )
 }
