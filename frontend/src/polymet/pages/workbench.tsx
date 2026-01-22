@@ -20,8 +20,6 @@ import { LibraryWidget } from "@/polymet/components/library-widget"
 
 
 import {
-  getEnabledParameters,
-  getModelParameterConfigs,
   getEffectiveDefault
 } from "@/polymet/data/model-parameters-data"
 import { formatToResolutions } from "@/polymet/data/types"
@@ -90,52 +88,82 @@ export function Workbench() {
   const [lastGeneration, setLastGeneration] = useState<Generation | null>(null)
 
 
-  // Dynamic parameters based on selected model
-  const [parameterValues, setParameterValues] = useState<ParameterValues>({})
+  // Dynamic parameters state
+  const [modelParameters, setModelParameters] = useState<any[]>([])
+  const [modelConfigs, setModelConfigs] = useState<any[]>([])
 
-  // Get model parameters (max 4, excluding prompt/negative_prompt)
-  const allParameters = getEnabledParameters(model)
-  const parameterConfigs = getModelParameterConfigs(model)
-
-  // Filter out prompt-like parameters and limit to 4
-  // Format parameter is ALWAYS shown first if present
-  const formatParam = allParameters.find(p => p.name === 'format')
-  const otherParams = allParameters
-    .filter(p =>
-      p.name !== 'format' &&
-      !p.name.toLowerCase().includes('prompt') &&
-      !p.name.toLowerCase().includes('description') &&
-      !p.name.toLowerCase().includes('width') &&
-      !p.name.toLowerCase().includes('height')
-      // Removed 'size' and 'resolution' from blacklist so they can be displayed
-    )
-
-  // Combine: format first, then other parameters (max 4 total)
-  // Combine: format first, then size/resolution, then others (max 4 total)
-  const sizeParam = otherParams.find(p => p.name === 'size' || p.name === 'resolution')
-  const restParams = otherParams.filter(p => p.name !== 'size' && p.name !== 'resolution')
-
-  const displayParameters = [
-    ...(formatParam ? [formatParam] : []),
-    ...(sizeParam ? [sizeParam] : []),
-    ...restParams
-  ].slice(0, 4)
-
-  // Get model credits from dynamic list or fallback
-  const selectedModel = models.find(m => m.id === model)
-  // Backend doesn't send credits yet? Default to 5
-  // If backend updated to send credits, use it.
-  const modelCredits = 5
-
-  // Initialize parameter values with defaults when model changes
+  // Parse parameters when model changes
   useEffect(() => {
-    const initialValues: ParameterValues = {}
-    allParameters.forEach(param => {
-      const config = parameterConfigs.find(c => c.parameter_id === param.id)
-      initialValues[param.id] = getEffectiveDefault(param, config)
-    })
-    setParameterValues(initialValues)
-  }, [model])
+    if (!selectedModel || !selectedModel.inputs) {
+      setModelParameters([])
+      setModelConfigs([])
+      return
+    }
+
+    try {
+      // Temporary parser to convert backend inputs array to frontend ModelParameter shape
+      const params = selectedModel.inputs.map((input: any) => {
+        let type = input.type || 'string'
+        // Fix numeric types often coming as string/number in generic JSON
+        if (type === 'integer') type = 'integer'
+        if (type === 'number') type = 'number'
+
+        return {
+          id: input.name, // Use name as ID for simplicity in dynamic land
+          name: input.name,
+          type: type,
+          default_value: input.default,
+          required: input.required || false,
+          enum: input.enum || input.allowed_values, // Check both typical fields
+          min: input.min,
+          max: input.max,
+          ui_group: 'other' // We can refine this later
+        }
+      })
+
+      // Sort: Format -> Size -> Quality -> Others
+      // We can infer this!
+      const sortedParams = params.sort((a: any, b: any) => {
+        const score = (p: string) => {
+          if (p === 'format') return 0
+          if (p === 'width' || p === 'height' || p === 'size' || p === 'resolution') return 1
+          if (p === 'quality' || p === 'steps') return 2
+          return 10
+        }
+        return score(a.name) - score(b.name)
+      })
+
+      setModelParameters(sortedParams)
+
+      // Generate default configs
+      const configs = sortedParams.map((p: any) => ({
+        parameter_id: p.id,
+        enabled: true,
+        display_order: 0,
+        custom_label: p.name.charAt(0).toUpperCase() + p.name.slice(1) // Capitalize
+      }))
+      setModelConfigs(configs)
+
+      // Set initial values
+      const initialValues: ParameterValues = {}
+      sortedParams.forEach((param: any) => {
+        if (param.default_value !== undefined) {
+          initialValues[param.id] = param.default_value
+        }
+      })
+      setParameterValues(initialValues)
+
+    } catch (e) {
+      console.error("Failed to parse dynamic inputs", e)
+    }
+
+  }, [selectedModel])
+
+  // Backwards compatibility for render loop
+  const displayParameters = modelParameters.slice(0, 4) // Show first 4 sorted
+  const parameterConfigs = modelConfigs
+  const allParameters = modelParameters
+
 
   const handleParameterChange = (parameterId: string, value: any) => {
     setParameterValues(prev => {

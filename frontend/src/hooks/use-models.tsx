@@ -39,7 +39,8 @@ export function useModels() {
                         name: m.name,
                         description: `${m.provider} model`,
                         category: "both", // We'll filter by capability, not just category
-                        capabilities: caps
+                        capabilities: caps,
+                        inputs: inputs
                     }
                 })
 
