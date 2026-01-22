@@ -92,6 +92,7 @@ export function Workbench() {
   // Dynamic parameters state
   const [modelParameters, setModelParameters] = useState<any[]>([])
   const [modelConfigs, setModelConfigs] = useState<any[]>([])
+  const [parameterValues, setParameterValues] = useState<ParameterValues>({})
 
   // Parse parameters when model changes
   useEffect(() => {
