@@ -352,8 +352,47 @@ async def analyze_model(
         service = await get_replicate_client(db)
         data = await service.analyze_model_schema(req.model_ref)
         return data
-    except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/upload/image")
+async def upload_model_image(
+    file: UploadFile = File(...),
+    user: User = Depends(get_admin_user)
+):
+    try:
+        # Validate extensions
+        ext = file.filename.split('.')[-1].lower()
+        if ext not in ["png", "jpg", "jpeg", "webp"]:
+             raise HTTPException(status_code=400, detail="Invalid image format")
+
+        # Generate Key
+        key = f"assets/models/{uuid.uuid4()}.{ext}"
+        
+        # Upload
+        s3 = boto3.client(
+            's3',
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_REGION
+        )
+        
+        s3.upload_fileobj(
+            file.file,
+            settings.AWS_BUCKET_NAME,
+            key,
+            ExtraArgs={'ContentType': file.content_type, 'ACL': 'public-read'}
+        )
+        
+        # Construct URL
+        # Assumption: Bucket is public or we use CloudFront. 
+        # Standard S3 URL style: https://bucket.s3.region.amazonaws.com/key
+        url = f"https://{settings.AWS_BUCKET_NAME}.s3.{settings.AWS_REGION}.amazonaws.com/{key}"
+        
+        return {"url": url}
+        
+    except Exception as e:
+        print(f"Upload Error: {e}")
+        raise HTTPException(status_code=500, detail="Upload failed")
 
 # ============================================================================
 # REMOTE SCHEMA FETCHING (New)
