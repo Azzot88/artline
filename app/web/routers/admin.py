@@ -267,8 +267,7 @@ async def create_model(
         capabilities=req.capabilities,
         # Initialize empty configs
         ui_config={},
-        normalized_caps_json={},
-        cost_config_json={}
+        normalized_caps_json={}
     )
     db.add(new_model)
     await db.commit()
