@@ -310,6 +310,7 @@ async def update_model(
         raise HTTPException(status_code=404, detail="Model not found")
         
     update_data = req.model_dump(exclude_unset=True)
+    
     for key, value in update_data.items():
         setattr(m, key, value)
         

@@ -36,10 +36,12 @@ export function useModels() {
                     }
 
                     // 2. Resolve Capabilities (Strict Typing)
-                    const rawModes = (m as any).modes || []
+                    // Backend now returns 'capabilities' which is the source of truth
+                    const rawCaps = (m as any).capabilities || (m as any).modes || []
+
                     // Cast strings to CapabilityType if they match schema
-                    const capabilities: CapabilityType[] = rawModes.filter((mode: string) =>
-                        Object.prototype.hasOwnProperty.call(CAPABILITY_SCHEMA, mode)
+                    const capabilities: CapabilityType[] = rawCaps.filter((cap: string) =>
+                        Object.prototype.hasOwnProperty.call(CAPABILITY_SCHEMA, cap)
                     ) as CapabilityType[]
 
                     // 3. Resolve Category based on Capabilities
