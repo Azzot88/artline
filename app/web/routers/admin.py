@@ -363,9 +363,14 @@ async def upload_model_image(
 ):
     try:
         # Validate extensions
+        # Check if filename exists
+        if not file.filename:
+             raise HTTPException(status_code=400, detail="Filename is missing")
+             
         ext = file.filename.split('.')[-1].lower()
-        if ext not in ["png", "jpg", "jpeg", "webp"]:
-             raise HTTPException(status_code=400, detail="Invalid image format")
+        if ext not in ["png", "jpg", "jpeg", "webp", "avif"]:
+             print(f"Upload rejected: {file.filename} (ext: {ext})")
+             raise HTTPException(status_code=400, detail=f"Invalid image format: {ext}")
 
         # Generate Key
         key = f"assets/models/{uuid.uuid4()}.{ext}"
@@ -391,7 +396,9 @@ async def upload_model_image(
         url = f"https://{settings.AWS_BUCKET_NAME}.s3.{settings.AWS_REGION}.amazonaws.com/{key}"
         
         return {"url": url}
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Upload Error: {e}")
         raise HTTPException(status_code=500, detail="Upload failed")
