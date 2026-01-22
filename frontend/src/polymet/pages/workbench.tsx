@@ -464,7 +464,17 @@ export function Workbench() {
                     value={model}
                     onChange={setModel}
                     creationType={creationType}
-                    models={models}
+                    models={models.filter(m => {
+                      // 1. Filter by Creation Type (Image vs Video) - if we had that data in backend
+                      // For now, allow all or rely on 'category' prop if mapped.
+
+                      // 2. Filter by Input Type (Text vs Image)
+                      if (inputType === 'image') {
+                        // Must support image input
+                        return m.capabilities?.includes('image')
+                      }
+                      return true // Text input is usually supported by all listed models, or check 'text'
+                    })}
                     loading={modelsLoading}
                   />
                 </div>

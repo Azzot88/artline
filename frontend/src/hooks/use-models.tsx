@@ -23,12 +23,25 @@ export function useModels() {
                 const data = await api.get<BackendModel[]>("/models")
 
                 // Map Backend to Frontend Shape
-                const mapped: SelectorModel[] = data.map(m => ({
-                    id: m.id,
-                    name: m.name,
-                    description: `${m.provider} model`, // Description not in backend yet
-                    category: "both" // Allow all for now, or infer from inputs
-                }))
+                const mapped: SelectorModel[] = data.map(m => {
+                    // Infer capabilities from inputs
+                    const inputs = m.inputs || []
+                    const caps: string[] = []
+
+                    if (inputs.some((i: any) => i.name === 'prompt' || i.type === 'string')) caps.push('text')
+                    if (inputs.some((i: any) => i.name === 'image' || i.name === 'init_image' || i.type === 'image')) caps.push('image')
+
+                    // Allow simple override if backend sends capabilities directly later
+                    // const capabilities = m.capabilities || caps
+
+                    return {
+                        id: m.id,
+                        name: m.name,
+                        description: `${m.provider} model`,
+                        category: "both", // We'll filter by capability, not just category
+                        capabilities: caps
+                    }
+                })
 
                 setModels(mapped)
             } catch (err) {

@@ -12,6 +12,7 @@ export interface AIModel {
   name: string
   description: string
   category: "image" | "video" | "both"
+  capabilities?: string[]
 }
 
 const AI_MODELS: AIModel[] = [
