@@ -170,7 +170,7 @@ export function ModelParametersGroup({
                       onValueChange={(value) => onChange(param.id, value)}
                     />
                   )
-                  )
+
                 })}
               </div>
             )}
