@@ -86,8 +86,7 @@ export function Workbench() {
 
   // Get model credits from dynamic list or fallback
   const selectedModel = models.find(m => m.id === model)
-  // Backend doesn't send credits yet? Default to 5
-  const modelCredits = 5
+  const modelCredits = selectedModel?.credits ?? 5
 
 
   // Dynamic parameters state

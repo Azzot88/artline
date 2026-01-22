@@ -14,6 +14,7 @@ export interface AIModel {
   category: "image" | "video" | "both"
   capabilities?: string[]
   inputs?: any[]
+  credits?: number
 }
 
 const AI_MODELS: AIModel[] = [
