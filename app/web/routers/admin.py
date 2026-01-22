@@ -12,7 +12,8 @@ from app.schemas import (
     ProviderRead, ProviderCreate, ProviderUpdate,
     AIModelRead, AIModelCreate, AIModelUpdate,
     JobRead,
-    ModelPerformanceStats
+    ModelPerformanceStats,
+    ModelSchemaRequest
 )
 from app.domain.billing.service import get_user_balance, add_ledger_entry
 from app.domain.providers.service import encrypt_key
