@@ -47,13 +47,27 @@ export function useModels() {
                     // 3. Resolve credits
                     const credits = (m as any).credits_per_generation ?? (m as any).credits ?? 5
 
+                    // 4. Resolve Category (Image vs Video) from 'modes'
+                    // specific backend field 'modes': ["text-to-image", "text-to-video"]
+                    const modes = (m as any).modes || []
+                    let category: "image" | "video" | "both" = "both" // Default
+
+                    const hasImage = modes.some((mode: string) => mode.includes("image"))
+                    const hasVideo = modes.some((mode: string) => mode.includes("video"))
+
+                    if (hasImage && hasVideo) category = "both"
+                    else if (hasImage) category = "image"
+                    else if (hasVideo) category = "video"
+                    // If neither (e.g. empty modes), keep "both" or infer from capabilities? 
+                    // Let's stick to "both" as safe default for now so we don't hide everything.
+
                     return {
                         id: m.id,
                         name: m.name || m.display_name, // Fallback to display_name
                         description: (m as any).description || `${m.provider} model`,
                         provider: m.provider,
                         cover_image: m.cover_image, // or cover_image_url
-                        category: "both",
+                        category: category,
                         capabilities: caps,
                         inputs: inputs,
                         credits: credits // Expose credits
