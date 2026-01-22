@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { api } from "@/lib/api"
 import { AIModel as SelectorModel } from "@/polymet/components/model-selector"
+import { CAPABILITY_SCHEMA, CapabilityType } from "@/polymet/data/capabilities"
 
 // Backend Model Shape
 interface BackendModel {
@@ -22,9 +23,7 @@ export function useModels() {
             try {
                 const data = await api.get<BackendModel[]>("/models")
 
-                import { CAPABILITY_SCHEMA, CapabilityType } from "@/polymet/data/capabilities"
 
-                // ...
 
                 // Map Backend to Frontend Shape
                 const mapped: SelectorModel[] = data.map(m => {
