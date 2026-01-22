@@ -21,6 +21,8 @@ import { UserProfile } from "@/polymet/pages/user-profile"
 import { LandingPage } from "@/polymet/pages/landing-page"
 import DocumentsPage from "@/polymet/pages/documents-page"
 
+import { Toaster } from "@/components/ui/sonner"
+
 export default function AIWorkbenchApp() {
   return (
     <Router>
@@ -57,6 +59,7 @@ export default function AIWorkbenchApp() {
             </Route>
 
           </Routes>
+          <Toaster />
         </LanguageProvider>
       </AuthProvider>
     </Router>

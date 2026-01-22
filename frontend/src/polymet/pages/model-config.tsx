@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -34,7 +34,7 @@ import { ModelParametersGroup } from "@/polymet/components/model-parameters-grou
 export function ModelConfig() {
   const { modelId } = useParams()
   const navigate = useNavigate()
-  const { toast } = useToast()
+
 
   const [model, setModel] = useState<AIModel | null>(null)
   const [loading, setLoading] = useState(true)
@@ -132,7 +132,7 @@ export function ModelConfig() {
 
     } catch (e) {
       console.error(e)
-      toast({ title: "Error loading model", variant: "destructive" })
+      toast.error("Error loading model")
     } finally {
       setLoading(false)
     }
@@ -140,7 +140,7 @@ export function ModelConfig() {
 
   async function handleFetchSchema() {
     if (!modelRef) {
-      toast({ title: "Enter a Model Ref first", variant: "destructive" })
+      toast.error("Enter a Model Ref first")
       return
     }
     setFetchingSchema(true)
@@ -157,14 +157,14 @@ export function ModelConfig() {
 
       loadSchema(rawSchema, modelRef)
 
-      toast({ title: "Schema fetched and parsed successfully" })
+      toast.success("Schema fetched and parsed successfully")
 
       if (!displayName && res.schema?.title) {
         setDisplayName(res.schema.title)
       }
     } catch (e: any) {
       console.error(e)
-      toast({ title: "Failed to fetch schema", description: e.message || "Unknown error", variant: "destructive" })
+      toast.error("Failed to fetch schema", { description: e.message || "Unknown error" })
     } finally {
       setFetchingSchema(false)
     }
@@ -174,7 +174,7 @@ export function ModelConfig() {
 
   async function handleAnalyzeModel() {
     if (!modelRef) {
-      toast({ title: "Enter a Model Ref first", variant: "destructive" })
+      toast.error("Enter a Model Ref first")
       return
     }
     setFetchingSchema(true)
@@ -185,14 +185,14 @@ export function ModelConfig() {
       // Use the full schema from the deep analysis
       if (res.full_schema) {
         loadSchema(res.full_schema, modelRef)
-        toast({ title: "Deep Analysis Complete", description: `Parsed ${Object.keys(res.inputs || {}).length} inputs.` })
+        toast.success("Deep Analysis Complete", { description: `Parsed ${Object.keys(res.inputs || {}).length} inputs.` })
         if (!displayName && res.full_schema.title) setDisplayName(res.full_schema.title)
       } else {
-        toast({ title: "Analysis complete but no schema found", variant: "warning" })
+        toast.warning("Analysis complete but no schema found")
       }
     } catch (e: any) {
       console.error(e)
-      toast({ title: "Analysis failed", description: e.message || "Unknown error", variant: "destructive" })
+      toast.error("Analysis failed", { description: e.message || "Unknown error" })
     } finally {
       setFetchingSchema(false)
     }
@@ -235,9 +235,9 @@ export function ModelConfig() {
       }
 
       await apiService.updateModel(modelId, payload)
-      toast({ title: "Changes saved successfully" })
+      toast.success("Changes saved successfully")
     } catch (e) {
-      toast({ title: "Failed to save", variant: "destructive" })
+      toast.error("Failed to save")
     } finally {
       setSaving(false)
     }
@@ -249,10 +249,10 @@ export function ModelConfig() {
     try {
       const s = await apiService.syncModelStats(modelId)
       setStats(s)
-      toast({ title: "Stats synced successfully" })
+      toast.success("Stats synced successfully")
     } catch (e) {
       console.error(e)
-      toast({ title: "Failed to sync stats", variant: "destructive" })
+      toast.error("Failed to sync stats")
     } finally {
       setSyncingStats(false)
     }
@@ -263,9 +263,9 @@ export function ModelConfig() {
     try {
       await apiService.deleteModel(modelId)
       navigate("/admin")
-      toast({ title: "Model deleted" })
+      toast.success("Model deleted")
     } catch (e) {
-      toast({ title: "Failed to delete", variant: "destructive" })
+      toast.error("Failed to delete")
     }
   }
 
@@ -395,9 +395,9 @@ export function ModelConfig() {
                           try {
                             const res = await apiService.uploadModelImage(file)
                             setCoverImageUrl(res.url)
-                            toast({ title: "Logo uploaded" })
+                            toast.success("Logo uploaded")
                           } catch (err) {
-                            toast({ title: "Upload failed", variant: "destructive" })
+                            toast.error("Upload failed")
                           }
                         }}
                       />
