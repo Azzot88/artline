@@ -387,7 +387,7 @@ async def upload_model_image(
             file.file,
             settings.AWS_BUCKET_NAME,
             key,
-            ExtraArgs={'ContentType': file.content_type, 'ACL': 'public-read'}
+            ExtraArgs={'ContentType': file.content_type}
         )
         
         # Construct URL
