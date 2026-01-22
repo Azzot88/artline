@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { CAPABILITY_SCHEMA } from "@/polymet/data/capabilities"
 import { CreationTypeToggle, CreationType } from "@/polymet/components/creation-type-toggle"
 import { InputTypeToggle, InputType } from "@/polymet/components/input-type-toggle"
