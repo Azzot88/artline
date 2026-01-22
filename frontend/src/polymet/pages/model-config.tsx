@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
 import { apiService } from "@/polymet/data/api-service"
 import { AIModel } from "@/polymet/data/models-data"
@@ -31,9 +31,12 @@ import {
 import { useModelConfig } from "@/polymet/hooks/use-model-config"
 import { ModelParametersGroup } from "@/polymet/components/model-parameters-group"
 
+
 export function ModelConfig() {
   const { modelId } = useParams()
   const navigate = useNavigate()
+  // const { toast } = useToast() REMOVED
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
 
   const [model, setModel] = useState<AIModel | null>(null)
@@ -370,7 +373,15 @@ export function ModelConfig() {
                   <div className="flex items-center gap-4">
                     {coverImageUrl ? (
                       <div className="relative w-24 h-24 rounded-lg overflow-hidden border bg-muted group">
-                        <img src={coverImageUrl} alt="Logo" className="w-full h-full object-cover" />
+                        <img
+                          src={coverImageUrl}
+                          alt="Logo"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            toast.error("Failed to load image. Check S3 permissions.")
+                            e.currentTarget.style.display = 'none'
+                          }}
+                        />
                         <button
                           onClick={() => setCoverImageUrl("")}
                           className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs"
@@ -386,6 +397,7 @@ export function ModelConfig() {
 
                     <div className="flex-1">
                       <Input
+                        ref={fileInputRef}
                         type="file"
                         accept="image/*"
                         className="text-xs"
@@ -396,6 +408,10 @@ export function ModelConfig() {
                             const res = await apiService.uploadModelImage(file)
                             setCoverImageUrl(res.url)
                             toast.success("Logo uploaded")
+                            // Clear input
+                            if (fileInputRef.current) {
+                              fileInputRef.current.value = ""
+                            }
                           } catch (err) {
                             toast.error("Upload failed")
                           }
