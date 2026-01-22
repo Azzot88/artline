@@ -350,12 +350,54 @@ export function Workbench() {
     }
   }
 
+  // Filter models centrally to support auto-selection
+  const filteredModels = useMemo(() => {
+    return models.filter(m => {
+      // 1. Filter by Creation Type (Image vs Video)
+      const isBoth = m.category === 'both'
+      const matchesCreation = m.category === creationType || isBoth
+
+      if (!matchesCreation) return false
+
+      // 2. Filter by Input Type (Text vs Image)
+      if (inputType === 'image') {
+        // Must support 'init_image' input
+        // Check capabilities that require 'init_image'
+        return m.capabilities?.some(cap =>
+          CAPABILITY_SCHEMA[cap]?.requiredInputs.includes('init_image')
+        )
+      }
+      return true
+    })
+  }, [models, creationType, inputType])
+
+  // Auto-Select Model when list changes
+  useEffect(() => {
+    // If no models available, nothing to select
+    if (filteredModels.length === 0) return
+
+    // If current model is still valid in the new list, keep it
+    const currentIsValid = filteredModels.some(m => m.id === model)
+    if (currentIsValid) return
+
+    // Otherwise, select the best default
+    if (creationType === 'image') {
+      const flux = filteredModels.find(m => m.name.toLowerCase().includes("flux"))
+      setModel(flux ? flux.id : filteredModels[0].id)
+    } else {
+      // For video, just pick the first one (usually Veo or Kling)
+      setModel(filteredModels[0].id)
+    }
+
+  }, [filteredModels, model, creationType])
+
+
+  // Helper for disable state
   const isGenerateDisabled = () => {
     if (inputType === "text" && !prompt.trim()) return true
     if (inputType === "image" && !file) return true
     if (!model) return true
     if (modelsLoading) return true
-    // if (isGenerating) return true // ALLOW PARALLEL GENERATIONS
 
     // Check required parameters
     const requiredParams = allParameters.filter(p => p.required)
@@ -391,31 +433,11 @@ export function Workbench() {
         </Alert>
       )}
 
-      {modelsError && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{t('workbench.errorLoading')}</AlertTitle>
-          <AlertDescription>
-            {modelsError}. {t('workbench.errorLoadingDesc')}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Moved loading spinner inside selector or hidden initially to avoid layout shift */}
-      {/* {modelsLoading && ...} REMOVED from top */}
-
       {/* Main Unified Card - Large Textarea with Controls Inside */}
       <Card className="overflow-hidden">
         <CardContent className="p-0">
           {/* Large Main Textarea Area */}
           <div className="relative">
-
-            {/* OVERLAY REMOVED FOR OPTIMISTIC UI */}
-            {/* <GenerationOverlay
-              isVisible={isGenerating}
-              status={currentJobStatus}
-              logs={currentJobLogs}
-            /> */}
 
             {/* Top Controls Bar - Input Type Toggle */}
             <div className="absolute top-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-b border-border p-4 z-10">
@@ -513,18 +535,7 @@ export function Workbench() {
                     value={model}
                     onChange={setModel}
                     creationType={creationType}
-                    models={models.filter(m => {
-                      // 1. Filter by Creation Type is handled inside ModelSelector via 'category'
-
-                      // 2. Filter by Input Type (Text vs Image)
-                      if (inputType === 'image') {
-                        // Must support 'init_image' input
-                        return m.capabilities?.some(cap =>
-                          CAPABILITY_SCHEMA[cap]?.requiredInputs.includes('init_image')
-                        )
-                      }
-                      return true
-                    })}
+                    models={filteredModels}
                     loading={modelsLoading}
                   />
                 </div>

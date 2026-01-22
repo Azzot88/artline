@@ -79,9 +79,8 @@ interface ModelSelectorProps {
 }
 
 export function ModelSelector({ value, onChange, creationType, models, loading }: ModelSelectorProps) {
-  const filteredModels = models.filter(
-    model => model.category === creationType || model.category === "both"
-  )
+  // Models are now pre-filtered by parent
+  const filteredModels = models
 
   return (
     <Select value={value} onValueChange={onChange} disabled={loading}>
