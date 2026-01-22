@@ -110,35 +110,7 @@ export function ModelParameterControl({
   // --- Standard Types ---
 
   // 4. Enumerations (Select)
-  if (allowedValues && allowedValues.length > 0) {
-    return (
-      <div className="space-y-2">
-        {!compact && <LabelWithTooltip />}
-        <Select
-          value={String(currentValue ?? "")}
-          onValueChange={(val) => {
-            // Try to preserve type
-            if (parameter.type === "integer") onChange(parseInt(val))
-            else if (parameter.type === "number") onChange(parseFloat(val))
-            else if (parameter.type === "boolean") onChange(val === "true")
-            else onChange(val)
-          }}
-          disabled={disabled}
-        >
-          <SelectTrigger id={parameter.id} className={compact ? "h-9" : ""}>
-            <SelectValue placeholder={label} />
-          </SelectTrigger>
-          <SelectContent>
-            {allowedValues.map((val) => (
-              <SelectItem key={String(val)} value={String(val)}>
-                {String(val)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-    )
-  }
+
 
   // 5. Booleans (Switch)
   if (parameter.type === "boolean") {
