@@ -514,7 +514,6 @@ export function ModelConfig() {
                 </div>
               </div>
               <Button
-                variant="destructive"
                 variant="outline"
                 size="sm"
                 className="w-full mt-6 text-destructive hover:text-destructive"

@@ -161,7 +161,6 @@ export function ModelParametersGroup({
                   const config = configs.find(c => c.parameter_id === param.id)
 
                   return (
-                  return (
                     <ModelParameterAdminControl
                       key={param.id}
                       parameter={param}
