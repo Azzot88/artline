@@ -11,6 +11,9 @@ interface BackendModel {
     cover_image?: string
     inputs: any[]
     defaults: any
+    ui_config?: {
+        parameter_configs?: any[]
+    }
 }
 
 export function useModels() {
@@ -78,7 +81,8 @@ export function useModels() {
                         category: category,
                         capabilities: capabilities, // Use strictly typed array
                         inputs: inputs,
-                        credits: credits
+                        credits: credits,
+                        ui_config: (m as any).ui_config
                     }
                 })
 

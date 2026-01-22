@@ -541,7 +541,8 @@ async def list_models(db: AsyncSession = Depends(get_db)):
              "inputs": m.normalized_caps_json.get("inputs", []) if m.normalized_caps_json else [],
              "defaults": m.normalized_caps_json.get("defaults", {}) if m.normalized_caps_json else {},
              "credits": m.credits_per_generation,
-             "capabilities": m.capabilities or []
+             "capabilities": m.capabilities or [],
+             "ui_config": m.ui_config or {}
          })
     return data
     return data

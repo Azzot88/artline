@@ -133,7 +133,15 @@ export function Workbench() {
           ui_group: 'other' // We can refine this later
         }
       }).filter(Boolean)
-        .filter((p: any) => p.name !== 'prompt') // Explicitly exclude prompt as it has dedicated UI
+        .filter((p: any) => p.name !== 'prompt')
+        .filter((p: any) => {
+          // Respect Admin UI Config
+          if (selectedModel.ui_config?.parameter_configs) {
+            const config = selectedModel.ui_config.parameter_configs.find((c: any) => c.parameter_id === p.id)
+            if (config && config.enabled === false) return false
+          }
+          return true
+        })
 
       // Sort: Format -> Size -> Quality -> Others
       // We can infer this!

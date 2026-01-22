@@ -17,6 +17,15 @@ export interface AIModel {
   capabilities?: CapabilityType[]
   inputs?: any[]
   credits?: number
+  ui_config?: {
+    parameter_configs?: {
+      parameter_id: string
+      enabled: boolean
+      display_order: number
+      custom_label: string
+      description: string
+    }[]
+  }
 }
 
 const AI_MODELS: AIModel[] = [
