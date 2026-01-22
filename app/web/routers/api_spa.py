@@ -535,6 +535,7 @@ async def list_models(db: AsyncSession = Depends(get_db)):
          data.append({
              "id": str(m.id),
              "name": m.display_name,
+             "description": m.description,
              "provider": m.provider,
              "cover_image": m.cover_image_url,
              "inputs": m.normalized_caps_json.get("inputs", []) if m.normalized_caps_json else [],
