@@ -138,6 +138,12 @@ export function Workbench() {
           // Respect Admin UI Config
           if (selectedModel.ui_config?.parameter_configs) {
             const config = selectedModel.ui_config.parameter_configs.find((c: any) => c.parameter_id === p.id)
+
+            // DEBUG LOG
+            if (p.name.includes('image')) {
+              console.log(`[Workbench] Filtering param ${p.name} (id=${p.id}). Config match:`, config)
+            }
+
             if (config && config.enabled === false) return false
           }
           return true
@@ -384,7 +390,6 @@ export function Workbench() {
   useEffect(() => {
     // If no models available, nothing to select
     if (filteredModels.length === 0) return
-
     // If current model is still valid in the new list, keep it
     const currentIsValid = filteredModels.some(m => m.id === model)
     if (currentIsValid) return
