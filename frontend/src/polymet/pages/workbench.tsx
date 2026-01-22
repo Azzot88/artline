@@ -39,6 +39,7 @@ export function Workbench() {
     }
     return ""
   })
+  const [file, setFile] = useState<File | null>(null)
 
   // Persist prompt
   useEffect(() => {
