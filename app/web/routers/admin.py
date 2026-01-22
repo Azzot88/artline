@@ -352,6 +352,7 @@ async def analyze_model(
         service = await get_replicate_client(db)
         data = await service.analyze_model_schema(req.model_ref)
         return data
+    except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/upload/image")
