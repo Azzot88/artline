@@ -1,8 +1,8 @@
-import type { 
-  ModelParameter, 
-  ModelParameterConfig, 
+import type {
+  ModelParameter,
+  ModelParameterConfig,
   ModelVersionCostSignals,
-  ModelWithParameters 
+  ModelWithParameters
 } from "@/polymet/data/types"
 import { aiModels } from "@/polymet/data/models-data"
 
@@ -293,7 +293,7 @@ const dalleParameterConfigs: ModelParameterConfig[] = [
   },
   {
     parameter_id: "dalle3-param-2",
-    enabled: false, // Hidden - resolution is calculated from format
+    enabled: true, // Enabled size parameter
     display_order: 3,
     custom_label: "Размер"
   },
@@ -512,11 +512,11 @@ export function getModelCostSignals(modelId: string): ModelVersionCostSignals | 
 export function getEnabledParameters(modelId: string): ModelParameter[] {
   const params = getModelParameters(modelId)
   const configs = getModelParameterConfigs(modelId)
-  
+
   const enabledParamIds = new Set(
     configs.filter(c => c.enabled).map(c => c.parameter_id)
   )
-  
+
   return params.filter(p => enabledParamIds.has(p.id))
 }
 
@@ -528,7 +528,7 @@ export function getParametersByGroup(modelId: string, group: string): ModelParam
 export function getModelWithParameters(modelId: string): ModelWithParameters | undefined {
   const model = aiModels.find(m => m.id === modelId)
   if (!model) return undefined
-  
+
   return {
     model,
     parameters: getModelParameters(modelId),
@@ -539,7 +539,7 @@ export function getModelWithParameters(modelId: string): ModelWithParameters | u
 
 // Get parameter config for a specific parameter
 export function getParameterConfig(
-  modelId: string, 
+  modelId: string,
   parameterId: string
 ): ModelParameterConfig | undefined {
   const configs = getModelParameterConfigs(modelId)

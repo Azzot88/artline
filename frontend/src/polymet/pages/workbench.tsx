@@ -106,14 +106,20 @@ export function Workbench() {
       !p.name.toLowerCase().includes('prompt') &&
       !p.name.toLowerCase().includes('description') &&
       !p.name.toLowerCase().includes('width') &&
-      !p.name.toLowerCase().includes('height') &&
-      !p.name.toLowerCase().includes('size')
+      !p.name.toLowerCase().includes('height')
+      // Removed 'size' and 'resolution' from blacklist so they can be displayed
     )
 
   // Combine: format first, then other parameters (max 4 total)
-  const displayParameters = formatParam
-    ? [formatParam, ...otherParams].slice(0, 4)
-    : otherParams.slice(0, 4)
+  // Combine: format first, then size/resolution, then others (max 4 total)
+  const sizeParam = otherParams.find(p => p.name === 'size' || p.name === 'resolution')
+  const restParams = otherParams.filter(p => p.name !== 'size' && p.name !== 'resolution')
+
+  const displayParameters = [
+    ...(formatParam ? [formatParam] : []),
+    ...(sizeParam ? [sizeParam] : []),
+    ...restParams
+  ].slice(0, 4)
 
   // Get model credits from dynamic list or fallback
   const selectedModel = models.find(m => m.id === model)
