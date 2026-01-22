@@ -111,15 +111,23 @@ export function ModelParameterControl({
   // --- Standard Types ---
 
   // 4. Enumerations (Select)
-  if (parameter.enum || allowedValues) {
+  if ((parameter.enum || allowedValues) && parameter.type !== 'array') {
     const options = allowedValues || parameter.enum || []
+    const strValue = currentValue !== undefined && currentValue !== null ? String(currentValue) : undefined
 
     return (
       <div className="space-y-2">
         {!compact && <LabelWithTooltip />}
         <Select
-          value={String(currentValue)}
-          onValueChange={onChange}
+          value={strValue}
+          onValueChange={(val) => {
+            // Restore type if numeric
+            if (parameter.type === 'integer' || parameter.type === 'number') {
+              onChange(Number(val))
+            } else {
+              onChange(val)
+            }
+          }}
           disabled={disabled}
         >
           <SelectTrigger className="h-9">
