@@ -1,10 +1,12 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, update, delete
 import uuid
+import boto3
 
 from app.core.db import get_db
+from app.core.config import settings
 from app.core.deps import get_current_user
 from app.models import User, Job, AIModel, ProviderConfig, LedgerEntry
 from app.schemas import (

@@ -217,6 +217,7 @@ export interface ProviderUpdateRequest {
 export interface AIModelCreateRequest {
   name: string
   display_name: string
+  description?: string
   provider: string
   model_ref: string
   version_id?: string

@@ -150,6 +150,7 @@ class AIModelRead(BaseModel):
     name: str = Field(validation_alias="display_name")
     
     display_name: str
+    description: Optional[str] = None
     provider: str
     model_ref: str # replicate ref
     version_id: Optional[str] = None
@@ -172,6 +173,7 @@ class AIModelRead(BaseModel):
 class AIModelCreate(BaseModel):
     # 'name' in request is mapped to display_name (or just use display_name)
     display_name: Optional[str] = None
+    description: Optional[str] = None
     
     provider: str
     model_ref: str
@@ -188,6 +190,7 @@ class AIModelCreate(BaseModel):
 
 class AIModelUpdate(BaseModel):
     display_name: Optional[str] = None
+    description: Optional[str] = None
     model_ref: Optional[str] = None
     version_id: Optional[str] = None
     credits_per_generation: Optional[int] = None

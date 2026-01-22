@@ -45,6 +45,8 @@ export function ModelConfig() {
 
   // Basic Form State
   const [displayName, setDisplayName] = useState("")
+  const [description, setDescription] = useState("")
+  const [coverImageUrl, setCoverImageUrl] = useState("")
   const [credits, setCredits] = useState("5")
   const [isActive, setIsActive] = useState(false)
   const [modelRef, setModelRef] = useState("")
@@ -80,6 +82,8 @@ export function ModelConfig() {
 
       // Init form
       setDisplayName(m.display_name || "")
+      setDescription(m.description || "")
+      setCoverImageUrl(m.cover_image_url || "")
       setCredits(m.credits_per_generation?.toString() || m.credits?.toString() || "5")
       setIsActive(m.is_active)
       setModelRef(m.model_ref || "")
@@ -202,8 +206,10 @@ export function ModelConfig() {
       // Construct Payload
       const payload = {
         display_name: displayName,
+        description: description,
         credits: parseInt(credits),
         is_active: isActive,
+        cover_image_url: coverImageUrl,
         model_ref: modelRef,
 
         // Save Configs and Defaults in ui_config
@@ -481,6 +487,63 @@ export function ModelConfig() {
                 <Label>Display Name</Label>
                 <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
               </div>
+
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <div className="relative">
+                  <textarea
+                    className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Enter model description..."
+                  />
+                  {/* Auto-fill from schema option? */}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Model Logo / Cover</Label>
+                <div className="flex items-center gap-4">
+                  {coverImageUrl ? (
+                    <div className="relative w-20 h-20 rounded-lg overflow-hidden border bg-muted group">
+                      <img src={coverImageUrl} alt="Logo" className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => setCoverImageUrl("")}
+                        className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-20 h-20 rounded-lg border-2 border-dashed flex items-center justify-center bg-muted/30 text-muted-foreground">
+                      <span className="text-[10px]">No Logo</span>
+                    </div>
+                  )}
+
+                  <div className="flex-1">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      className="text-xs"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        try {
+                          const res = await apiService.uploadModelImage(file)
+                          setCoverImageUrl(res.url)
+                          toast({ title: "Logo uploaded" })
+                        } catch (err) {
+                          toast({ title: "Upload failed", variant: "destructive" })
+                        }
+                      }}
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Upload a PNG/JPG. Will be stored in S3.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label>Status</Label>
                 <Select value={isActive ? "active" : "inactive"} onValueChange={v => setIsActive(v === "active")}>
