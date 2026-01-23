@@ -75,7 +75,7 @@ export function ModelParameterControl({
   // --- Special Handlers ---
 
   // 1. Format Selector
-  if (parameter.name === "format") {
+  if (parameter.name === "format" || parameter.name === "aspect_ratio") {
     const isVideoFormat = allowedValues?.some(v => ["16:9", "9:16"].includes(String(v)))
     const type = isVideoFormat ? "video" : "image"
 
@@ -123,7 +123,7 @@ export function ModelParameterControl({
   // 4. Enumerations (Select)
   if ((parameter.enum || allowedValues) && parameter.type !== 'array') {
     return (
-      <div className={cn("w-[85px]", compact ? "" : "space-y-1")}>
+      <div className={cn("w-[80px]", compact ? "" : "space-y-1")}>
         {!compact && (
           <label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground/60 flex items-center gap-1.5 px-1">
             {getParameterIcon(parameter.name)}
@@ -147,7 +147,7 @@ export function ModelParameterControl({
               <SelectValue placeholder={label} />
             </div>
           </SelectTrigger>
-          <SelectContent className="glass-effect border-white/10 min-w-[85px] p-1">
+          <SelectContent className="glass-effect border-white/10 min-w-[80px] p-1">
             {options.map((opt: any) => (
               <SelectItem key={String(opt)} value={String(opt)} className="focus:bg-primary/10 focus:text-primary cursor-pointer px-2 rounded-md">
                 <span className="text-xs font-bold">{String(opt)}</span>
