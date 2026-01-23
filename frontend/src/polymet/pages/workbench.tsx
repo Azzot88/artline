@@ -19,6 +19,7 @@ import { toast } from "sonner"
 import { LibraryWidget } from "@/polymet/components/library-widget"
 import { useJobPolling } from "@/polymet/hooks/use-job-polling"
 import { formatToResolutions } from "@/polymet/data/types"
+import { normalizeModelInputs } from "@/polymet/data/transformers"
 
 import type { ParameterValues, ImageFormatType, VideoFormatType, Generation } from "@/polymet/data/types"
 
@@ -95,69 +96,28 @@ export function Workbench() {
   const [modelConfigs, setModelConfigs] = useState<any[]>([])
   const [parameterValues, setParameterValues] = useState<ParameterValues>({})
 
-  // Parse parameters when model changes
+  // Parse parameters when model changes (Consolidated logic)
   useEffect(() => {
-    if (!selectedModel || !selectedModel.inputs) {
+    if (!selectedModel) {
       setModelParameters([])
       setModelConfigs([])
       return
     }
 
-    try {
-      const params = selectedModel.inputs.map((input: any) => {
-        if (!input) return null
-        let type = input.type || 'string'
-        let allowedValues = input.enum || input.allowed_values
-        let uiConfig = selectedModel.ui_config?.parameter_configs?.find(
-          (c: any) => c.parameter_id === input.name
-        )
-        if (uiConfig?.allowed_values?.length > 0) {
-          allowedValues = uiConfig.allowed_values
-        }
+    const sortedParams = normalizeModelInputs(selectedModel)
+    setModelParameters(sortedParams)
+    setModelConfigs(sortedParams.map((p: any) => ({
+      parameter_id: p.id,
+      enabled: true,
+      display_order: 0,
+      custom_label: p.name.charAt(0).toUpperCase() + p.name.slice(1)
+    })))
 
-        return {
-          id: input.name,
-          name: input.name,
-          type: type,
-          default_value: input.default,
-          required: input.required || false,
-          enum: allowedValues,
-          min: input.min,
-          max: input.max,
-          ui_group: 'other',
-          _config: uiConfig
-        }
-      }).filter(Boolean)
-        .filter((p: any) => p.name !== 'prompt')
-        .filter((p: any) => !(p._config && p._config.enabled === false))
-
-      const sortedParams = params.sort((a: any, b: any) => {
-        const score = (p: string) => {
-          if (p === 'format') return 0
-          if (p === 'width' || p === 'height' || p === 'size' || p === 'resolution') return 1
-          if (p === 'quality' || p === 'steps') return 2
-          return 10
-        }
-        return score(a.name) - score(b.name)
-      })
-
-      setModelParameters(sortedParams)
-      setModelConfigs(sortedParams.map((p: any) => ({
-        parameter_id: p.id,
-        enabled: true,
-        display_order: 0,
-        custom_label: p.name.charAt(0).toUpperCase() + p.name.slice(1)
-      })))
-
-      const initialValues: ParameterValues = {}
-      sortedParams.forEach((param: any) => {
-        if (param.default_value !== undefined) initialValues[param.id] = param.default_value
-      })
-      setParameterValues(initialValues)
-    } catch (e) {
-      console.error("Failed to parse dynamic inputs", e)
-      setModelParameters([])
-    }
+    const initialValues: ParameterValues = {}
+    sortedParams.forEach((param: any) => {
+      if (param.default_value !== undefined) initialValues[param.id] = param.default_value
+    })
+    setParameterValues(initialValues)
   }, [selectedModel])
 
   const handleParameterChange = (parameterId: string, value: any) => {

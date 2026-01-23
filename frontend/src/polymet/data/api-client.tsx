@@ -103,6 +103,11 @@ async function apiFetch<T>(
   try {
     const response = await fetch(url, config)
 
+    // Handle 404 errors specifically for cleanup
+    if (response.status === 404) {
+      console.warn(`[API Client] 404 Not Found: ${url}. This might be a dead endpoint or missing resource.`)
+    }
+
     // Parse JSON response
     const data = await response.json()
 

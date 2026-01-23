@@ -107,3 +107,53 @@ export function normalizeGeneration(raw: any): Generation {
         input_image_url: raw.input_image_url
     }
 }
+
+/**
+ * Normalizes model inputs from the backend into a clean array of ModelParameter objects.
+ * Handles fallbacks for missing types, enumeration values, and UI configurations.
+ */
+export function normalizeModelInputs(model: any): any[] {
+    if (!model || !model.inputs) return []
+
+    try {
+        return model.inputs.map((input: any) => {
+            if (!input) return null
+            const type = input.type || 'string'
+            let allowedValues = input.enum || input.allowed_values
+            const uiConfig = model.ui_config?.parameter_configs?.find(
+                (c: any) => c.parameter_id === input.name
+            )
+
+            if (uiConfig?.allowed_values?.length > 0) {
+                allowedValues = uiConfig.allowed_values
+            }
+
+            return {
+                id: input.name,
+                name: input.name,
+                type: type,
+                default_value: input.default,
+                required: input.required || false,
+                enum: allowedValues,
+                min: input.min,
+                max: input.max,
+                ui_group: 'other',
+                _config: uiConfig
+            }
+        }).filter(Boolean)
+            .filter((p: any) => p.name !== 'prompt')
+            .filter((p: any) => !(p._config && p._config.enabled === false))
+            .sort((a: any, b: any) => {
+                const score = (p: string) => {
+                    if (p === 'format') return 0
+                    if (p === 'width' || p === 'height' || p === 'size' || p === 'resolution') return 1
+                    if (p === 'quality' || p === 'steps') return 2
+                    return 10
+                }
+                return score(a.name) - score(b.name)
+            })
+    } catch (e) {
+        console.error("Failed to parse dynamic inputs", e)
+        return []
+    }
+}
