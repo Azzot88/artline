@@ -118,152 +118,151 @@ export function ModelParameterControl({
 
   // --- Standard Types ---
 
-  // 4. Enumerations (Select)
-  if ((parameter.enum || allowedValues) && parameter.type !== 'array') {
-    const options = allowedValues || parameter.enum || []
-    const strValue = currentValue !== undefined && currentValue !== null ? String(currentValue) : undefined
-
-    return (
-      <div className={cn("w-[110px]", compact ? "" : "space-y-1")}>
-        {!compact && <LabelWithTooltip />}
-        <Select
-          value={strValue}
-          onValueChange={(val) => {
-            // Restore type if numeric
-            if (parameter.type === 'integer' || parameter.type === 'number') {
-              onChange(Number(val))
-            } else {
-              onChange(val)
-            }
-          }}
-          disabled={disabled}
-        >
-          <SelectTrigger className={cn("w-full bg-background/50 border-white/10 glass-effect gap-2 justify-start", compact ? "h-9" : "h-10")}>
-            <div className="flex items-center gap-2 text-xs font-semibold overflow-hidden">
-              <div className="text-primary/70 shrink-0">{getParameterIcon(parameter.name)}</div>
-              <SelectValue placeholder={label} />
-            </div>
-          </SelectTrigger>
-          <SelectContent className="glass-effect border-white/10 min-w-[110px]">
-            {options.map((opt: any) => (
-              <SelectItem key={String(opt)} value={String(opt)} className="focus:bg-primary/10 focus:text-primary cursor-pointer px-2">
-                <span className="text-xs font-medium">{String(opt)}</span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-    )
-  }
-
-
-  // 5. Booleans (Switch)
-  if (parameter.type === "boolean") {
-    return (
-      <div className="flex items-center justify-between">
-        <LabelWithTooltip />
-        <Switch
-          id={parameter.id}
-          checked={currentValue === true || currentValue === "true"}
-          onCheckedChange={onChange}
-          disabled={disabled}
-        />
-      </div>
-    )
-  }
-
-  // 6. Numeric Ranges (Slider + Input)
-  if ((parameter.type === "integer" || parameter.type === "number") &&
-    parameter.min !== undefined && parameter.max !== undefined) {
-
-    const step = parameter.step || (parameter.type === "integer" ? 1 : 0.01)
-
-    return (
-      <div className="space-y-3">
-        <div className="flex justify-between items-center">
-          <LabelWithTooltip />
-          <span className="text-xs text-muted-foreground tabular-nums">
-            {currentValue ?? effectiveDefault}
-          </span>
-        </div>
-        <div className="flex items-center gap-4">
-          <Slider
-            value={[Number(currentValue ?? effectiveDefault ?? parameter.min)]}
-            onValueChange={(vals) => onChange(vals[0])}
-            min={parameter.min}
-            max={parameter.max}
-            step={step}
-            disabled={disabled}
-            className="flex-1"
-          />
-          <Input
-            type="number"
-            className="w-20 h-9"
-            value={currentValue ?? ""}
-            onChange={(e) => {
-              const val = Number(e.target.value)
-              if (!isNaN(val)) onChange(val)
-            }}
-            min={parameter.min}
-            max={parameter.max}
-            step={step}
-            disabled={disabled}
-          />
-        </div>
-        <div className="flex justify-between text-xs text-muted-foreground px-1">
-          <span>{parameter.min}</span>
-          <span>{parameter.max}</span>
-        </div>
-      </div>
-    )
-  }
-
-  // 7. Arrays (Dynamic List)
-  if (parameter.type === "array") {
-    return (
-      <DynamicList
-        label={!compact ? label : undefined}
-        value={Array.isArray(currentValue) ? currentValue : []}
-        onChange={onChange}
-        disabled={disabled}
-      />
-    )
-  }
-
-  // 8. Long Text
-  if (parameter.type === "string" && (parameter.name.includes("prompt") || parameter.format === "multiline")) {
-    return (
-      <div className="space-y-2">
-        {!compact && <LabelWithTooltip />}
-        <Textarea
-          value={currentValue || ""}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={disabled}
-          rows={4}
-          placeholder={`Enter ${label.toLowerCase()}...`}
-        />
-      </div>
-    )
-  }
-
-  // 9. Default Fallback (Input)
   return (
-    <div className="space-y-2">
-      {!compact && <LabelWithTooltip />}
-      <Input
-        type={parameter.type === "number" || parameter.type === "integer" ? "number" : "text"}
-        value={currentValue ?? ""}
-        onChange={(e) => {
-          const val = e.target.value
-          if (parameter.type === "number" || parameter.type === "integer") {
-            onChange(val === "" ? undefined : Number(val))
+    <div className={cn("w-[90px]", compact ? "" : "space-y-1")}>
+      {!compact && (
+        <label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground/60 flex items-center gap-1.5 px-1">
+          {getParameterIcon(parameter.name)}
+          {label}
+        </label>
+      )}
+      <Select
+        value={strValue}
+        onValueChange={(val) => {
+          if (parameter.type === 'integer' || parameter.type === 'number') {
+            onChange(Number(val))
           } else {
             onChange(val)
           }
         }}
         disabled={disabled}
-        placeholder={`Enter ${label}...`}
+      >
+        <SelectTrigger className={cn("w-full bg-background/40 border-white/5 glass-effect px-2.5 hover:bg-white/5 transition-all text-primary", compact ? "h-9" : "h-10")}>
+          <div className="flex items-center gap-2 text-xs font-bold overflow-hidden">
+            <div className="text-primary/70 shrink-0">{getParameterIcon(parameter.name)}</div>
+            <SelectValue placeholder={label} />
+          </div>
+        </SelectTrigger>
+        <SelectContent className="glass-effect border-white/10 min-w-[100px] p-1">
+          {options.map((opt: any) => (
+            <SelectItem key={String(opt)} value={String(opt)} className="focus:bg-primary/10 focus:text-primary cursor-pointer px-2 rounded-md">
+              <span className="text-xs font-bold">{String(opt)}</span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
+}
+
+
+// 5. Booleans (Switch)
+if (parameter.type === "boolean") {
+  return (
+    <div className="flex items-center justify-between">
+      <LabelWithTooltip />
+      <Switch
+        id={parameter.id}
+        checked={currentValue === true || currentValue === "true"}
+        onCheckedChange={onChange}
+        disabled={disabled}
       />
     </div>
   )
+}
+
+// 6. Numeric Ranges (Slider + Input)
+if ((parameter.type === "integer" || parameter.type === "number") &&
+  parameter.min !== undefined && parameter.max !== undefined) {
+
+  const step = parameter.step || (parameter.type === "integer" ? 1 : 0.01)
+
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-between items-center">
+        <LabelWithTooltip />
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {currentValue ?? effectiveDefault}
+        </span>
+      </div>
+      <div className="flex items-center gap-4">
+        <Slider
+          value={[Number(currentValue ?? effectiveDefault ?? parameter.min)]}
+          onValueChange={(vals) => onChange(vals[0])}
+          min={parameter.min}
+          max={parameter.max}
+          step={step}
+          disabled={disabled}
+          className="flex-1"
+        />
+        <Input
+          type="number"
+          className="w-20 h-9"
+          value={currentValue ?? ""}
+          onChange={(e) => {
+            const val = Number(e.target.value)
+            if (!isNaN(val)) onChange(val)
+          }}
+          min={parameter.min}
+          max={parameter.max}
+          step={step}
+          disabled={disabled}
+        />
+      </div>
+      <div className="flex justify-between text-xs text-muted-foreground px-1">
+        <span>{parameter.min}</span>
+        <span>{parameter.max}</span>
+      </div>
+    </div>
+  )
+}
+
+// 7. Arrays (Dynamic List)
+if (parameter.type === "array") {
+  return (
+    <DynamicList
+      label={!compact ? label : undefined}
+      value={Array.isArray(currentValue) ? currentValue : []}
+      onChange={onChange}
+      disabled={disabled}
+    />
+  )
+}
+
+// 8. Long Text
+if (parameter.type === "string" && (parameter.name.includes("prompt") || parameter.format === "multiline")) {
+  return (
+    <div className="space-y-2">
+      {!compact && <LabelWithTooltip />}
+      <Textarea
+        value={currentValue || ""}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        rows={4}
+        placeholder={`Enter ${label.toLowerCase()}...`}
+      />
+    </div>
+  )
+}
+
+// 9. Default Fallback (Input)
+return (
+  <div className="space-y-2">
+    {!compact && <LabelWithTooltip />}
+    <Input
+      type={parameter.type === "number" || parameter.type === "integer" ? "number" : "text"}
+      value={currentValue ?? ""}
+      onChange={(e) => {
+        const val = e.target.value
+        if (parameter.type === "number" || parameter.type === "integer") {
+          onChange(val === "" ? undefined : Number(val))
+        } else {
+          onChange(val)
+        }
+      }}
+      disabled={disabled}
+      placeholder={`Enter ${label}...`}
+    />
+  </div>
+)
 }
