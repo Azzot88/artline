@@ -37,6 +37,10 @@ export const translations = {
             static: "Статика",
             dynamic: "Динамика"
         },
+        library: {
+            title: "Библиотека",
+            subtitle: "Ваша личная коллекция генераций"
+        },
         navigation: {
             workbench: "Мастерская",
             history: "История",
@@ -414,15 +418,20 @@ export const translations = {
             themeDark: "Қараңғы",
             themeSystem: "Жүйелік",
             static: "Статика",
-            dynamic: "Динамика"
+            dynamic: "Динамика",
+            viewAll: "Барлығын көру"
+        },
+        library: {
+            title: "Кітапхана",
+            subtitle: "Сіздің жеке генерациялар жинағыңыз"
         },
         workbench: {
             appTitle: "Шеберхана",
             appSubtitle: "Контент жасауға арналған бірыңғай платформа",
-            textToImage: "Текст → Фото",
-            textToVideo: "Текст → Видео",
-            imageToImage: "Фото → Фото",
-            videoToVideo: "Фото → Видео",
+            textToImage: "Мәтін → Сурет",
+            textToVideo: "Мәтін → Видео",
+            imageToImage: "Сурет → Сурет",
+            videoToVideo: "Сурет → Видео",
             generating: "Генерация...",
             generate: "Жасау",
             describeImage: "Жасағыңыз келетін суретті сипаттаңыз...",
@@ -752,15 +761,20 @@ export const translations = {
             themeDark: "Караңгы",
             themeSystem: "Системалык",
             static: "Статика",
-            dynamic: "Динамика"
+            dynamic: "Динамика",
+            viewAll: "Баарын көрүү"
+        },
+        library: {
+            title: "Китепкана",
+            subtitle: "Сиздин жеке генерациялар топтомуңуз"
         },
         workbench: {
             appTitle: "Устакана",
             appSubtitle: "Контент жаратуу үчүн бирдиктүү платформа",
-            textToImage: "Текст → Фото",
+            textToImage: "Текст → Сүрөт",
             textToVideo: "Текст → Видео",
-            imageToImage: "Фото → Фото",
-            videoToVideo: "Фото → Видео",
+            imageToImage: "Сүрөт → Сүрөт",
+            videoToVideo: "Сүрөт → Видео",
             generating: "Генерация...",
             generate: "Жасоо",
             describeImage: "Жасагыңыз келген сүрөттү сүрөттөп бериңиз...",

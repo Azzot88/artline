@@ -55,7 +55,7 @@ export function Library() {
                 <div>
                     <h1 className="text-2xl font-bold">{t('common.library') || "Library"}</h1>
                     <p className="text-sm text-muted-foreground">
-                        Your personal collection of generations
+                        {t('library.subtitle')}
                     </p>
                 </div>
             </div>
