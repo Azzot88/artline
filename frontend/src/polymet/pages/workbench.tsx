@@ -251,7 +251,7 @@ export function Workbench() {
   }
 
   return (
-    <div className="w-full space-y-8 animate-in fade-in duration-700">
+    <div className="w-full space-y-6 animate-in fade-in duration-700">
       {/* Page Header */}
       <div className="space-y-2">
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
@@ -277,7 +277,7 @@ export function Workbench() {
         <CardContent className="p-0">
           <div className="relative">
             {/* Top Controls Bar */}
-            <div className="absolute top-0 left-0 right-0 bg-background/40 backdrop-blur-xl border-b border-white/10 p-4 z-10 flex flex-wrap items-center gap-4">
+            <div className="absolute top-0 left-0 right-0 bg-background/40 backdrop-blur-xl border-b border-white/10 p-3 z-10 flex flex-wrap items-center gap-4">
               <CreationTypeToggle value={creationType} onChange={setCreationType} />
               <InputTypeToggle value={inputType} onChange={setInputType} creationType={creationType} />
             </div>
@@ -290,9 +290,9 @@ export function Workbench() {
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder={creationType === "image" ? t('workbench.describeImage') : t('workbench.describeVideo')}
-                  className="w-full min-h-[450px] resize-none bg-transparent border-0 focus-visible:ring-0 text-xl md:text-2xl p-8 pt-24 pb-36 font-medium placeholder:text-muted-foreground/40"
+                  className="w-full min-h-[400px] resize-none bg-transparent border-0 focus-visible:ring-0 text-xl md:text-2xl p-8 pt-20 pb-36 font-medium placeholder:text-muted-foreground/40"
                 />
-                <div className="absolute top-24 right-8">
+                <div className="absolute top-20 right-8">
                   <Button
                     variant="secondary"
                     size="sm"
@@ -305,7 +305,7 @@ export function Workbench() {
                 </div>
               </div>
             ) : (
-              <div className="w-full min-h-[450px] p-8 pt-24 pb-36 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-xl m-4 mt-20">
+              <div className="w-full min-h-[400px] p-8 pt-20 pb-36 flex flex-col items-center justify-center relative">
                 <button
                   onClick={() => document.getElementById('file-input')?.click()}
                   className="group flex flex-col items-center gap-4 p-12 rounded-3xl bg-white/5 hover:bg-white/10 transition-all border border-white/5"

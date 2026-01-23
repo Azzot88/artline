@@ -170,13 +170,13 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
                 <Link key={item.href} to={item.href} onClick={onClose}>
                   <div
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
                       active
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                        : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
                     )}
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className={cn("w-4 h-4 transition-colors", active ? "text-primary-foreground" : "group-hover:text-primary")} />
                     <span>{label}</span>
                     {item.badge && (
                       <span className="ml-auto text-xs px-1.5 py-0.5 rounded bg-primary/20">
@@ -201,13 +201,13 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
             <div
               onClick={handleSettingsClick}
               className={cn(
-                "cursor-pointer flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                "cursor-pointer flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group",
                 (isActive("/account") || isActive("/admin") || isActive("/login"))
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                  : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
               )}
             >
-              <SettingsIcon className="w-4 h-4" />
+              <SettingsIcon className={cn("w-4 h-4 transition-colors", (isActive("/account") || isActive("/admin") || isActive("/login")) ? "text-primary-foreground" : "group-hover:text-primary")} />
               <span>{t('common.settings')}</span>
             </div>
 
