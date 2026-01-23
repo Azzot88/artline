@@ -75,7 +75,7 @@ export function FormatSelectorV2({
   const selectedFormat = formats.find(f => f.value === value) || { value, label: value, icon: <AspectRatioBox ratio={String(value)} /> }
 
   return (
-    <div className={cn("w-[80px]", compact ? "" : "space-y-1")}>
+    <div className={cn("w-[90px]", compact ? "" : "space-y-1")}>
       {!compact && (
         <label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground/60 flex items-center gap-1.5 px-1">
           {t('workbench.format')}
@@ -84,11 +84,10 @@ export function FormatSelectorV2({
       <Select value={String(value)} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger className={cn("w-full bg-background/40 border-white/5 glass-effect px-2 hover:bg-white/5 transition-all text-primary", compact ? "h-9" : "h-10")}>
           <div className="flex items-center gap-1.5 text-xs font-bold overflow-hidden">
-            {selectedFormat.icon}
             <SelectValue />
           </div>
         </SelectTrigger>
-        <SelectContent className="glass-effect border-white/10 min-w-[80px] p-1">
+        <SelectContent className="glass-effect border-white/10 min-w-[90px] p-1">
           {formats.map(format => (
             <SelectItem key={format.value} value={format.value} className="focus:bg-primary/10 focus:text-primary cursor-pointer px-2 rounded-md">
               <div className="flex items-center gap-2 w-full">
