@@ -68,6 +68,8 @@ export function CommunityGallery() {
           setGenerations(mapped)
         }
       } catch (e) {
+      } finally {
+        setLoading(false)
       }
     }
     fetchRecent()
