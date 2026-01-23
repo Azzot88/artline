@@ -115,7 +115,25 @@ export function Workbench() {
 
     const initialValues: ParameterValues = {}
     sortedParams.forEach((param: any) => {
-      if (param.default_value !== undefined) initialValues[param.id] = param.default_value
+      // Get the config for this parameter to check allowed_values
+      const config = sortedParams.find((p: any) => p.id === param.id) // sortedParams is actually a mix, but we can look up in the derived configs
+      const paramConfig = {
+        parameter_id: param.id,
+        allowed_values: param.allowed_values, // normalizeModelInputs merges config into param
+        override_default: undefined
+      }
+
+      let defVal = param.default_value
+
+      // If we have strict allowed values, ensure default is valid
+      if (param.allowed_values && param.allowed_values.length > 0) {
+        if (!param.allowed_values.includes(defVal)) {
+          // Default invalid? Fallback to first allowed value
+          defVal = param.allowed_values[0]
+        }
+      }
+
+      if (defVal !== undefined) initialValues[param.id] = defVal
     })
     setParameterValues(initialValues)
   }, [selectedModel])
