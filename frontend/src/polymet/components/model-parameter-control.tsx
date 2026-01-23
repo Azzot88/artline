@@ -123,7 +123,7 @@ export function ModelParameterControl({
   // 4. Enumerations (Select)
   if ((parameter.enum || allowedValues) && parameter.type !== 'array') {
     return (
-      <div className={cn("w-[90px]", compact ? "" : "space-y-1")}>
+      <div className={cn("w-[85px]", compact ? "" : "space-y-1")}>
         {!compact && (
           <label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground/60 flex items-center gap-1.5 px-1">
             {getParameterIcon(parameter.name)}
@@ -141,13 +141,13 @@ export function ModelParameterControl({
           }}
           disabled={disabled}
         >
-          <SelectTrigger className={cn("w-full bg-background/40 border-white/5 glass-effect px-2.5 hover:bg-white/5 transition-all text-primary", compact ? "h-9" : "h-10")}>
-            <div className="flex items-center gap-2 text-xs font-bold overflow-hidden">
+          <SelectTrigger className={cn("w-full bg-background/40 border-white/5 glass-effect px-2 hover:bg-white/5 transition-all text-primary", compact ? "h-9" : "h-10")}>
+            <div className="flex items-center gap-1.5 text-xs font-bold overflow-hidden">
               <div className="text-primary/70 shrink-0">{getParameterIcon(parameter.name)}</div>
               <SelectValue placeholder={label} />
             </div>
           </SelectTrigger>
-          <SelectContent className="glass-effect border-white/10 min-w-[100px] p-1">
+          <SelectContent className="glass-effect border-white/10 min-w-[85px] p-1">
             {options.map((opt: any) => (
               <SelectItem key={String(opt)} value={String(opt)} className="focus:bg-primary/10 focus:text-primary cursor-pointer px-2 rounded-md">
                 <span className="text-xs font-bold">{String(opt)}</span>

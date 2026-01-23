@@ -31,12 +31,11 @@ const AspectRatioBox = ({ ratio, className }: { ratio: string; className?: strin
   const w = parts[0] || 1;
   const h = parts[1] || 1;
 
-  return (
-    <div className={cn("border-[1.5px] border-current rounded-[1px] shrink-0 opacity-80",
-      w === h ? "w-3 h-3" : (w > h ? "w-4 h-2.5" : "w-2.5 h-4"),
-      className)}
-    />
-  )
+  const iconClasses = cn("w-3.5 h-3.5 shrink-0 opacity-80", className)
+
+  if (w === h) return <SquareIcon className={iconClasses} />
+  if (w > h) return <RectangleHorizontalIcon className={iconClasses} />
+  return <RectangleVerticalIcon className={iconClasses} />
 }
 
 const IMAGE_FORMATS: { value: ImageFormatType; label: string; icon: React.ReactNode }[] = [
@@ -76,25 +75,25 @@ export function FormatSelectorV2({
   const selectedFormat = formats.find(f => f.value === value) || { value, label: value, icon: <AspectRatioBox ratio={String(value)} /> }
 
   return (
-    <div className={cn("w-[90px]", compact ? "" : "space-y-1")}>
+    <div className={cn("w-[80px]", compact ? "" : "space-y-1")}>
       {!compact && (
         <label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground/60 flex items-center gap-1.5 px-1">
           {t('workbench.format')}
         </label>
       )}
       <Select value={String(value)} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger className={cn("w-full bg-background/40 border-white/5 glass-effect px-2.5 hover:bg-white/5 transition-all", compact ? "h-9" : "h-10")}>
-          <div className="flex items-center gap-2 text-xs font-bold text-primary">
+        <SelectTrigger className={cn("w-full bg-background/40 border-white/5 glass-effect px-2 hover:bg-white/5 transition-all text-primary", compact ? "h-9" : "h-10")}>
+          <div className="flex items-center gap-1.5 text-xs font-bold overflow-hidden">
             {selectedFormat.icon}
             <SelectValue />
           </div>
         </SelectTrigger>
-        <SelectContent className="glass-effect border-white/10 min-w-[95px] p-1">
+        <SelectContent className="glass-effect border-white/10 min-w-[80px] p-1">
           {formats.map(format => (
             <SelectItem key={format.value} value={format.value} className="focus:bg-primary/10 focus:text-primary cursor-pointer px-2 rounded-md">
-              <div className="flex items-center justify-between w-full gap-3">
-                <span className="text-xs font-bold">{format.label}</span>
-                <div className="text-primary/70">{format.icon}</div>
+              <div className="flex items-center gap-2 w-full">
+                <div className="text-primary/70 shrink-0">{format.icon}</div>
+                <span className="text-[11px] font-bold">{format.label}</span>
               </div>
             </SelectItem>
           ))}
