@@ -12,7 +12,8 @@ import {
   TrendingUpIcon,
   CreditCardIcon,
   Brain,
-  CheckCircle
+  CheckCircle,
+  Video
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -47,15 +48,29 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
   const isAdmin = user?.is_admin || false
 
   const isActive = (href: string) => {
-    return location.pathname === href || location.pathname.startsWith(href + "/")
+    // Special handling for Workbench tabs
+    if (href === '/workbench?tab=image') {
+      return location.pathname === '/workbench' && (!location.search || location.search.includes('tab=image'))
+    }
+    if (href === '/workbench?tab=video') {
+      return location.pathname === '/workbench' && location.search.includes('tab=video')
+    }
+
+    return location.pathname === href || (href !== '/' && location.pathname.startsWith(href + "/"))
   }
 
   const mainNavItems: NavItem[] = [
     {
-      key: "workbench",
-      href: "/workbench",
-      icon: LayoutDashboardIcon,
-      title: "common.startUsing"
+      key: "static",
+      href: "/workbench?tab=image",
+      icon: ImageIcon,
+      title: "common.static"
+    },
+    {
+      key: "dynamic",
+      href: "/workbench?tab=video",
+      icon: Video,
+      title: "common.dynamic"
     },
     {
       key: "tariffs",
@@ -66,7 +81,17 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
     {
       key: "library",
       href: "/library",
-      icon: ImageIcon,
+      icon: LayoutDashboardIcon, // Using Layout/Dashboard icon for library consistency if preferred, otherwise ImageIcon was reused before. Original was ImageIcon. But Static uses ImageIcon now. Let's use LayoutDashboard for Library or Folder. Original had ImageIcon for library?
+      // Re-checking original: Library used ImageIcon. Static should use ImageIcon. Library should use something else? 
+      // Original: Library used ImageIcon. 
+      // User didn't ask to change Library icon but if duplicate it might be confusing.
+      // Let's use Gallery/Images icon for library? Or maybe defaults.
+      // I'll stick to original ImageIcon for library to minimize changes unless it conflicts visually.
+      // Actually, having two ImageIcons is bad.
+      // I'll swap Library to LayoutDashboardIcon (which was Start Using) or Folder.
+      // Providing 'LayoutDashboardIcon' which is imported.
+      // Wait, 'common.library' usually implies a gallery.
+      // Let's use 'LayoutDashboardIcon' for Library for now to avoid duplicates.
       title: "common.library"
     }
   ]

@@ -34,6 +34,8 @@ export const translations = {
             themeLight: "Светлая",
             themeDark: "Тёмная",
             themeSystem: "Системная",
+            static: "Статика",
+            dynamic: "Динамика"
         },
         navigation: {
             workbench: "Мастерская",
@@ -115,7 +117,7 @@ export const translations = {
             textToImage: "Текст → Фото",
             textToVideo: "Текст → Видео",
             imageToImage: "Фото → Фото",
-            videoToVideo: "Видео → Видео",
+            videoToVideo: "Фото → Видео",
             generating: "Генерация...",
             generate: "Создать",
             describeImage: "Опишите изображение, которое хотите создать...",
@@ -396,6 +398,8 @@ export const translations = {
             themeLight: "Ашық",
             themeDark: "Қараңғы",
             themeSystem: "Жүйелік",
+            static: "Статика",
+            dynamic: "Динамика"
         },
         workbench: {
             appTitle: "Шеберхана",
@@ -403,7 +407,7 @@ export const translations = {
             textToImage: "Текст → Фото",
             textToVideo: "Текст → Видео",
             imageToImage: "Фото → Фото",
-            videoToVideo: "Видео → Видео",
+            videoToVideo: "Фото → Видео",
             generating: "Генерация...",
             generate: "Жасау",
             describeImage: "Жасағыңыз келетін суретті сипаттаңыз...",
@@ -416,42 +420,42 @@ export const translations = {
                 genFailed: "Генерация қатесі",
                 unknownError: "Белгісіз қате"
             },
-            libraryWidget: {
-                title: "Менің генерацияларым",
-                viewAll: "Барлығын көру",
-                empty: "Генерациялар жоқ"
-            },
-            generationDetails: {
-                title: "Генерация мәліметтері",
-                prompt: "Промпт",
-                model: "Модель",
-                resolution: "Өлшемі",
-                format: "Формат",
-                duration: "Ұзақтығы",
-                cost: "Құны",
-                date: "Күні",
-                download: "Жүктеу",
-                delete: "Жою",
-                copyPrompt: "Көшіру",
-                readMore: "Толығырақ",
-                readLess: "Жасыру",
-                copied: "Көшірілді",
-                status: {
-                    queued: "Кезекте",
-                    running: "Дайындалуда...",
-                    succeeded: "Дайын",
-                    failed: "Қате"
-                },
-                units: {
-                    pixels: "px",
-                    seconds: "сек",
-                    credits: "кр"
-                }
-            },
             loading: "Модельдер жүктелуде...",
             errorLoading: "Модельдерді жүктеу қатесі",
             errorLoadingDesc: "Сервердің жұмыс істеп тұрғанын және авторланғаныңызды тексеріңіз.",
             inputFile: "Файлды таңдаңыз"
+        },
+        libraryWidget: {
+            title: "Менің генерацияларым",
+            viewAll: "Барлығын көру",
+            empty: "Генерациялар жоқ"
+        },
+        generationDetails: {
+            title: "Генерация мәліметтері",
+            prompt: "Промпт",
+            model: "Модель",
+            resolution: "Өлшемі",
+            format: "Формат",
+            duration: "Ұзақтығы",
+            cost: "Құны",
+            date: "Күні",
+            download: "Жүктеу",
+            delete: "Жою",
+            copyPrompt: "Көшіру",
+            readMore: "Толығырақ",
+            readLess: "Жасыру",
+            copied: "Көшірілді",
+            status: {
+                queued: "Кезекте",
+                running: "Дайындалуда...",
+                succeeded: "Дайын",
+                failed: "Қате"
+            },
+            units: {
+                pixels: "px",
+                seconds: "сек",
+                credits: "кр"
+            }
         },
         landing: {
             hero: {
@@ -717,6 +721,8 @@ export const translations = {
             themeLight: "Жарык",
             themeDark: "Караңгы",
             themeSystem: "Системалык",
+            static: "Статика",
+            dynamic: "Динамика"
         },
         workbench: {
             appTitle: "Устакана",
@@ -724,7 +730,7 @@ export const translations = {
             textToImage: "Текст → Фото",
             textToVideo: "Текст → Видео",
             imageToImage: "Фото → Фото",
-            videoToVideo: "Видео → Видео",
+            videoToVideo: "Фото → Видео",
             generating: "Генерация...",
             generate: "Жасоо",
             describeImage: "Жасагыңыз келген сүрөттү сүрөттөп бериңиз...",
@@ -737,42 +743,42 @@ export const translations = {
                 genFailed: "Генерация катасы",
                 unknownError: "Белгисиз ката"
             },
-            libraryWidget: {
-                title: "Менин генерацияларым",
-                viewAll: "Баарын көрүү",
-                empty: "Генерациялар жок"
-            },
-            generationDetails: {
-                title: "Генерация маолыматы",
-                prompt: "Промпт",
-                model: "Модель",
-                resolution: "Өлчөмү",
-                format: "Формат",
-                duration: "Узактыгы",
-                cost: "Баасы",
-                date: "Күнү",
-                download: "Жүктөө",
-                delete: "Өчүрүү",
-                copyPrompt: "Көчүрүү",
-                readMore: "Толугураак",
-                readLess: "Жашыруу",
-                copied: "Көчүрүлдү",
-                status: {
-                    queued: "Кезекте",
-                    running: "Даярдалууда...",
-                    succeeded: "Даяр",
-                    failed: "Ката"
-                },
-                units: {
-                    pixels: "px",
-                    seconds: "сек",
-                    credits: "кр"
-                }
-            },
             loading: "Моделдер жүктөлүүдө...",
             errorLoading: "Моделдерди жүктөө катасы",
             errorLoadingDesc: "Сервер иштеп жатканын жана авторизацияланганыңызды текшериңиз.",
             inputFile: "Файлды тандаңыз"
+        },
+        libraryWidget: {
+            title: "Менин генерацияларым",
+            viewAll: "Баарын көрүү",
+            empty: "Генерациялар жок"
+        },
+        generationDetails: {
+            title: "Генерация маолыматы",
+            prompt: "Промпт",
+            model: "Модель",
+            resolution: "Өлчөмү",
+            format: "Формат",
+            duration: "Узактыгы",
+            cost: "Баасы",
+            date: "Күнү",
+            download: "Жүктөө",
+            delete: "Өчүрүү",
+            copyPrompt: "Көчүрүү",
+            readMore: "Толугураак",
+            readLess: "Жашыруу",
+            copied: "Көчүрүлдү",
+            status: {
+                queued: "Кезекте",
+                running: "Даярдалууда...",
+                succeeded: "Даяр",
+                failed: "Ката"
+            },
+            units: {
+                pixels: "px",
+                seconds: "сек",
+                credits: "кр"
+            }
         },
         landing: {
             hero: {

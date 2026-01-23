@@ -59,7 +59,16 @@ export function Workbench() {
         return prev + spacer + text
       })
     }
-  }, [location])
+
+    // Handle Tab/Mode from URL (Static/Dynamic)
+    const params = new URLSearchParams(location.search)
+    const tab = params.get('tab')
+    if (tab === 'video') {
+      if (creationType !== 'video') setCreationType('video')
+    } else if (tab === 'image') {
+      if (creationType !== 'image') setCreationType('image')
+    }
+  }, [location, creationType])
 
   // Use Dynamic Models
   const { models, loading: modelsLoading, error: modelsError } = useModels()
