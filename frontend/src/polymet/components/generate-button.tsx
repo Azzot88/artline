@@ -25,7 +25,11 @@ export function GenerateButton({
       onClick={onClick}
       disabled={disabled || loading}
       size="lg"
-      className={cn("w-full gap-2 text-base font-semibold", className)}
+      className={cn(
+        "w-full gap-2 text-base font-semibold transition-all duration-300",
+        loading && "animate-pulse-subtle shadow-[0_0_20px_rgba(107,79,255,0.4)]",
+        className
+      )}
     >
       {loading ? (
         <>

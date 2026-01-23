@@ -103,6 +103,7 @@
   --chart-3: 30 80% 55%;
   --chart-4: 280 65% 60%;
   --chart-5: 340 75% 55%;
+  /* Sidebar */
   --sidebar: 240 20% 5%;
   --sidebar-foreground: 240 20% 90%;
   --sidebar-primary: 266 100% 65%;
@@ -111,6 +112,37 @@
   --sidebar-accent-foreground: 240 20% 90%;
   --sidebar-border: 240 20% 12%;
   --sidebar-ring: 266 100% 65%;
+}
+
+@layer components {
+  .glass-effect {
+    @apply bg-background/60 backdrop-blur-md border border-border/50 shadow-lg;
+  }
+  
+  .premium-gradient {
+    @apply bg-gradient-to-br from-primary/20 via-background to-accent/10;
+  }
+}
+
+@layer utilities {
+  .animate-pulse-subtle {
+    animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-subtle {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.85; transform: scale(0.98); }
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+  }
 }
 
 body {
