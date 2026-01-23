@@ -101,12 +101,17 @@ export function ModelSelector({ value, onChange, creationType, models, loading }
       </SelectTrigger>
       <SelectContent className="max-w-xs">
         {filteredModels.map((model) => (
-          <SelectItem key={model.id} value={model.id}>
-            <div className="flex flex-col items-start">
-              <span className="font-medium">{model.name}</span>
-              <span className="text-xs text-muted-foreground">
-                {model.description}
-              </span>
+          <SelectItem key={model.id} value={model.id} className="focus:bg-primary/10 focus:text-primary cursor-pointer group">
+            <div className="flex items-center gap-3">
+              <div className="p-1.5 rounded-md bg-primary/5 group-focus:bg-primary/20 transition-colors">
+                <SparklesIcon className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <div className="flex flex-col items-start leading-tight">
+                <span className="font-semibold text-sm">{model.name}</span>
+                <span className="text-[10px] text-muted-foreground group-focus:text-primary/70 line-clamp-1">
+                  {model.description}
+                </span>
+              </div>
             </div>
           </SelectItem>
         ))}
