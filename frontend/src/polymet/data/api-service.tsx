@@ -96,6 +96,10 @@ export const apiService = {
     return api.delete(`/jobs/${jobId}`)
   },
 
+  async toggleCurated(jobId: string) {
+    return api.post<{ is_curated: boolean, is_public: boolean }>(`/jobs/${jobId}/curate`)
+  },
+
   // ==========================================================================
   // Models
   // ==========================================================================

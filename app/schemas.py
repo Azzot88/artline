@@ -40,6 +40,9 @@ class JobRead(BaseModel):
     logs: Optional[str] = None
     
     # Metadata
+    model_id: Optional[uuid.UUID] = None
+    cost_credits: int = 0
+
     input_type: str = "text"
     input_image_url: Optional[str] = None
     format: str = "square"

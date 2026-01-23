@@ -508,6 +508,30 @@ async def toggle_public(
     await db.commit()
     return {"is_public": job.is_public}
 
+@router.post("/jobs/{job_id}/curate")
+async def toggle_curated(
+    job_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin only")
+
+    stmt = select(Job).where(Job.id == job_id)
+    result = await db.execute(stmt)
+    job = result.scalar_one_or_none()
+    
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    job.is_curated = not job.is_curated
+    # If curating, ensure it is also public so it shows in gallery
+    if job.is_curated:
+        job.is_public = True
+        
+    await db.commit()
+    return {"is_curated": job.is_curated, "is_public": job.is_public}
+
 @router.post("/jobs/{job_id}/like")
 async def like_job(
     job_id: str,
