@@ -128,11 +128,21 @@ export function normalizeModelInputs(model: any): any[] {
                 allowedValues = uiConfig.allowed_values
             }
 
+            // Sanitise default value:
+            // If we have strict allowed values and the current default is NOT in them,
+            // fallback to the first allowed value.
+            let safeDefault = input.default
+            if (allowedValues && allowedValues.length > 0) {
+                if (!allowedValues.includes(safeDefault)) {
+                    safeDefault = allowedValues[0]
+                }
+            }
+
             return {
                 id: input.name,
                 name: input.name,
                 type: type,
-                default_value: input.default,
+                default_value: safeDefault,
                 required: input.required || false,
                 enum: allowedValues,
                 min: input.min,
