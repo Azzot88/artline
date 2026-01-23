@@ -425,6 +425,9 @@ export const translations = {
             title: "Кітапхана",
             subtitle: "Сіздің жеке генерациялар жинағыңыз"
         },
+        gallery: {
+            communityTitle: "Қоғамдастық галереясы"
+        },
         workbench: {
             appTitle: "Шеберхана",
             appSubtitle: "Контент жасауға арналған бірыңғай платформа",
@@ -767,6 +770,9 @@ export const translations = {
         library: {
             title: "Китепкана",
             subtitle: "Сиздин жеке генерациялар топтомуңуз"
+        },
+        gallery: {
+            communityTitle: "Коомдук галерея"
         },
         workbench: {
             appTitle: "Устакана",
