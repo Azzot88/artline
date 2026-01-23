@@ -104,8 +104,8 @@ export const JOB_STATUSES = ["queued", "running", "succeeded", "failed"] as cons
 export const JOB_KINDS = ["image", "video"] as const
 export const INPUT_TYPES = ["text", "image"] as const
 // Format types for images and videos
-export const IMAGE_FORMAT_TYPES = ["1:1", "2:3", "3:2", "16:9", "9:16"] as const
-export const VIDEO_FORMAT_TYPES = ["16:9", "9:16", "1:1"] as const
+export const IMAGE_FORMAT_TYPES = ["1:1", "2:3", "3:2", "16:9", "9:16", "21:9", "9:21", "4:5", "5:4", "4:3", "3:4"] as const
+export const VIDEO_FORMAT_TYPES = ["16:9", "9:16", "1:1", "21:9", "4:5", "5:4"] as const
 export const FORMAT_TYPES = ["square", "portrait", "landscape"] as const // Legacy
 export const RESOLUTION_TYPES = ["720", "1080", "4k"] as const
 
