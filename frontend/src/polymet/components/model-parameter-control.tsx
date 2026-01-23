@@ -5,7 +5,7 @@ import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { InfoIcon } from "lucide-react"
+import { InfoIcon, MaximizeIcon, ZapIcon, LayersIcon, HardDriveIcon, CogIcon } from "lucide-react"
 
 import { FormatSelectorV2 } from "@/polymet/components/format-selector-v2"
 import { DynamicList } from "@/polymet/components/smart-inputs/dynamic-list"
@@ -15,6 +15,7 @@ import { DualSlider } from "@/polymet/components/smart-inputs/dual-slider"
 
 import type { ModelParameter, ModelParameterConfig, ImageFormatType, VideoFormatType } from "@/polymet/data/types"
 import { getEffectiveDefault, getAllowedValues, getParameterLabel } from "@/polymet/data/types"
+import { cn } from "@/lib/utils"
 
 interface ModelParameterControlProps {
   parameter: ModelParameter
@@ -42,16 +43,26 @@ export function ModelParameterControl({
   const currentValue = value ?? effectiveDefault
 
   // --- Helper: Label + Tooltip ---
+  const getParameterIcon = (name: string) => {
+    const n = name.toLowerCase()
+    if (n === 'format' || n === 'aspect_ratio') return <LayersIcon className="w-3.5 h-3.5" />
+    if (n === 'resolution' || n === 'size' || n === 'width' || n === 'height') return <MaximizeIcon className="w-3.5 h-3.5" />
+    if (n === 'quality' || n === 'steps' || n === 'cfg' || n === 'strength') return <ZapIcon className="w-3.5 h-3.5" />
+    if (n.includes('format') || n.includes('output')) return <HardDriveIcon className="w-3.5 h-3.5" />
+    return <CogIcon className="w-3.5 h-3.5" />
+  }
+
   const LabelWithTooltip = () => (
-    <div className="flex items-center gap-2 mb-2">
-      <Label htmlFor={parameter.id} className="cursor-pointer">
+    <div className="flex items-center gap-2 mb-2 transition-colors group">
+      {getParameterIcon(parameter.name)}
+      <Label htmlFor={parameter.id} className="cursor-pointer text-xs font-medium text-muted-foreground group-hover:text-primary transition-colors">
         {label}
         {parameter.required && <span className="text-destructive ml-1">*</span>}
       </Label>
       {description && (
         <Popover>
           <PopoverTrigger asChild>
-            <InfoIcon className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+            <InfoIcon className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground cursor-help" />
           </PopoverTrigger>
           <PopoverContent className="w-80 p-3 text-sm">
             {description}
@@ -69,17 +80,14 @@ export function ModelParameterControl({
     const type = isVideoFormat ? "video" : "image"
 
     return (
-      <div className="space-y-2">
-        {!compact && <LabelWithTooltip />}
-        <FormatSelectorV2
-          value={currentValue as ImageFormatType | VideoFormatType}
-          onChange={onChange}
-          type={type}
-          disabled={disabled}
-          compact={compact}
-          allowedValues={allowedValues}
-        />
-      </div>
+      <FormatSelectorV2
+        value={currentValue as ImageFormatType | VideoFormatType}
+        onChange={onChange}
+        type={type}
+        disabled={disabled}
+        compact={compact}
+        allowedValues={allowedValues}
+      />
     )
   }
 
@@ -116,7 +124,7 @@ export function ModelParameterControl({
     const strValue = currentValue !== undefined && currentValue !== null ? String(currentValue) : undefined
 
     return (
-      <div className="space-y-2">
+      <div className={cn("w-[160px]", compact ? "" : "space-y-1")}>
         {!compact && <LabelWithTooltip />}
         <Select
           value={strValue}
@@ -130,13 +138,16 @@ export function ModelParameterControl({
           }}
           disabled={disabled}
         >
-          <SelectTrigger className="h-9">
-            <SelectValue placeholder={`Select ${label}...`} />
+          <SelectTrigger className={cn("w-full bg-background/50 border-white/10 glass-effect gap-2", compact ? "h-9" : "h-10")}>
+            <div className="flex items-center gap-2 text-xs font-semibold">
+              <div className="text-primary/70">{getParameterIcon(parameter.name)}</div>
+              <SelectValue placeholder={label} />
+            </div>
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="glass-effect border-white/10 min-w-[160px]">
             {options.map((opt: any) => (
-              <SelectItem key={String(opt)} value={String(opt)}>
-                {String(opt)}
+              <SelectItem key={String(opt)} value={String(opt)} className="focus:bg-primary/10 focus:text-primary cursor-pointer">
+                <span className="text-xs font-medium">{String(opt)}</span>
               </SelectItem>
             ))}
           </SelectContent>

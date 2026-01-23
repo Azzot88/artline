@@ -90,14 +90,14 @@ interface ModelSelectorProps {
 export function ModelSelector({ value, onChange, creationType, models, loading }: ModelSelectorProps) {
   return (
     <Select value={value} onValueChange={onChange} disabled={loading}>
-      <SelectTrigger className="w-full h-12 bg-background/50 border-white/10 glass-effect gap-3 px-4">
+      <SelectTrigger className="w-[260px] h-10 bg-background/50 border-white/10 glass-effect gap-3 px-3">
         <SparklesIcon className="w-4 h-4 text-primary shrink-0" />
         <SelectValue placeholder={loading ? "Loading models..." : "Select AI Model"} />
       </SelectTrigger>
-      <SelectContent className="max-w-xs glass-effect border-white/10">
+      <SelectContent className="w-[260px] glass-effect border-white/10 p-1">
         {models.map((model) => (
-          <SelectItem key={model.id} value={model.id} className="focus:bg-primary/10 focus:text-primary cursor-pointer group">
-            <div className="flex flex-col items-start leading-tight py-0.5">
+          <SelectItem key={model.id} value={model.id} className="focus:bg-primary/10 focus:text-primary cursor-pointer group py-2">
+            <div className="flex flex-col items-start leading-tight">
               <span className="font-semibold text-sm">{model.name}</span>
               <span className="text-[10px] text-muted-foreground group-focus:text-primary/70 line-clamp-1">
                 {model.description}

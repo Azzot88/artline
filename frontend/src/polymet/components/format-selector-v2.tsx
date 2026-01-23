@@ -10,9 +10,11 @@ import {
   RectangleVerticalIcon,
   RectangleHorizontalIcon,
   MonitorIcon,
-  SmartphoneIcon
+  SmartphoneIcon,
+  LayersIcon
 } from "lucide-react"
 import type { ImageFormatType, VideoFormatType } from "@/polymet/data/types"
+import { cn } from "@/lib/utils"
 
 interface FormatSelectorV2Props {
   value: ImageFormatType | VideoFormatType
@@ -23,18 +25,37 @@ interface FormatSelectorV2Props {
   allowedValues?: any[]
 }
 
+const AspectRatioBox = ({ ratio, className }: { ratio: string; className?: string }) => {
+  const is169 = ratio === "16:9"
+  const is916 = ratio === "9:16"
+  const is11 = ratio === "1:1" || ratio === "square"
+  const is23 = ratio === "2:3" || ratio === "portrait"
+  const is32 = ratio === "3:2" || ratio === "landscape"
+
+  return (
+    <div className={cn("border-2 border-current rounded-sm shrink-0",
+      is11 && "w-3 h-3",
+      is169 && "w-4 h-2.5",
+      is916 && "w-2.5 h-4",
+      is32 && "w-4 h-3",
+      is23 && "w-3 h-4",
+      className)}
+    />
+  )
+}
+
 const IMAGE_FORMATS: { value: ImageFormatType; label: string; icon: React.ReactNode }[] = [
-  { value: "1:1", label: "1:1 Квадрат", icon: <SquareIcon className="w-4 h-4" /> },
-  { value: "2:3", label: "2:3 Портрет", icon: <RectangleVerticalIcon className="w-4 h-4" /> },
-  { value: "3:2", label: "3:2 Альбом", icon: <RectangleHorizontalIcon className="w-4 h-4" /> },
-  { value: "16:9", label: "16:9 Широкий", icon: <MonitorIcon className="w-4 h-4" /> },
-  { value: "9:16", label: "9:16 Вертикальный", icon: <SmartphoneIcon className="w-4 h-4" /> }
+  { value: "9:16", label: "9:16", icon: <AspectRatioBox ratio="9:16" /> },
+  { value: "2:3", label: "2:3", icon: <AspectRatioBox ratio="2:3" /> },
+  { value: "1:1", label: "1:1", icon: <AspectRatioBox ratio="1:1" /> },
+  { value: "3:2", label: "3:2", icon: <AspectRatioBox ratio="3:2" /> },
+  { value: "16:9", label: "16:9", icon: <AspectRatioBox ratio="16:9" /> },
 ]
 
 const VIDEO_FORMATS: { value: VideoFormatType; label: string; icon: React.ReactNode }[] = [
-  { value: "16:9", label: "16:9 Горизонтальное", icon: <MonitorIcon className="w-4 h-4" /> },
-  { value: "9:16", label: "9:16 Вертикальное", icon: <SmartphoneIcon className="w-4 h-4" /> },
-  { value: "1:1", label: "1:1 Квадратное", icon: <SquareIcon className="w-4 h-4" /> }
+  { value: "9:16", label: "9:16", icon: <AspectRatioBox ratio="9:16" /> },
+  { value: "1:1", label: "1:1", icon: <AspectRatioBox ratio="1:1" /> },
+  { value: "16:9", label: "16:9", icon: <AspectRatioBox ratio="16:9" /> },
 ]
 
 export function FormatSelectorV2({
@@ -54,27 +75,26 @@ export function FormatSelectorV2({
   const selectedFormat = formats.find(f => f.value === value)
 
   return (
-    <div className={compact ? "" : "space-y-1"}>
+    <div className={cn("w-[160px]", compact ? "" : "space-y-1")}>
       {!compact && (
-        <label className="text-xs font-medium text-muted-foreground">
+        <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+          <LayersIcon className="w-3 h-3" />
           Формат
         </label>
       )}
       <Select value={value} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger className={compact ? "h-9" : "h-10"}>
-          <SelectValue>
-            <div className="flex items-center gap-2">
-              {selectedFormat?.icon}
-              <span>{selectedFormat?.value || "Выберите формат"}</span>
-            </div>
-          </SelectValue>
+        <SelectTrigger className={cn("w-full bg-background/50 border-white/10 glass-effect gap-2", compact ? "h-9" : "h-10")}>
+          <div className="flex items-center gap-2 text-xs font-semibold">
+            {selectedFormat?.icon}
+            <SelectValue />
+          </div>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="glass-effect border-white/10 min-w-[160px]">
           {formats.map(format => (
-            <SelectItem key={format.value} value={format.value}>
+            <SelectItem key={format.value} value={format.value} className="focus:bg-primary/10 focus:text-primary cursor-pointer">
               <div className="flex items-center gap-2">
-                {format.icon}
-                <span>{format.label}</span>
+                <div className="w-6 flex justify-center text-primary/70">{format.icon}</div>
+                <span className="text-xs font-medium">{format.label}</span>
               </div>
             </SelectItem>
           ))}
