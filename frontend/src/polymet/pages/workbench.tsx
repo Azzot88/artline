@@ -25,12 +25,17 @@ import type { ParameterValues, ImageFormatType, VideoFormatType, Generation } fr
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
-import { useLocation } from "react-router-dom"
+import { useLocation, useSearchParams } from "react-router-dom"
 
 export function Workbench() {
   const { t } = useLanguage()
   const { refreshUser } = useAuth()
-  const [creationType, setCreationType] = useState<CreationType>("image")
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [creationType, setCreationType] = useState<CreationType>(() => {
+    const tab = searchParams.get('tab')
+    return (tab === 'video') ? 'video' : 'image'
+  })
+
   const [inputType, setInputType] = useState<InputType>("text")
   const [prompt, setPrompt] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -59,16 +64,28 @@ export function Workbench() {
         return prev + spacer + text
       })
     }
+  }, [location])
 
-    // Handle Tab/Mode from URL (Static/Dynamic)
-    const params = new URLSearchParams(location.search)
-    const tab = params.get('tab')
-    if (tab === 'video') {
-      if (creationType !== 'video') setCreationType('video')
-    } else if (tab === 'image') {
-      if (creationType !== 'image') setCreationType('image')
+  // Sync URL -> State
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab === 'video' && creationType !== 'video') {
+      setCreationType('video')
+    } else if (tab === 'image' && creationType !== 'image') {
+      setCreationType('image')
+    } else if (!tab) {
+      // Default to image if param missing, optional but keeps URL clean
+      // setCreationType('image') 
     }
-  }, [location, creationType])
+  }, [searchParams, creationType])
+
+  const handleCreationTypeChange = (type: CreationType) => {
+    setCreationType(type)
+    setSearchParams(prev => {
+      prev.set('tab', type)
+      return prev
+    })
+  }
 
   // Use Dynamic Models
   const { models, loading: modelsLoading, error: modelsError } = useModels()
@@ -265,7 +282,7 @@ export function Workbench() {
           <div className="relative">
             {/* Top Controls Bar */}
             <div className="absolute top-0 left-0 right-0 bg-background/40 backdrop-blur-xl border-b border-white/10 p-3 z-10 flex flex-wrap items-center gap-4">
-              <CreationTypeToggle value={creationType} onChange={setCreationType} />
+              <CreationTypeToggle value={creationType} onChange={handleCreationTypeChange} />
               <InputTypeToggle value={inputType} onChange={setInputType} creationType={creationType} />
             </div>
 
