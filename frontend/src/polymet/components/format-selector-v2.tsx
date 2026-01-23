@@ -75,7 +75,7 @@ export function FormatSelectorV2({
   const selectedFormat = formats.find(f => f.value === value)
 
   return (
-    <div className={cn("w-[160px]", compact ? "" : "space-y-1")}>
+    <div className={cn("w-[110px]", compact ? "" : "space-y-1")}>
       {!compact && (
         <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
           <LayersIcon className="w-3 h-3" />
@@ -83,18 +83,18 @@ export function FormatSelectorV2({
         </label>
       )}
       <Select value={value} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger className={cn("w-full bg-background/50 border-white/10 glass-effect gap-2", compact ? "h-9" : "h-10")}>
-          <div className="flex items-center gap-2 text-xs font-semibold">
-            {selectedFormat?.icon}
+        <SelectTrigger className={cn("w-full bg-background/50 border-white/10 glass-effect gap-2 justify-start", compact ? "h-9" : "h-10")}>
+          <div className="flex items-center gap-2 text-xs font-semibold overflow-hidden">
+            <div className="text-primary/70 shrink-0">{selectedFormat?.icon}</div>
             <SelectValue />
           </div>
         </SelectTrigger>
-        <SelectContent className="glass-effect border-white/10 min-w-[160px]">
+        <SelectContent className="glass-effect border-white/10 min-w-[110px]">
           {formats.map(format => (
-            <SelectItem key={format.value} value={format.value} className="focus:bg-primary/10 focus:text-primary cursor-pointer">
-              <div className="flex items-center gap-2">
-                <div className="w-6 flex justify-center text-primary/70">{format.icon}</div>
+            <SelectItem key={format.value} value={format.value} className="focus:bg-primary/10 focus:text-primary cursor-pointer px-2">
+              <div className="flex items-center justify-between w-full gap-2 min-w-[80px]">
                 <span className="text-xs font-medium">{format.label}</span>
+                <div className="text-primary/70">{format.icon}</div>
               </div>
             </SelectItem>
           ))}

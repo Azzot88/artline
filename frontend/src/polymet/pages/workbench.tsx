@@ -321,9 +321,9 @@ export function Workbench() {
             )}
 
             {/* Bottom Controls Bar */}
-            <div className="absolute bottom-0 left-0 right-0 bg-background/60 backdrop-blur-2xl border-t border-white/10 p-6">
-              <div className="flex flex-wrap items-end gap-4">
-                <div className="flex-1 min-w-[240px]">
+            <div className="absolute bottom-0 left-0 right-0 bg-background/60 backdrop-blur-2xl border-t border-white/10 p-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="shrink-0">
                   <ModelSelector
                     value={model}
                     onChange={setModel}
@@ -333,22 +333,21 @@ export function Workbench() {
                   />
                 </div>
 
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2">
                   {modelParameters.slice(0, 3).map(param => (
-                    <div key={param.id} className="w-36 md:w-44">
-                      <ModelParameterControl
-                        parameter={param}
-                        config={modelConfigs.find(c => c.parameter_id === param.id)}
-                        value={parameterValues[param.id]}
-                        onChange={(val) => handleParameterChange(param.id, val)}
-                        disabled={loading}
-                        compact
-                      />
-                    </div>
+                    <ModelParameterControl
+                      key={param.id}
+                      parameter={param}
+                      config={modelConfigs.find(c => c.parameter_id === param.id)}
+                      value={parameterValues[param.id]}
+                      onChange={(val) => handleParameterChange(param.id, val)}
+                      disabled={loading}
+                      compact
+                    />
                   ))}
                 </div>
 
-                <div className="w-full md:w-auto md:ml-auto">
+                <div className="md:ml-auto">
                   <GenerateButton
                     credits={modelCredits}
                     onClick={handleGenerate}

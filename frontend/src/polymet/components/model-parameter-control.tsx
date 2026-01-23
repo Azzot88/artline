@@ -124,7 +124,7 @@ export function ModelParameterControl({
     const strValue = currentValue !== undefined && currentValue !== null ? String(currentValue) : undefined
 
     return (
-      <div className={cn("w-[160px]", compact ? "" : "space-y-1")}>
+      <div className={cn("w-[110px]", compact ? "" : "space-y-1")}>
         {!compact && <LabelWithTooltip />}
         <Select
           value={strValue}
@@ -138,15 +138,15 @@ export function ModelParameterControl({
           }}
           disabled={disabled}
         >
-          <SelectTrigger className={cn("w-full bg-background/50 border-white/10 glass-effect gap-2", compact ? "h-9" : "h-10")}>
-            <div className="flex items-center gap-2 text-xs font-semibold">
-              <div className="text-primary/70">{getParameterIcon(parameter.name)}</div>
+          <SelectTrigger className={cn("w-full bg-background/50 border-white/10 glass-effect gap-2 justify-start", compact ? "h-9" : "h-10")}>
+            <div className="flex items-center gap-2 text-xs font-semibold overflow-hidden">
+              <div className="text-primary/70 shrink-0">{getParameterIcon(parameter.name)}</div>
               <SelectValue placeholder={label} />
             </div>
           </SelectTrigger>
-          <SelectContent className="glass-effect border-white/10 min-w-[160px]">
+          <SelectContent className="glass-effect border-white/10 min-w-[110px]">
             {options.map((opt: any) => (
-              <SelectItem key={String(opt)} value={String(opt)} className="focus:bg-primary/10 focus:text-primary cursor-pointer">
+              <SelectItem key={String(opt)} value={String(opt)} className="focus:bg-primary/10 focus:text-primary cursor-pointer px-2">
                 <span className="text-xs font-medium">{String(opt)}</span>
               </SelectItem>
             ))}
