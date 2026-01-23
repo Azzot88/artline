@@ -106,6 +106,16 @@ export function FormatSelectorV2({
     formats = allPossibleFormats.filter(f => allowedValues.includes(f.value))
   }
 
+  // CRITICAL FIX: Ensure the current value is ALWAYS in the list, 
+  // otherwise Radix UI Select renders nothing/blank.
+  if (value && !formats.some(f => f.value === value)) {
+    formats.push({
+      value: value,
+      label: String(value),
+      icon: <AspectRatioBox ratio={String(value)} />
+    })
+  }
+
   const selectedFormat = formats.find(f => f.value === value) || { value, label: value, icon: <AspectRatioBox ratio={String(value)} /> }
 
   return (

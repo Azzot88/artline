@@ -122,6 +122,14 @@ export function ModelParameterControl({
 
   // 4. Enumerations (Select)
   if ((parameter.enum || allowedValues) && parameter.type !== 'array') {
+    // Ensure current value is in the options list to prevent blank selection
+    const rawOptions = allowedValues || parameter.enum || []
+    let options = rawOptions.map(String)
+
+    if (strValue && !options.includes(strValue)) {
+      options = [strValue, ...options]
+    }
+
     return (
       <div className={cn("w-[95px]", compact ? "" : "space-y-1")}>
         {!compact && (
@@ -144,13 +152,15 @@ export function ModelParameterControl({
           <SelectTrigger className={cn("w-full bg-background/40 border-white/5 glass-effect px-2 hover:bg-white/5 transition-all text-primary", compact ? "h-9" : "h-10")}>
             <div className="flex items-center gap-1.5 text-xs font-bold overflow-hidden">
               <div className="text-primary/70 shrink-0">{getParameterIcon(parameter.name)}</div>
-              <SelectValue placeholder={label} />
+              <SelectValue placeholder={label}>
+                {strValue}
+              </SelectValue>
             </div>
           </SelectTrigger>
           <SelectContent className="glass-effect border-white/10 min-w-[95px] p-1">
-            {options.map((opt: any) => (
-              <SelectItem key={String(opt)} value={String(opt)} className="focus:bg-primary/10 focus:text-primary cursor-pointer px-2 rounded-md">
-                <span className="text-xs font-bold">{String(opt)}</span>
+            {options.map((opt: string) => (
+              <SelectItem key={opt} value={opt} className="focus:bg-primary/10 focus:text-primary cursor-pointer px-2 rounded-md">
+                <span className="text-xs font-bold">{opt}</span>
               </SelectItem>
             ))}
           </SelectContent>
