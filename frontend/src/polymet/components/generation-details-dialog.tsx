@@ -60,7 +60,7 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
     const handleCopyPrompt = () => {
         if (!generation?.prompt) return
         navigator.clipboard.writeText(generation.prompt)
-        toast.success(t('generationDetails.copied') || "Prompt copied")
+        toast.success(t('generationDetails.copied'))
 
         // Auto-use prompt if handler provided
         if (onUsePrompt) {
@@ -80,7 +80,7 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                toast.success("Download started");
+                toast.success(t('generationDetails.downloadStarted'));
             } else {
                 throw new Error("No URL returned");
             }
@@ -92,17 +92,17 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
     }
 
     const handleDelete = async () => {
-        if (!confirm("Delete this creation? This action cannot be undone.")) return;
+        if (!confirm(t('generationDetails.confirms.delete'))) return;
 
         setIsDeleting(true)
         try {
             await api.delete(`/jobs/${generation.id}`)
-            toast.success("Deleted successfully")
+            toast.success(t('generationDetails.deleteSuccess'))
             onOpenChange(false)
             if (onDelete) onDelete(generation.id)
         } catch (e) {
             console.error("Delete failed", e)
-            toast.error("Failed to delete")
+            toast.error(t('generationDetails.deleteFailed'))
         } finally {
             setIsDeleting(false)
         }
@@ -114,9 +114,9 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
         try {
             const res = await apiService.toggleCurated(generation.id)
             setIsCurated(res.is_curated)
-            toast.success(res.is_curated ? "Added to Community Gallery" : "Removed from Gallery")
+            toast.success(res.is_curated ? t('generationDetails.addToGallery') : t('generationDetails.removeFromGallery'))
         } catch (e) {
-            toast.error("Failed to update curation status")
+            toast.error(t('generationDetails.curationFailed'))
         }
     }
 
@@ -218,7 +218,7 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                         </span>
                                     </div>
                                     <h3 className="text-lg font-semibold font-display tracking-tight leading-tight">
-                                        {(generation.model_name || generation.model || "Unknown Model").split('/').pop()?.split(':')[0].replace(/-/g, ' ') || "Generation"}
+                                        {(generation.model_name || generation.model || t('generationDetails.unknownModel')).split('/').pop()?.split(':')[0].replace(/-/g, ' ') || "Generation"}
                                     </h3>
                                 </div>
                                 <div className="flex gap-1">
@@ -244,7 +244,7 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                 <div className="flex items-center justify-between">
                                     <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                                         <span className="w-1 h-4 bg-primary rounded-full" />
-                                        Prompt
+                                        {t('generationDetails.prompt')}
                                     </h4>
                                     <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-muted" onClick={handleCopyPrompt} title={t('generationDetails.title.copy')}>
                                         <CopyIcon className="w-3.5 h-3.5" />
@@ -265,9 +265,9 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                             onClick={() => setIsPromptExpanded(!isPromptExpanded)}
                                         >
                                             {isPromptExpanded ? (
-                                                <>Read Less <ChevronUpIcon className="w-3 h-3" /></>
+                                                <>{t('generationDetails.readLess')} <ChevronUpIcon className="w-3 h-3" /></>
                                             ) : (
-                                                <>Read More <ChevronDownIcon className="w-3 h-3" /></>
+                                                <>{t('generationDetails.readMore')} <ChevronDownIcon className="w-3 h-3" /></>
                                             )}
                                         </Button>
                                     )}
@@ -278,7 +278,7 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                             <div className="grid grid-cols-2 gap-4">
                                 <MetaItem
                                     icon={BoxIcon}
-                                    label="Model Version"
+                                    label={t('generationDetails.model')}
                                     value={
                                         // Try to find model name from context or direct prop
                                         // We need to access models list to map ID -> Name if model_name is missing
@@ -290,32 +290,32 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                         // Wait, user asked: "Should be the model name specified in the admin properties"
                                         // I should import useModels hook here to be safe?
                                         // Let's import useModels to do the lookup.
-                                        (models.find(m => m.id === generation.model_id)?.name || generation.model_name || generation.model_id || "Unknown").replace(/:.*/, '') || "Unknown"
+                                        (models.find(m => m.id === generation.model_id)?.name || generation.model_name || generation.model_id || t('generationDetails.unknownModel')).replace(/:.*/, '') || t('generationDetails.unknownModel')
                                     }
                                     subValue={generation.model_id ? "ID: " + generation.model_id.slice(0, 8) + "..." : undefined}
                                 />
                                 <MetaItem
                                     icon={MaximizeIcon}
-                                    label="Resolution"
+                                    label={t('generationDetails.resolution')}
                                     value={resolutionLabel}
-                                    subValue={aspectRatio ? `${aspectRatio} Aspect Ratio` : 'Unknown AR'}
+                                    subValue={aspectRatio ? `${aspectRatio} ${t('generationDetails.aspectRatio')}` : 'Unknown AR'}
                                 />
                                 <MetaItem
                                     icon={FileImageIcon}
-                                    label="Format"
+                                    label={t('generationDetails.format')}
                                     value={fileExt.toUpperCase()}
                                 />
                                 {durationLabel && (
                                     <MetaItem
                                         icon={ClockIcon}
-                                        label="Duration"
+                                        label={t('generationDetails.duration')}
                                         value={durationLabel}
                                     />
                                 )}
                                 <MetaItem
                                     icon={CoinsIcon}
-                                    label="Cost"
-                                    value={cost > 0 ? `${cost} Credits` : 'Free'}
+                                    label={t('generationDetails.cost')}
+                                    value={cost > 0 ? `${cost} ${t('generationDetails.units.credits')}` : 'Free'}
                                     className="text-indigo-400 font-bold"
                                 />
                             </div>
@@ -325,8 +325,8 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                 <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive flex gap-3 items-start">
                                     <AlertCircle className="w-5 h-5 shrink-0" />
                                     <div className="space-y-1">
-                                        <p className="font-semibold text-sm">Generation Failed</p>
-                                        <p className="text-xs opacity-90">An error occurred during process.</p>
+                                        <p className="font-semibold text-sm">{t('generationDetails.generationFailed')}</p>
+                                        <p className="text-xs opacity-90">{t('workbench.toasts.genFailed')}</p>
                                     </div>
                                 </div>
                             )}
@@ -338,12 +338,12 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                     <div className="p-6 bg-muted/20 border-t border-border space-y-3">
                         <Button className="w-full shadow-lg shadow-primary/20 font-semibold" size="lg" onClick={handleDownload}>
                             <DownloadIcon className="w-4 h-4 mr-2" />
-                            Download {fileExt.toUpperCase()}
+                            {t('generationDetails.download')} {fileExt.toUpperCase()}
                         </Button>
 
                         <Button variant="outline" className="w-full hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors" onClick={handleDelete} disabled={isDeleting}>
                             <Trash2Icon className="w-4 h-4 mr-2 opacity-70" />
-                            {isDeleting ? "Deleting..." : "Delete from Library"}
+                            {isDeleting ? t('generationDetails.deleting') : t('generationDetails.deleteFromLibrary')}
                         </Button>
                     </div>
                 </div>

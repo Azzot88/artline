@@ -81,7 +81,22 @@ export const translations = {
                 pixels: "px",
                 seconds: "сек",
                 credits: "кр"
-            }
+            },
+            downloadStarted: "Загрузка началась",
+            downloadFailed: "Ошибка загрузки",
+            confirms: {
+                delete: "Удалить эту генерацию? Это действие нельзя отменить."
+            },
+            deleteSuccess: "Удалено успешно",
+            deleteFailed: "Не удалось удалить",
+            addToGallery: "Добавлено в галерею",
+            removeFromGallery: "Удалено из галереи",
+            curationFailed: "Не удалось изменить статус",
+            generationFailed: "Генерация не удалась",
+            unknownModel: "Неизвестная модель",
+            aspectRatio: "Соотношение сторон",
+            deleteFromLibrary: "Удалить из библиотеки",
+            deleting: "Удаление..."
         },
         dashboard: {
             title: "Дашборд",
@@ -455,7 +470,22 @@ export const translations = {
                 pixels: "px",
                 seconds: "сек",
                 credits: "кр"
-            }
+            },
+            downloadStarted: "Жүктеу басталды",
+            downloadFailed: "Жүктеу қатесі",
+            confirms: {
+                delete: "Бұл генерацияны жою керек пе? Бұл әрекетті қайтару мүмкін емес."
+            },
+            deleteSuccess: "Сәтті жойылды",
+            deleteFailed: "Жою сәтсіз аяқталды",
+            addToGallery: "Галереяға қосылды",
+            removeFromGallery: "Галереядан жойылды",
+            curationFailed: "Статусты өзгерту сәтсіз",
+            generationFailed: "Генерация сәтсіз аяқталды",
+            unknownModel: "Белгісіз модель",
+            aspectRatio: "Тараптар қатынасы",
+            deleteFromLibrary: "Кітапханадан жою",
+            deleting: "Жойылуда..."
         },
         landing: {
             hero: {
@@ -778,7 +808,22 @@ export const translations = {
                 pixels: "px",
                 seconds: "сек",
                 credits: "кр"
-            }
+            },
+            downloadStarted: "Жүктөө башталды",
+            downloadFailed: "Жүктөө катасы",
+            confirms: {
+                delete: "Бул генерацияны өчүрүү керекпи? Бул аракетти артка кайтаруу мүмкүн эмес."
+            },
+            deleteSuccess: "Ийгиликтүү өчүрүлдү",
+            deleteFailed: "Өчүрүү ишке ашкан жок",
+            addToGallery: "Галереяга кошулду",
+            removeFromGallery: "Галереядан өчүрүлдү",
+            curationFailed: "Статусту өзгөртүү ишке ашкан жок",
+            generationFailed: "Генерация ишке ашкан жок",
+            unknownModel: "Белгисиз модель",
+            aspectRatio: "Тараптар катышы",
+            deleteFromLibrary: "Китепканадан өчүрүү",
+            deleting: "Өчүрүлүүдө..."
         },
         landing: {
             hero: {
