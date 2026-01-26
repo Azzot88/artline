@@ -95,7 +95,7 @@ export function LandingPage() {
 
             <main className="flex-1">
                 {/* 3. Hero Section */}
-                <section className="relative overflow-hidden py-16 lg:py-24">
+                <section className="relative overflow-hidden py-12 lg:py-20">
                     {/* Gradient Background */}
                     {/* Gradient Background */}
                     <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-background to-background animate-pulse-subtle"></div>
@@ -137,9 +137,9 @@ export function LandingPage() {
                 </section>
 
                 {/* 4. Products Block */}
-                <section id="products" className="py-12 glass-effect">
+                <section id="products" className="py-10 glass-effect">
                     <div className="container px-4 md:px-6 mx-auto">
-                        <div className="text-center mb-8 relative z-10">
+                        <div className="text-center mb-6 relative z-10">
                             <h2 className="text-3xl font-bold tracking-tight">{t('landing.products.title')}</h2>
                         </div>
                         {/* Background Blob for Products */}
@@ -192,9 +192,9 @@ export function LandingPage() {
                 </section>
 
                 {/* 5. Use Cases */}
-                <section className="py-12">
+                <section className="py-10">
                     <div className="container px-4 md:px-6 mx-auto">
-                        <h2 className="text-3xl font-bold tracking-tight text-center mb-8">{t('landing.useCases.title')}</h2>
+                        <h2 className="text-3xl font-bold tracking-tight text-center mb-6">{t('landing.useCases.title')}</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {(t('landing.useCases.items') as any[]).map((item, i) => {
                                 const icons = [Sparkles, BarChart, Cpu, Video, Layers];
@@ -212,9 +212,9 @@ export function LandingPage() {
                 </section>
 
                 {/* 6. Why US */}
-                <section id="features" className="py-12 glass-effect">
+                <section id="features" className="py-10 glass-effect">
                     <div className="container px-4 md:px-6 mx-auto">
-                        <h2 className="text-3xl font-bold tracking-tight text-center mb-8">{t('landing.whyUs.title')}</h2>
+                        <h2 className="text-3xl font-bold tracking-tight text-center mb-6">{t('landing.whyUs.title')}</h2>
                         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                             {(t('landing.whyUs.items') as any[]).map((item, i) => {
                                 const icons = [Globe, Zap, Shield, Check];
@@ -231,9 +231,9 @@ export function LandingPage() {
                 </section>
 
                 {/* 7. Pay-as-you-go Pricing */}
-                <section id="pricing" className="py-12">
+                <section id="pricing" className="py-10">
                     <div className="container px-4 md:px-6 mx-auto">
-                        <div className="text-center mb-8 relative z-10">
+                        <div className="text-center mb-6 relative z-10">
                             <h2 className="text-3xl font-bold tracking-tight">{t('landing.payAsYouGo.title')}</h2>
                             <p className="text-muted-foreground mt-4 text-lg">{t('landing.payAsYouGo.subtitle')}</p>
                         </div>
@@ -241,7 +241,7 @@ export function LandingPage() {
                         <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
 
                         <div
-                            className="flex overflow-x-auto pb-6 pt-12 gap-4 md:grid md:grid-cols-3 md:gap-8 max-w-5xl mx-auto md:overflow-visible snap-x snap-mandatory mask-linear-fade scrollbar-hide relative z-10"
+                            className="flex overflow-x-auto pb-6 pt-2 gap-4 md:grid md:grid-cols-3 md:gap-8 max-w-5xl mx-auto md:overflow-visible snap-x snap-mandatory mask-linear-fade scrollbar-hide relative z-10"
                             onScroll={(e) => handleScroll(e, setPaygIndex)}
                         >
                             {/* 7.1 Starter */}
@@ -316,9 +316,9 @@ export function LandingPage() {
                 </section>
 
                 {/* 8. Subscriptions (Redesigned - Stricter & Compact) */}
-                <section className="py-12 glass-effect">
+                <section className="py-10 glass-effect">
                     <div className="container px-4 md:px-6 mx-auto">
-                        <div className="text-center mb-8 relative z-10">
+                        <div className="text-center mb-6 relative z-10">
                             <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">{t('landing.subscriptions.title')}</h2>
                             <p className="text-muted-foreground text-base max-w-2xl mx-auto">
                                 {t('landing.subscriptions.subtitle')}
@@ -328,7 +328,7 @@ export function LandingPage() {
                         <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
 
                         <div
-                            className="flex overflow-x-auto pb-6 pt-12 gap-6 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible max-w-6xl mx-auto snap-x snap-mandatory scrollbar-hide relative z-10"
+                            className="flex overflow-x-auto pb-6 pt-2 gap-6 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible max-w-6xl mx-auto snap-x snap-mandatory scrollbar-hide relative z-10"
                             onScroll={(e) => handleScroll(e, setSubIndex)}
                         >
                             {/* BASIC */}
@@ -422,9 +422,9 @@ export function LandingPage() {
                 </section>
 
                 {/* 8.2 FAQ (NEW: Accordion, 2 columns) */}
-                <section id="faq" className="py-12 glass-effect">
+                <section id="faq" className="py-10 glass-effect">
                     <div className="container px-4 md:px-6 mx-auto max-w-6xl">
-                        <div className="text-center mb-8">
+                        <div className="text-center mb-6">
                             <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">{t('landing.faq.title')}</h2>
                         </div>
 
