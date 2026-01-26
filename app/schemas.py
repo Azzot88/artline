@@ -67,7 +67,7 @@ class JobRead(BaseModel):
     predict_time: Optional[float] = None
     provider_cost: Optional[float] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
 
 class ModelPerformanceStats(BaseModel):
     avg_predict_time_24h: Optional[float] = None

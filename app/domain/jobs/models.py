@@ -46,6 +46,7 @@ class Job(Base):
     
     status: Mapped[str] = mapped_column(String, default="queued", index=True) # "queued", "running", "succeeded", "failed"
     cost_credits: Mapped[int] = mapped_column(Integer, default=0)
+    quote_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("pricing_quotes.id"), nullable=True)
     progress: Mapped[int] = mapped_column(Integer, default=0)
     
     # Gallery & Curation
