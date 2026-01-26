@@ -32,6 +32,7 @@ export function LibraryWidget({ refreshTrigger, newGeneration, onUsePrompt }: Li
                 const data = await api.get<any[]>("/jobs")
 
                 if (Array.isArray(data)) {
+                    console.log("Library Jobs:", data)
                     // Sort by creation date desc if not already
                     data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
