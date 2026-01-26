@@ -114,7 +114,12 @@ class ReplicateService:
                 field["options"] = prop["enum"]
                 
             # Special Handling
-            if key == "aspect_ratio": field["type"] = "select"
+            if key == "aspect_ratio": 
+                field["type"] = "select"
+                if "options" not in field:
+                    # Provide standard defaults if schema ref didn't resolve
+                    field["options"] = ["1:1", "16:9", "9:16", "3:2", "2:3", "4:5", "5:4"]
+
             if key == "image" or key == "input_image": field["type"] = "image"
                 
             normalized_inputs.append(field)
