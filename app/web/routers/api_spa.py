@@ -309,10 +309,22 @@ async def create_spa_job(
 
 @router.get("/jobs/{job_id}", response_model=JobRead)
 async def get_job_status(
+    request: Request,
     job_id: str,
     user: User | object | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db)
 ):
+    # Handle Guest Fallback (same as list_jobs)
+    if not user:
+        guest_id_cookie = request.cookies.get("guest_id")
+        if guest_id_cookie:
+            try:
+                gid = uuid.UUID(guest_id_cookie)
+                from app.domain.users.guest_service import get_guest
+                user = await get_guest(db, gid)
+            except ValueError:
+                pass
+
     if not user:
          raise HTTPException(status_code=401, detail="Unauthorized")
 
@@ -408,10 +420,22 @@ def delete_s3_object_bg(key: str):
 
 @router.get("/jobs/{job_id}/download")
 async def download_job(
+    request: Request,
     job_id: str,
     user: User | object | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db)
 ):
+    # Handle Guest Fallback
+    if not user:
+        guest_id_cookie = request.cookies.get("guest_id")
+        if guest_id_cookie:
+            try:
+                gid = uuid.UUID(guest_id_cookie)
+                from app.domain.users.guest_service import get_guest
+                user = await get_guest(db, gid)
+            except ValueError:
+                pass
+
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
