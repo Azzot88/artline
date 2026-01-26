@@ -571,21 +571,45 @@ async def get_model_ui_spec(
 
 @router.get("/models")
 async def list_models(db: AsyncSession = Depends(get_db)):
-    # Reuse logic roughly or query directly
-    # Ideally standard formatted JSON
+    # Fetch active models
     res = await db.execute(select(AIModel).where(AIModel.is_active == True))
     models = res.scalars().all()
     
+    # Use CatalogService to resolve authoritative parameters
+    from app.domain.catalog.service import CatalogService
+    catalog_service = CatalogService()
+    
     data = []
     for m in models:
+         # Resolve full spec (assuming 'starter' tier for public list)
+         spec = catalog_service.resolve_ui_spec(m, user_tier="starter")
+         
+         # Map spec.parameters to legacy 'inputs' format for frontend compatibility
+         inputs = []
+         for p in spec.parameters:
+             inputs.append({
+                 "name": p.id,
+                 "type": p.type,
+                 "description": p.description,
+                 "default": p.default,
+                 "required": p.required,
+                 "min": p.min,
+                 "max": p.max,
+                 "enum": [opt.value for opt in p.options] if p.options else None,
+                 "ui_group": p.group_id
+             })
+
+         # Extract defaults map
+         defaults = {p.id: p.default for p in spec.parameters if p.default is not None}
+
          data.append({
              "id": str(m.id),
              "name": m.display_name,
              "description": m.description,
              "provider": m.provider,
              "cover_image": m.cover_image_url,
-             "inputs": m.normalized_caps_json.get("inputs", []) if m.normalized_caps_json else [],
-             "defaults": m.normalized_caps_json.get("defaults", {}) if m.normalized_caps_json else {},
+             "inputs": inputs, # Authoritative inputs from CatalogService
+             "defaults": defaults,
              "credits": m.credits_per_generation,
              "capabilities": m.capabilities or [],
              "ui_config": m.ui_config or {}

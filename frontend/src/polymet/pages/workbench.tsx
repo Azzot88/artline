@@ -238,7 +238,22 @@ export function Workbench() {
       }
     } catch (err: any) {
       console.error(err)
-      toast.error(t('workbench.toasts.genFailed'), { description: err.message || t('workbench.toasts.unknownError') })
+      console.error(err)
+      let errorMessage = t('workbench.toasts.unknownError');
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'object' && err !== null) {
+        // Handle API error objects containing detail or message
+        errorMessage = (err as any).detail || (err as any).message || JSON.stringify(err);
+        // Handle specific object format {code: ..., message: ...}
+        if (typeof errorMessage === 'object') {
+          errorMessage = (errorMessage as any).message || JSON.stringify(errorMessage);
+        }
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+
+      toast.error(t('workbench.toasts.genFailed'), { description: errorMessage })
     } finally {
       setLoading(false)
     }
