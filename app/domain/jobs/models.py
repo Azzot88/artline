@@ -59,7 +59,7 @@ class Job(Base):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     logs: Mapped[str | None] = mapped_column(Text, nullable=True)
     
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
     completed_at: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     
@@ -71,4 +71,11 @@ class Job(Base):
     def credits_spent(self) -> int:
         return self.cost_credits
 
+    @property
+    def model_name(self) -> str | None:
+        if self.model:
+            return self.model.display_name
+        return None
+
     user: Mapped["User"] = relationship("app.domain.users.models.User", back_populates="jobs")
+    model: Mapped["AIModel"] = relationship("app.domain.providers.models.AIModel")

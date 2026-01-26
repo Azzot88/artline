@@ -41,6 +41,7 @@ class JobRead(BaseModel):
     
     # Metadata
     model_id: Optional[uuid.UUID] = None
+    model_name: Optional[str] = None
     cost_credits: int = 0
 
     input_type: str = "text"

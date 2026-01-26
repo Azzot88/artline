@@ -1,11 +1,15 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update, or_, and_
+from sqlalchemy.orm import joinedload
 from app.domain.jobs.models import Job
 from app.domain.users.models import User
+from app.domain.providers.models import AIModel
 from app.domain.billing.service import get_user_balance, add_ledger_entry
 import uuid
-
 import math
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Base costs (1:5 ratio)
 BASE_COST_IMAGE = 10
@@ -67,6 +71,15 @@ async def create_job(
             external_id=None
         )
 
+    # Resolve Model ID if possible (for metadata)
+    model_id = None
+    try:
+        # If model is a UUID string, try to parse
+        model_uuid = uuid.UUID(model)
+        model_id = model_uuid
+    except ValueError:
+        pass
+
     # Create Job
     job = Job(
         kind=kind,
@@ -74,7 +87,9 @@ async def create_job(
         status="queued",
         progress=0,
         owner_type="guest" if is_guest else "user",
-        is_public=False # Default to PRIVATE per new logic (Library only)
+        is_public=False, # Default to PRIVATE per new logic (Library only)
+        model_id=model_id,
+        provider="replicate" # Default, runner will confirm
     )
     
     if is_guest:
@@ -128,10 +143,8 @@ async def create_job(
 async def get_user_jobs(db: AsyncSession, user: User | object, limit: int = 50):
     # Determine if guest
     is_guest = not isinstance(user, User)
-    
-    from sqlalchemy import or_, and_
 
-    stmt = select(Job).order_by(Job.created_at.desc()).limit(limit)
+    stmt = select(Job).options(joinedload(Job.model)).order_by(Job.created_at.desc()).limit(limit)
     
     if is_guest:
         stmt = stmt.where(Job.guest_id == user.id)
@@ -141,12 +154,12 @@ async def get_user_jobs(db: AsyncSession, user: User | object, limit: int = 50):
     # Strict Availability Filter
     # Show only:
     # 1. Active jobs (queued, running)
-    # 2. Succeeded jobs WITH a result_url
-    # Hide: failed, deleted, or succeeded-but-broken
+    # 2. Succeeded jobs WITH a result_url (or failed if recently failed, but let's hide failed for now if desired)
+    # Hide: deleted
     
     stmt = stmt.where(
         or_(
-            Job.status.in_(['queued', 'running']),
+            Job.status.in_(['queued', 'running', 'failed']), # Show failed too so user knows
             and_(
                 Job.status == 'succeeded',
                 Job.result_url.isnot(None),
@@ -154,11 +167,59 @@ async def get_user_jobs(db: AsyncSession, user: User | object, limit: int = 50):
             )
         )
     )
-    # We implicitly exclude 'deleted' and 'failed' by not including them in the OR
-    # But wait, original code excluded 'deleted'. This logic covers it (deleted is not queued/running/succeeded).
+    stmt = stmt.where(Job.status != 'deleted')
         
     result = await db.execute(stmt)
     return result.scalars().all()
+
+async def get_job_with_permission(db: AsyncSession, job_id: str, user: User | object):
+    """
+    Fetch job ensuring the user owns it. 
+    """
+    is_guest = not isinstance(user, User)
+    stmt = select(Job).where(Job.id == job_id)
+    
+    if is_guest:
+        stmt = stmt.where(Job.guest_id == user.id)
+    else:
+        stmt = stmt.where(Job.user_id == user.id)
+        
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
+
+async def delete_job(db: AsyncSession, job_id: str, user: User | object) -> bool:
+    """
+    Soft delete a job if owned by user.
+    """
+    job = await get_job_with_permission(db, job_id, user)
+    if not job:
+        return False
+        
+    # Soft Delete
+    job.status = 'deleted'
+    job.is_public = False
+    job.is_curated = False
+    job.prompt = '[Deleted]'
+    job.result_url = None
+    job.thumbnailUrl = None
+    job.input_image_url = None
+    
+    await db.commit()
+    return True
+
+async def like_job(db: AsyncSession, job_id: str) -> int:
+    """
+    Atomic like increment.
+    """
+    stmt = (
+        update(Job)
+        .where(Job.id == job_id)
+        .values(likes=Job.likes + 1)
+        .returning(Job.likes)
+    )
+    result = await db.execute(stmt)
+    await db.commit()
+    return result.scalar_one()
 
 async def get_job(db: AsyncSession, job_id: str, user_id: uuid.UUID):
     result = await db.execute(
@@ -169,6 +230,7 @@ async def get_job(db: AsyncSession, job_id: str, user_id: uuid.UUID):
 async def get_curated_jobs(db: AsyncSession, limit: int = 6):
     stmt = (
         select(Job)
+        .options(joinedload(Job.model))
         .where(Job.is_curated == True)
         .where(Job.status == 'succeeded')
         .where(Job.result_url.isnot(None))
@@ -181,6 +243,7 @@ async def get_curated_jobs(db: AsyncSession, limit: int = 6):
 async def get_public_jobs(db: AsyncSession, limit: int = 50, offset: int = 0):
     stmt = (
         select(Job)
+        .options(joinedload(Job.model))
         .where(Job.is_curated == True) # ONLY Curated/Approved jobs show in Community Gallery
         .where(Job.status == 'succeeded') 
         .where(Job.result_url.isnot(None))
@@ -198,6 +261,7 @@ async def get_review_jobs(db: AsyncSession, limit: int = 50, offset: int = 0):
     """
     stmt = (
         select(Job)
+        .options(joinedload(Job.model))
         .where(Job.is_public == True)
         .where(Job.is_curated == False)
         .where(Job.status == 'succeeded') 
@@ -208,3 +272,4 @@ async def get_review_jobs(db: AsyncSession, limit: int = 50, offset: int = 0):
     )
     result = await db.execute(stmt)
     return result.scalars().all()
+
