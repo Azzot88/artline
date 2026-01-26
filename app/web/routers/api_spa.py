@@ -534,6 +534,7 @@ async def like_job(
     return {"likes": likes}
 
 from app.domain.catalog.service import CatalogService
+from app.domain.catalog.schemas import ModelUISpec
 
 @router.get("/models/{model_id}/ui-spec", response_model=ModelUISpec)
 async def get_model_ui_spec(
