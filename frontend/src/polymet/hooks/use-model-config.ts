@@ -95,9 +95,14 @@ export function useModelConfig({ modelId, initialValues = {}, initialConfigs = [
     }, [])
 
     const updateConfig = useCallback((paramId: string, updates: Partial<ModelParameterConfig>) => {
-        setConfigs(prev => prev.map(c =>
-            c.parameter_id === paramId ? { ...c, ...updates } : c
-        ))
+        setConfigs(prev => {
+            const exists = prev.some(c => c.parameter_id === paramId)
+            if (exists) {
+                return prev.map(c => c.parameter_id === paramId ? { ...c, ...updates } : c)
+            }
+            // Create New
+            return [...prev, { parameter_id: paramId, enabled: true, display_order: 0, ...updates }]
+        })
     }, [])
 
     const toggleCapability = useCallback((cap: string) => {
