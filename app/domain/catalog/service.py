@@ -27,7 +27,7 @@ class CatalogService:
                 if not input_props:
                     input_props = raw_schema.get("properties", {})
                 
-                params = self.replicate_service.to_canonical(input_props)
+                params = self.replicate_service.to_canonical(input_props, root_schema=raw_schema)
             except Exception as e:
                 print(f"Schema Parse Error: {e}")
                 # Fallback empty or logging

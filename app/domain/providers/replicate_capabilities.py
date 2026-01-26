@@ -7,12 +7,13 @@ class ReplicateCapabilitiesService:
     Parses Replicate OpenAI Schemas to derive UI capabilities (Modes, Resolutions, Durations).
     """
     
-    def to_canonical(self, input_schema: Dict[str, Any], defaults: Dict[str, Any] = None) -> List[UIParameter]:
+    def to_canonical(self, input_schema: Dict[str, Any], root_schema: Dict[str, Any] = None) -> List[UIParameter]:
         """
         Converts raw Replicate schema into a list of Canonical UIParameters.
         """
         params = []
         props = input_schema
+        self.root_schema = root_schema or {}
         
         # Priority mapping for ordering
         # Core params first
@@ -25,22 +26,28 @@ class ReplicateCapabilitiesService:
             details = props[key]
             
             # Skip hidden/blacklisted params
-            if key in ["scheduler", "refine"]: # Example blacklist, maybe configurable? 
-                 # For now, include scheduler as advanced
+            if key in ["scheduler", "refine"]: 
                  pass
             
+            # RESOLVE REF / ALLOF
+            # If details itself has $ref or allOf, resolve it to get the "real" type/enum
+            resolved_details = self._resolve_schema(details) 
+            # Merge resolved props back into details for parsing (but keep original overrides like description)
+            # We prioritize resolved_details for type/enum, but details for title/default
+            
+            # Logic: If 'enum' is in resolved, use it.
+            effective_enum = details.get("enum") or resolved_details.get("enum")
+            effective_type = details.get("type") or resolved_details.get("type")
+
             p_type = "text"
             options = None
             
-            # Determine Type
-            raw_type = details.get("type")
-            
-            if "enum" in details:
+            if effective_enum:
                 p_type = "select"
                 # Build options
                 options = [
                     ParameterOption(label=str(val).title().replace("_", " "), value=val)
-                    for val in details["enum"]
+                    for val in effective_enum
                 ]
             # Handle anyOf / oneOf (common in newer schemas)
             elif "anyOf" in details or "oneOf" in details or "allOf" in details:
@@ -48,16 +55,17 @@ class ReplicateCapabilitiesService:
                 schemas = []
                 if "anyOf" in details: schemas.extend(details["anyOf"])
                 if "oneOf" in details: schemas.extend(details["oneOf"])
-                if "allOf" in details: schemas.extend(details["allOf"])
-
+                # allOf is handled by _resolve_schema mostly, but mixed cases might exist
+                
                 # Look for const/enum inside schema list
-                 # Example: [{"type": "string", "enum": ["a", "b"]}, {"type": "null"}]
                 found_enum = []
                 for s in schemas:
-                    if "enum" in s:
-                        found_enum.extend(s["enum"])
-                    elif "const" in s:
-                         found_enum.append(s["const"])
+                    # Resolve sub-schema too
+                    s_res = self._resolve_schema(s)
+                    if "enum" in s_res:
+                         found_enum.extend(s_res["enum"])
+                    elif "const" in s_res:
+                         found_enum.append(s_res["const"])
                 
                 if found_enum:
                     p_type = "select"
@@ -256,3 +264,47 @@ class ReplicateCapabilitiesService:
                 return [int(frames_prop["maximum"] / fps)]
                 
         return []
+
+    def _resolve_schema(self, schema: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Resolves $ref and merges allOf/anyOf schemas to find the effective type/enum.
+        """
+        if not schema:
+            return {}
+
+        # 1. Resolve $ref
+        if "$ref" in schema:
+            ref = schema["$ref"]
+            # Typically "#/components/schemas/Name"
+            if ref.startswith("#/"):
+                parts = ref.split("/")[1:] # Skip #
+                # Walk the root
+                current = self.root_schema
+                try:
+                    for part in parts:
+                        current = current.get(part)
+                        if not current: break
+                    
+                    if current:
+                         # Recursively resolve the target in case it is also a ref
+                         return self._resolve_schema(current)
+                except Exception:
+                    pass
+            return {}
+
+        # 2. Extract from allOf (merge)
+        # If allOf exists, we want to find the one that has the enum or type
+        if "allOf" in schema:
+            merged = {}
+            for sub in schema["allOf"]:
+                resolved = self._resolve_schema(sub)
+                merged.update(resolved)
+            
+            # Merge local props on top (e.g. default, description)
+            # (Use a shadow copy to avoid mutating original schema in memory if re-used)
+            # Actually simplest is to just return the resolved enum if found
+            if "enum" in merged:
+                return merged
+            return merged
+
+        return schema
