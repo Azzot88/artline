@@ -148,7 +148,12 @@ async def create_job(
     quote.job_id = job.id
     
     await db.commit()
-    await db.refresh(job)
+    await db.commit()
+    
+    # Re-fetch with eager loaded model to prevent MissingGreenlet on property access
+    stmt = select(Job).options(joinedload(Job.model)).where(Job.id == job.id)
+    res = await db.execute(stmt)
+    job = res.scalar_one()
     
     return job, None
 
@@ -196,6 +201,7 @@ async def get_job_with_permission(db: AsyncSession, job_id: str, user: User | ob
     else:
         stmt = stmt.where(Job.user_id == user.id)
         
+    stmt = stmt.options(joinedload(Job.model))
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
 
@@ -235,7 +241,7 @@ async def like_job(db: AsyncSession, job_id: str) -> int:
 
 async def get_job(db: AsyncSession, job_id: str, user_id: uuid.UUID):
     result = await db.execute(
-        select(Job).where(Job.id == job_id, Job.user_id == user_id)
+        select(Job).options(joinedload(Job.model)).where(Job.id == job_id, Job.user_id == user_id)
     )
     return result.scalar_one_or_none()
 
