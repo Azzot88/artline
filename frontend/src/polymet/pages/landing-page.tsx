@@ -159,7 +159,6 @@ export function LandingPage() {
                                 const BtnIcon = btnIconMap[i] || Wand2;
 
                                 return (
-                                return (
                                     <Link to={product.link} key={i} className="group h-full block">
                                         <Card className="flex flex-col h-full hover:border-primary/50 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden glass-effect-strong">
                                             <CardHeader>
