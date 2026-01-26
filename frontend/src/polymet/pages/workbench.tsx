@@ -26,6 +26,7 @@ import type { ParameterValues, ImageFormatType, VideoFormatType, Generation } fr
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 import { useLocation, useSearchParams } from "react-router-dom"
+import { useModelSpec } from "@/polymet/hooks/use-model-spec"
 
 export function Workbench() {
   const { t } = useLanguage()
@@ -118,11 +119,13 @@ export function Workbench() {
   const selectedModel = models.find(m => m.id === model)
   const modelCredits = selectedModel?.credits ?? 5
 
+  const { spec, loading: specLoading } = useModelSpec(selectedModel?.id || null)
+
   const [modelParameters, setModelParameters] = useState<any[]>([])
   const [modelConfigs, setModelConfigs] = useState<any[]>([])
   const [parameterValues, setParameterValues] = useState<ParameterValues>({})
 
-  // Parse parameters when model changes (Consolidated logic)
+  // Effect to sync Spec -> Internal State
   useEffect(() => {
     if (!selectedModel) {
       setModelParameters([])
@@ -130,39 +133,53 @@ export function Workbench() {
       return
     }
 
-    const sortedParams = normalizeModelInputs(selectedModel)
-    setModelParameters(sortedParams)
-    setModelConfigs(sortedParams.map((p: any) => ({
-      parameter_id: p.id,
-      enabled: true,
-      display_order: 0,
-      custom_label: p.name.charAt(0).toUpperCase() + p.name.slice(1)
-    })))
+    if (spec) {
+      // Phase 3 Logic: Use Spec
+      const params = spec.parameters.filter(p => !p.hidden)
+      // Convert to compatible format
+      const mappedParams = params.map(p => ({
+        id: p.id,
+        name: p.id,
+        type: p.type,
+        label: p.label,
+        default_value: p.default,
+        required: p.required,
+        min: p.min,
+        max: p.max,
+        step: p.step,
+        options: p.options,
+        group: p.group_id
+      }))
 
-    const initialValues: ParameterValues = {}
-    sortedParams.forEach((param: any) => {
-      // Get the config for this parameter to check allowed_values
-      const config = sortedParams.find((p: any) => p.id === param.id) // sortedParams is actually a mix, but we can look up in the derived configs
-      const paramConfig = {
-        parameter_id: param.id,
-        allowed_values: param.allowed_values, // normalizeModelInputs merges config into param
-        override_default: undefined
-      }
+      setModelParameters(mappedParams)
+      // Configs
+      setModelConfigs(mappedParams.map(p => ({
+        parameter_id: p.id,
+        enabled: true,
+        display_order: 0,
+        custom_label: p.label
+      })))
 
-      let defVal = param.default_value
+      // Defaults
+      const defaults: ParameterValues = {}
+      mappedParams.forEach(p => {
+        if (p.default_value !== undefined) defaults[p.id] = p.default_value
+      })
+      setParameterValues(prev => ({ ...defaults, ...prev })) // Keep user edits? Or reset? Reset safer for now
+      setParameterValues(defaults)
 
-      // If we have strict allowed values, ensure default is valid
-      if (param.allowed_values && param.allowed_values.length > 0) {
-        if (!param.allowed_values.includes(defVal)) {
-          // Default invalid? Fallback to first allowed value
-          defVal = param.allowed_values[0]
-        }
-      }
-
-      if (defVal !== undefined) initialValues[param.id] = defVal
-    })
-    setParameterValues(initialValues)
-  }, [selectedModel])
+    } else if (!specLoading && !spec) {
+      // Fallback to legacy if no spec found (or error)
+      // Keeping legacy logic for stability during migration
+      const sortedParams = normalizeModelInputs(selectedModel)
+      setModelParameters(sortedParams)
+      const initialValues: ParameterValues = {}
+      sortedParams.forEach((param: any) => {
+        if (param.default_value !== undefined) initialValues[param.id] = param.default_value
+      })
+      setParameterValues(initialValues)
+    }
+  }, [selectedModel, spec, specLoading])
 
   const handleParameterChange = (parameterId: string, value: any) => {
     setParameterValues(prev => {

@@ -201,6 +201,7 @@ export interface ModelParameter {
   required: boolean
   ui_group: UIGroup
   created_at: string
+  options?: { label: string, value: any }[]
 }
 
 // Model Version Cost Signals
@@ -254,6 +255,7 @@ export interface ModelParameter {
   required: boolean
   ui_group: UIGroup
   created_at: string
+  options?: { label: string, value: any }[]
 
   // Extended Metadata from Schema
   step?: number

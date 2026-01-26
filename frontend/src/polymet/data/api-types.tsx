@@ -245,3 +245,45 @@ export interface AIModelUpdateRequest {
 export interface ModelSchemaRequest {
   model_ref: string
 }
+
+// ============================================================================
+// Canonical UI Spec (Phase 2)
+// ============================================================================
+
+export interface ParameterOption {
+  label: string
+  value: any
+  description?: string
+  icon?: string
+}
+
+export type UIParameterType = "text" | "number" | "select" | "boolean" | "slider" | "textarea"
+
+export interface UIParameter {
+  id: string
+  label: string
+  type: UIParameterType
+  default: any
+  required: boolean
+  min?: number
+  max?: number
+  step?: number
+  options?: ParameterOption[]
+  description?: string
+  placeholder?: string
+  group_id?: string
+  hidden?: boolean
+}
+
+export interface ParameterGroup {
+  id: string
+  label: string
+  description?: string
+  collapsed_by_default: boolean
+}
+
+export interface ModelUISpec {
+  model_id: string
+  groups: ParameterGroup[]
+  parameters: UIParameter[]
+}

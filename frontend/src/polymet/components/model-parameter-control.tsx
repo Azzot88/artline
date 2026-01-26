@@ -121,13 +121,15 @@ export function ModelParameterControl({
   const strValue = currentValue !== undefined && currentValue !== null ? String(currentValue) : undefined
 
   // 4. Enumerations (Select)
-  if ((parameter.enum || allowedValues) && parameter.type !== 'array') {
-    // Ensure current value is in the options list to prevent blank selection
-    const rawOptions = allowedValues || parameter.enum || []
-    let options = rawOptions.map(String)
+  if ((parameter.enum || allowedValues || parameter.options) && parameter.type !== 'array') {
+    // Check if we have labeled options
+    const labeledOptions = parameter.options || (allowedValues || parameter.enum || []).map(v => ({ label: String(v), value: v }))
 
-    if (strValue && !options.includes(strValue)) {
-      options = [strValue, ...options]
+    // Ensure current value is in the options list
+    const hasValue = labeledOptions.some(opt => String(opt.value) === strValue)
+
+    if (strValue && !hasValue) {
+      labeledOptions.unshift({ label: strValue, value: strValue })
     }
 
     return (
@@ -158,9 +160,9 @@ export function ModelParameterControl({
             </div>
           </SelectTrigger>
           <SelectContent className="glass-effect border-white/10 min-w-[95px] p-1">
-            {options.map((opt: string) => (
-              <SelectItem key={opt} value={opt} className="focus:bg-primary/10 focus:text-primary cursor-pointer px-2 rounded-md">
-                <span className="text-xs font-bold">{opt}</span>
+            {labeledOptions.map((opt) => (
+              <SelectItem key={String(opt.value)} value={String(opt.value)} className="focus:bg-primary/10 focus:text-primary cursor-pointer px-2 rounded-md">
+                <span className="text-xs font-bold">{opt.label}</span>
               </SelectItem>
             ))}
           </SelectContent>
