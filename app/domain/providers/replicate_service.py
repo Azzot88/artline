@@ -167,13 +167,23 @@ class ReplicateService:
                  raise ValueError("Could not determine version ID from model info.")
 
             # Step 2: Get Version Details (Schema)
-            version_url = f"{base_url}/models/{owner}/{name}/versions/{target_version}"
-            resp = await client.get(version_url, headers=headers)
-            if resp.status_code != 200:
-                 raise IOError(f"Failed to fetch version info: {resp.status_code} {resp.text}")
-            
-            version_data = resp.json()
-            schema = version_data.get("openapi_schema", {})
+            # Optimization: If we already have the schema from Step 1 (latest_version), use it.
+            schema = None
+            if not version_id: # Only if we auto-resolved latest
+                 latest_obj = model_data.get("latest_version", {})
+                 if latest_obj.get("id") == target_version and "openapi_schema" in latest_obj:
+                     schema = latest_obj["openapi_schema"]
+
+            if not schema:
+                version_url = f"{base_url}/models/{owner}/{name}/versions/{target_version}"
+                resp = await client.get(version_url, headers=headers)
+                if resp.status_code != 200:
+                     # Fallback: If version lookup fails but we had a version ID, maybe try to be lenient?
+                     # For now, raise but maybe log warning
+                     raise IOError(f"Failed to fetch version info: {resp.status_code} {resp.text}")
+                
+                version_data = resp.json()
+                schema = version_data.get("openapi_schema", {})
             
             # Extract Components
             components = schema.get("components", {}).get("schemas", {})
