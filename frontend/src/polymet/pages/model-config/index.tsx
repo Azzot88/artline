@@ -11,7 +11,7 @@ import {
 } from "lucide-react"
 
 import { useModelConfig } from "@/polymet/hooks/use-model-config"
-import { ModelParametersGroup } from "@/polymet/components/model-parameters-group"
+import { ConfigurationGrid } from "./configuration-grid"
 
 // Sub-Components
 import { ModelConfigLayout } from "./layout"
@@ -221,15 +221,20 @@ export function ModelConfig() {
                         hasParams={parameters.length > 0}
                     />
 
-                    {/* Parameter Editor */}
+
+                    {/* Visual Configuration Grid */}
                     {parameters.length > 0 && (
                         <div className="space-y-4">
-                            <h3 className="text-lg font-semibold">Parameter Configuration</h3>
-                            <ModelParametersGroup
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-semibold">Parameter Configuration</h3>
+                                <Badge variant="secondary" className="font-mono text-xs">
+                                    {parameters.length} Params
+                                </Badge>
+                            </div>
+
+                            <ConfigurationGrid
                                 parameters={parameters}
                                 configs={configs}
-                                values={values}
-                                onChange={updateValue}
                                 onConfigChange={updateConfig}
                             />
                         </div>

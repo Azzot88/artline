@@ -19,55 +19,82 @@ class PricingService:
         Persists the quote to DB for audit.
         """
         
-        # 1. Base Cost Logic (Replace hardcoded rules)
-        base_cost = 0
-        breakdown = []
+        # 1. Base Cost Logic
+        # Priority: Admin Override > Model Default > Global Minimum
+        base_cost = model.credits_per_generation if model.credits_per_generation > 0 else 5
         
-        # Rule: Video vs Image
-        if model.type == "video":
-            base_cost = 50
-            breakdown.append({"label": "Video Base", "cost": 50})
-        else:
-            base_cost = 10
-            breakdown.append({"label": "Image Base", "cost": 10})
-            
-        # Rule: Model Specific Overrides (Legacy Compatibility)
-        if model.model_ref == "runwayml/runway-gen-2" or "runway" in model.display_name.lower():
-             # +30%
-             extra = math.ceil(base_cost * 0.3)
-             base_cost += extra
-             breakdown.append({"label": "Runway Premium", "cost": extra})
-             
-        elif "luma" in model.display_name.lower():
-             # -20%
-             discount = math.ceil(base_cost * 0.2)
-             base_cost -= discount
-             breakdown.append({"label": "Luma Discount", "cost": -discount})
-             
-        elif "flux-pro" in model.display_name.lower() or "pro" in model.model_ref:
-             # Flux Pro Fixed Price
-             # Override base
-             # Check if we should use DB cost? 
-             # For now, replicate logic: 55
-             current = base_cost # 10
-             target = 55
-             diff = target - current
-             base_cost = target
-             breakdown.append({"label": "Flux Pro Surcharge", "cost": diff})
-             
-        # Rule: Official DB Price (if set and > 0, strict override?)
-        # For this refactor, let's say DB 'credits_per_generation' is the base if set > 0
-        if model.credits_per_generation and model.credits_per_generation > 0 and model.credits_per_generation != 5:
-             # If DB has specific price, use it as Authority?
-             # Let's trust the code rules for now as requested, but maybe in Phase 2 we move entirely to DB.
-             pass
+        # Hardcodes for fallback (Migrate these to DB rules later via a script)
+        # If DB rules exist, we rely on them + base. If empty, maybe keep legacy fallback?
+        # For now, we trust the DB 'credits_per_generation' as the base.
+        
+        breakdown = []
+        breakdown.append({"label": "Base Price", "cost": base_cost})
 
-        # 2. Create Quote
+        current_total = base_cost
+
+        # 2. Dynamic Rule Engine
+        # Rules are stored in model.pricing_rules (JSON List)
+        if model.pricing_rules:
+            for rule in model.pricing_rules:
+                # Rule Structure: {param_id, operator, value, surcharge, label}
+                param_id = rule.get("param_id")
+                
+                # Check if param is relevant
+                if param_id not in params:
+                    continue
+                    
+                user_value = params[param_id]
+                target_value = rule.get("value")
+                op = rule.get("operator")
+                
+                match = False
+                
+                # Operator Logic
+                if op == "eq" and user_value == target_value:
+                    match = True
+                elif op == "neq" and user_value != target_value:
+                    match = True
+                elif op == "gt" and isinstance(user_value, (int, float)) and user_value > target_value:
+                    match = True
+                elif op == "gte" and isinstance(user_value, (int, float)) and user_value >= target_value:
+                    match = True
+                elif op == "lt" and isinstance(user_value, (int, float)) and user_value < target_value:
+                    match = True
+                elif op == "lte" and isinstance(user_value, (int, float)) and user_value <= target_value:
+                    match = True
+                elif op == "in" and user_value in target_value:
+                    match = True
+                elif op == "contains" and target_value in user_value:
+                    match = True
+                    
+                if match:
+                    surcharge = rule.get("surcharge", 0)
+                    if surcharge != 0:
+                        label = rule.get("label") or f"{param_id} surcharge"
+                        breakdown.append({"label": label, "cost": surcharge})
+                        current_total += surcharge
+        else:
+             # Legacy Fallback (Preserve behavior until user migrates rules in UI)
+             if model.type == "video":
+                # Video Base was 50, if base_cost is just 5, we might undercharge.
+                # Assuming Admin has set base_cost correct in DB or we use this fallback.
+                if base_cost <= 10: 
+                     diff = 50 - base_cost
+                     if diff > 0:
+                        breakdown.append({"label": "Video Base Adjustment", "cost": diff})
+                        current_total += diff
+                        
+             if "runway" in model.model_ref or "runway" in model.display_name.lower():
+                 extra = math.ceil(current_total * 0.3)
+                 breakdown.append({"label": "Runway Premium", "cost": extra})
+                 current_total += extra
+
+        # 3. Create Quote
         quote = PricingQuote(
             model_id=model.id,
             user_id=user_context.user.id if user_context and user_context.user else None,
             guest_id=uuid.UUID(user_context.guest_id) if user_context and user_context.guest_id else None,
-            total_credits=base_cost,
+            total_credits=current_total,
             breakdown=breakdown
         )
         

@@ -241,7 +241,28 @@ export interface ModelParameterConfig {
   is_advanced?: boolean // Hide behind "Advanced" toggle
   description?: string // Tooltip text
   component_type?: "slider" | "input" | "select" | "switch" | "textarea" | "color" | "file"
+
+  // Phase 7: Dynamic Config Engine
+  access_tiers?: string[] // ["starter", "pro", "studio"]
+  allowed_file_types?: string[]
+  pricing_rules?: PricingRule[]
 }
+
+
+export interface PricingRule {
+  id: string
+  param_id: string
+  operator: "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "in" | "contains"
+  value: any
+  surcharge: number
+  label?: string
+}
+
+export interface UIParameterConfig extends ModelParameterConfig {
+  // Alias for clearer usage in new components
+  visible: boolean
+}
+
 
 export interface ModelParameter {
   id: string
