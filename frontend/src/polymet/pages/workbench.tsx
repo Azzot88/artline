@@ -9,7 +9,9 @@ import { FormatResolutionIndicator } from "@/polymet/components/format-resolutio
 import { Card, CardContent } from "@/components/ui/card"
 import { CommunityGallery } from "@/polymet/components/community-gallery"
 import { Textarea } from "@/components/ui/textarea"
-import { PlusIcon, SparklesIcon } from "lucide-react"
+import { PlusIcon, SparklesIcon, SlidersHorizontalIcon } from "lucide-react"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { WorkbenchParameters } from "@/polymet/components/workbench-parameters"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/polymet/components/language-provider"
 import { useAuth } from "@/polymet/components/auth-provider"
@@ -366,6 +368,24 @@ export function Workbench() {
                       compact
                     />
                   ))}
+
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-9 gap-2 bg-background/50 border-white/10 glass-effect">
+                        <SlidersHorizontalIcon className="w-4 h-4" />
+                        <span className="hidden sm:inline">Настройки</span>
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent className="w-[400px] sm:w-[540px] p-0 border-l border-white/10 glass-effect bg-background/80 backdrop-blur-3xl">
+                      <WorkbenchParameters
+                        parameters={modelParameters}
+                        configs={modelConfigs}
+                        values={parameterValues}
+                        onChange={handleParameterChange}
+                        disabled={loading}
+                      />
+                    </SheetContent>
+                  </Sheet>
                 </div>
 
                 <div className="md:ml-auto">
