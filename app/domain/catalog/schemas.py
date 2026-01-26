@@ -41,3 +41,5 @@ class ModelUISpec(BaseModel):
     model_id: str
     groups: List[ParameterGroup]
     parameters: List[UIParameter]
+    
+    model_config = ConfigDict(protected_namespaces=())
