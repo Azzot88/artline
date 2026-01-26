@@ -151,7 +151,8 @@ class ProviderUpdate(BaseModel):
 class AIModelRead(BaseModel):
     id: uuid.UUID
     # Return display_name as name for frontend compatibility
-    name: str = Field(validation_alias="display_name")
+    # Return display_name as name for frontend compatibility
+    name: Optional[str] = Field(None, validation_alias="display_name")
     
     display_name: str
     description: Optional[str] = None
