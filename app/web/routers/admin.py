@@ -291,7 +291,22 @@ async def get_model(
     m = (await db.execute(select(AIModel).where(AIModel.id == uid))).scalar_one_or_none()
     if not m:
         raise HTTPException(status_code=404, detail="Model not found")
-    return m
+    # Compute Authoritative Spec (Fetch 2.0 flow)
+    from app.domain.catalog.service import CatalogService
+    catalog = CatalogService()
+    # Admin sees everything (tier='admin')
+    spec = catalog.resolve_ui_spec(m, user_tier="admin")
+    
+    # We dynamically attach this to the response or return a composite object
+    # AIModelRead might not have 'spec'. 
+    # Ideally we update the schema, but for quick iteration let's return a dict/custom JSON
+    # or subclass AIModelRead.
+    
+    # Let's return a dict merged with model data
+    data = m.__dict__.copy()
+    data["spec"] = spec
+    
+    return data
 
 @router.put("/models/{model_id}", response_model=AIModelRead)
 async def update_model(

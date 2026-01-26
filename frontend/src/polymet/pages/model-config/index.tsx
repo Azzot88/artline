@@ -66,31 +66,36 @@ export function ModelConfig() {
             setIsActive(m.is_active)
             setModelRef(m.model_ref || "")
 
-            // Init Hook Data (Logic ported from old mono file)
-            let uiConfig = m.ui_config || {}
-            let caps = m.normalized_caps_json || {}
+            // FETCH 2.0: Authoritative Spec from Backend
+            // The backend now computes the 'spec' field via CatalogService using raw_schema + ui_config
+            const spec = (m as any).spec || {};
 
-            // Parsers...
-            if (typeof uiConfig === 'string') try { uiConfig = JSON.parse(uiConfig) } catch { }
-            if (typeof caps === 'string') try { caps = JSON.parse(caps) } catch { }
+            // A: Parameters (Global Source of Truth)
+            if (spec.parameters) {
+                setParameters(spec.parameters);
 
-            // A: Params
-            if (caps._parameters) setParameters(caps._parameters)
-
-            // B: Configs
-            if (uiConfig.parameter_configs) setConfigs(uiConfig.parameter_configs)
-
-            // C: Values
-            if (uiConfig.default_values) {
-                setValues(uiConfig.default_values)
-            } else if (caps._parameters) {
-                // Auto-init defaults from params
+                // Init Defaults from Spec if not overridden
                 const d: any = {}
-                caps._parameters.forEach((p: any) => { if (p.default_value !== null) d[p.id] = p.default_value })
+                spec.parameters.forEach((p: any) => {
+                    if (p.default !== undefined) d[p.id] = p.default
+                })
+
+                // Merge with actual stored values (if any)
+                // But generally spec.parameters[].default IS the merged default.
+                // However, we might have 'values' state for local editing?
+                // For Config Editor, we usually edit Configs, not Values? 
+                // Wait, 'default_values' in ui_config are overrides.
+                // CatalogService already applied them to p.default.
                 setValues(d)
             }
 
-            // D: Caps
+            // B: Configs (Admin Overrides)
+            // We still need the raw config map to know what is *explicitly* configured vs inherited
+            let uiConfig = m.ui_config || {}
+            if (typeof uiConfig === 'string') try { uiConfig = JSON.parse(uiConfig) } catch { }
+            if (uiConfig.parameter_configs) setConfigs(uiConfig.parameter_configs)
+
+            // C: Caps (Modes)
             if (m.capabilities) setCapabilities(m.capabilities)
             else if (m.modes) setCapabilities(m.modes)
 
