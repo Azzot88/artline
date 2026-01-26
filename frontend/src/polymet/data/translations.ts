@@ -47,7 +47,17 @@ export const translations = {
             gallery: "Галерея",
             dashboard: "Дашборд",
             account: "Аккаунт",
+            account: "Аккаунт",
             admin: "Админ",
+        },
+        admin: {
+            title: "Диспетчерская",
+            dashboard: "Дашборд",
+            users: "Пользователи",
+            models: "Модели",
+            providers: "Провайдеры",
+            reports: "Отчеты",
+            system: "Система"
         },
         gallery: {
             title: "Галерея",
@@ -421,6 +431,15 @@ export const translations = {
             dynamic: "Динамика",
             viewAll: "Барлығын көру"
         },
+        admin: {
+            title: "Диспетчерлік",
+            dashboard: "Дашборд",
+            users: "Пайдаланушылар",
+            models: "Модельдер",
+            providers: "Провайдерлер",
+            reports: "Есептер",
+            system: "Жүйе"
+        },
         library: {
             title: "Кітапхана",
             subtitle: "Сіздің жеке генерациялар жинағыңыз"
@@ -766,6 +785,15 @@ export const translations = {
             static: "Статика",
             dynamic: "Динамика",
             viewAll: "Баарын көрүү"
+        },
+        admin: {
+            title: "Диспетчердик",
+            dashboard: "Дашборд",
+            users: "Колдонуучулар",
+            models: "Моделдер",
+            providers: "Провайдерлер",
+            reports: "Отчеттор",
+            system: "Система"
         },
         library: {
             title: "Китепкана",

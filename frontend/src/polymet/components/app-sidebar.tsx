@@ -216,25 +216,59 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
 
           <Separator className="my-4" />
 
-          {/* Settings & Language Group */}
+          {/* Settings / Dispatcher Group */}
           <div className="space-y-1">
-            <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-              {t('common.settings')}
-            </p>
+            {isAdmin ? (
+              <div className="space-y-1">
+                <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  {t('admin.title')}
+                </p>
 
-            {/* Smart Settings Button */}
-            <div
-              onClick={handleSettingsClick}
-              className={cn(
-                "cursor-pointer flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group",
-                (isActive("/account") || isActive("/admin") || isActive("/login"))
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                  : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
-              )}
-            >
-              <SettingsIcon className={cn("w-4 h-4 transition-colors", (isActive("/account") || isActive("/admin") || isActive("/login")) ? "text-primary-foreground" : "group-hover:text-primary")} />
-              <span>{t('common.settings')}</span>
-            </div>
+                {/* Admin Sub-Items */}
+                {[
+                  { href: "/admin", label: t('admin.dashboard'), icon: LayoutDashboardIcon, exact: true },
+                  { href: "/admin/users", label: t('admin.users'), icon: UserIcon },
+                  { href: "/admin/models", label: t('admin.models'), icon: SparklesIcon }, // Box/Sparkles for Models
+                  { href: "/admin/providers", label: t('admin.providers'), icon: SlidersIcon }, // Shield/Sliders for Providers
+                  { href: "/admin/reports", label: t('admin.reports'), icon: TrendingUpIcon },
+                  { href: "/admin/system", label: t('admin.system'), icon: SettingsIcon },
+                ].map((item) => (
+                  <Link key={item.href} to={item.href} onClick={onClose}>
+                    <div
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group",
+                        isActive(item.href) && (item.exact ? location.pathname === item.href : true)
+                          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                          : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
+                      )}
+                    >
+                      <item.icon className={cn("w-4 h-4 transition-colors", isActive(item.href) ? "text-primary-foreground" : "group-hover:text-primary")} />
+                      <span>{item.label}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <>
+                <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  {t('common.settings')}
+                </p>
+
+                {/* Standard Settings Button */}
+                <div
+                  onClick={handleSettingsClick}
+                  className={cn(
+                    "cursor-pointer flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group",
+                    (isActive("/account") || isActive("/login"))
+                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                      : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
+                  )}
+                >
+                  <SettingsIcon className={cn("w-4 h-4 transition-colors", (isActive("/account") || isActive("/login")) ? "text-primary-foreground" : "group-hover:text-primary")} />
+                  <span>{t('common.settings')}</span>
+                </div>
+              </>
+            )}
 
             {/* Language Switcher Row */}
             <div className="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-primary/5 group transition-all duration-200">
