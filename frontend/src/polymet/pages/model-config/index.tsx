@@ -110,10 +110,7 @@ export function ModelConfig() {
             console.error(e)
             toast.error("Error loading model")
 
-        } catch (e) {
-            console.error(e)
-            toast.error("Error loading model")
-        } finally {
+
             setLoading(false)
         }
     }
