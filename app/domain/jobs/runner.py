@@ -84,12 +84,25 @@ def process_job(self, job_id: str):
         elif model_identifier == "flux-pro":
              replicate_model_ref = "black-forest-labs/flux-1.1-pro"
 
-        # 4. Build Strict Payload
-        raw_params["prompt"] = prompt_text
+        # 4. Build Strict Payload (Using CatalogService for Truth)
+        from app.domain.catalog.service import CatalogService
+        catalog = CatalogService()
+        
         allowed_inputs = []
-        if ai_model and ai_model.normalized_caps_json:
-             allowed_inputs = ai_model.normalized_caps_json.get("inputs", [])
-             
+        if ai_model:
+             # Resolve authoritative spec
+             spec = catalog.resolve_ui_spec(ai_model)
+             # Map UIParameters to allowed_input dicts
+             for p in spec.parameters:
+                 allowed_inputs.append({
+                     "name": p.id,
+                     "type": p.type,
+                     # Extract raw values for enum check
+                     "options": [o.value for o in p.options] if p.options else None
+                 })
+                 
+        raw_params["prompt"] = prompt_text
+              
         if allowed_inputs:
              payload = service.build_payload(raw_params, allowed_inputs)
              # Safety: Ensure prompt exists if allowed_inputs was somehow missing it or empty
