@@ -185,7 +185,7 @@ export function LandingPage() {
                                         </Card>
                                     </Link>
                                 );
-                                );
+
                             })}
                         </div>
                     </div>
