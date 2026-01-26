@@ -21,6 +21,15 @@ import { UserProfile } from "@/polymet/pages/user-profile"
 import { LandingPage } from "@/polymet/pages/landing-page"
 import DocumentsPage from "@/polymet/pages/documents-page"
 
+// Admin Suite
+import { AdminLayout } from "@/polymet/pages/admin/layout"
+import { AdminDashboard } from "@/polymet/pages/admin/dashboard"
+import { AdminUsers } from "@/polymet/pages/admin/users"
+import { AdminModels } from "@/polymet/pages/admin/models"
+import { AdminProviders } from "@/polymet/pages/admin/providers"
+import { AdminReports } from "@/polymet/pages/admin/reports"
+import { AdminSystem } from "@/polymet/pages/admin/system"
+
 import { Toaster } from "@/components/ui/sonner"
 
 export default function AIWorkbenchApp() {
@@ -54,7 +63,15 @@ export default function AIWorkbenchApp() {
 
             {/* Admin Routes */}
             <Route element={<AdminRoute />}>
-              <Route path="/admin" element={<AppLayout><AdminPanel /></AppLayout>} />
+              <Route path="/admin" element={<AppLayout><AdminLayout /></AppLayout>}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="models" element={<AdminModels />} />
+                <Route path="providers" element={<AdminProviders />} />
+                <Route path="reports" element={<AdminReports />} />
+                <Route path="system" element={<AdminSystem />} />
+              </Route>
+              {/* Keep Review separate for now if needed, or integrate? */}
               <Route path="/admin/review" element={<AppLayout><AdminReview /></AppLayout>} />
             </Route>
 

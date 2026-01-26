@@ -63,3 +63,30 @@ Refocus the Sidebar on context-specific actions and navigation.
 3.  **Auth Flow**: Verify Button text on Landing/Login pages.
 4.  **Job Status**: Start a generation -> Observe "Отправлено" -> "Загружено X%".
 5.  **Language**: Open as Guest -> Verify `EN` is hidden. Login as Admin -> Verify `EN` is visible.
+### 5. Model Configuration Page Redesign (`model-config.tsx`)
+Refactor the monolithic configuration page into a modern, component-driven UI using `shadcn/ui`.
+
+#### Analysis (Current State)
+- **Monolithic**: Single file (600+ lines) handling data fetching, form state, and UI.
+- **UX**: Long list of checkboxes for Capabilities. "Fetch Schema" action is utilitarian.
+- **Visuals**: Basic cards. Visual hierarchy is flat.
+
+#### Proposed Design (UI/UX Pro Max)
+- **Split Architecture**: Break down into focused components:
+  - `ModelHeader`: Sticky header with actions (Save, Reset, JSON).
+  - `ModelBasicSettings`: Cover image, name, description, usage limits.
+  - `ModelCapabilities`: Visual selection (Toggle Group or Cards) for generation modes.
+  - `ModelSchemaConfig`: The complex "Fetch" interactions and parameter mapping.
+- **Layout**: Use a **Two-Column** grid with "Sticky Sidebar" for quick actions/stats.
+  - **Left (Main)**: Schema, Parameters, Description.
+  - **Right (Sidebar)**: Status, Cost, Capabilities, Metadata.
+- **Interactions**:
+  - **Capabilities**: Use `ToggleGroup` or distinctive visual cards instead of a laundry list of checkboxes.
+  - **Fetch Schema**: Use a "Wizard" or "Connector" style UI. show "Connected" state when `model_ref` matches schema.
+  - **Icons**: Use consistent Lucide icons (Activity, Layers, Database).
+
+#### [NEW] Components
+- `frontend/src/polymet/pages/model-config/layout.tsx` (Main Layout)
+- `frontend/src/polymet/pages/model-config/basic-settings.tsx`
+- `frontend/src/polymet/pages/model-config/capabilities-card.tsx`
+- `frontend/src/polymet/pages/model-config/schema-connector.tsx`
