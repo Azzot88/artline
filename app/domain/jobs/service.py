@@ -256,7 +256,8 @@ async def get_public_jobs(db: AsyncSession, limit: int = 50, offset: int = 0):
     stmt = (
         select(Job)
         .options(joinedload(Job.model))
-        .where(Job.is_curated == True) # ONLY Curated/Approved jobs show in Community Gallery
+        # .where(Job.is_curated == True) # RELAXED: Show all public jobs for now
+        .where(Job.is_public == True)
         .where(Job.status == 'succeeded') 
         .where(Job.result_url.isnot(None))
         .order_by(Job.created_at.desc())

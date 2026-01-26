@@ -216,10 +216,26 @@ async def get_me(
 
 @router.get("/jobs", response_model=list[JobRead])
 async def list_jobs(
+    request: Request,
     user: User | object | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
     limit: int = 50
 ):
+    # Handle Guest Fallback
+    if not user:
+        guest_id_cookie = request.cookies.get("guest_id")
+        if guest_id_cookie:
+            try:
+                gid = uuid.UUID(guest_id_cookie)
+                # We do NOT create on list, only fetch. If invalid, return empty.
+                from app.domain.users.guest_service import get_guest
+                user = await get_guest(db, gid)
+            except ValueError:
+                pass
+    
+    if not user:
+        return []
+
     return await get_user_jobs(db, user, limit)
 
 @router.get("/gallery", response_model=list[JobRead])
