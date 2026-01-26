@@ -44,10 +44,12 @@ export function VisualParamCard({ param, config, onConfigChange }: VisualParamCa
     const [isOpen, setIsOpen] = useState(false)
 
     return (
-        <Card className={cn(
-            "group relative transition-all duration-300 hover:shadow-md border-border/50",
-            !isVisible && "opacity-60 grayscale-[0.5] border-dashed"
-        )}>
+        <Card
+            onClick={() => setIsOpen(true)}
+            className={cn(
+                "group relative transition-all duration-300 hover:shadow-md border-border/50 cursor-pointer",
+                !isVisible && "opacity-60 grayscale-[0.5] border-dashed"
+            )}>
             {/* Header: Identity */}
             <CardHeader className="p-4 pb-2 flex flex-row items-start justify-between space-y-0">
                 <div className="flex items-center gap-3">
@@ -70,6 +72,7 @@ export function VisualParamCard({ param, config, onConfigChange }: VisualParamCa
                 <Switch
                     checked={isVisible}
                     onCheckedChange={(c) => onConfigChange(param.id, { enabled: c })}
+                    onClick={(e) => e.stopPropagation()}
                     className="data-[state=checked]:bg-primary"
                 />
             </CardHeader>
