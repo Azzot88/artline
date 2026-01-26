@@ -246,7 +246,7 @@ export function ModelConfig() {
 
                             <ConfigurationGrid
                                 parameters={parameters}
-                                configs={configs}
+                                configs={configs.reduce((acc, c) => ({ ...acc, [c.parameter_id]: c }), {} as Record<string, any>)}
                                 onConfigChange={updateConfig}
                             />
                         </div>
