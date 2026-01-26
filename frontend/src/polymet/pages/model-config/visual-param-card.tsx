@@ -142,7 +142,7 @@ export function VisualParamCard({ param, config, onConfigChange }: VisualParamCa
                     <DrawerContent>
                         <div className="mx-auto w-full max-w-lg">
                             <DrawerHeader>
-                                <DrawerTitle>Configure: {param.label}</DrawerTitle>
+                                <DrawerTitle>Configure: {param.label || param.id}</DrawerTitle>
                                 <DrawerDescription>Set access tiers and pricing logic.</DrawerDescription>
                             </DrawerHeader>
 
