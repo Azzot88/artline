@@ -89,6 +89,18 @@ export function VisualParamCard({ param, config, onConfigChange }: VisualParamCa
                             def: {String(param.default).substring(0, 10)}
                         </Badge>
                     )}
+
+                    {/* Options Preview */}
+                    {param.options && param.options.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1 w-full opacity-60">
+                            {param.options.slice(0, 3).map(o => (
+                                <span key={o.value} className="text-[9px] border px-1 rounded-sm bg-muted/50 truncate max-w-[60px]">
+                                    {o.label}
+                                </span>
+                            ))}
+                            {param.options.length > 3 && <span className="text-[9px] px-1">+ {param.options.length - 3}</span>}
+                        </div>
+                    )}
                 </div>
             </CardContent>
 

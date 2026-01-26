@@ -42,6 +42,26 @@ class ReplicateCapabilitiesService:
                     ParameterOption(label=str(val).title().replace("_", " "), value=val)
                     for val in details["enum"]
                 ]
+            # Handle anyOf / oneOf (common in newer schemas)
+            elif "anyOf" in details or "oneOf" in details:
+                schemas = details.get("anyOf") or details.get("oneOf")
+                # Look for const/enum inside schema list
+                 # Example: [{"type": "string", "enum": ["a", "b"]}, {"type": "null"}]
+                found_enum = []
+                for s in schemas:
+                    if "enum" in s:
+                        found_enum.extend(s["enum"])
+                    elif "const" in s:
+                         found_enum.append(s["const"])
+                
+                if found_enum:
+                    p_type = "select"
+                    # Dedupe
+                    found_enum = sorted(list(set(found_enum)), key=lambda x: str(x))
+                    options = [
+                        ParameterOption(label=str(val).title().replace("_", " "), value=val) 
+                        for val in found_enum
+                    ]
             elif raw_type == "integer":
                 p_type = "number"
             elif raw_type == "number":
