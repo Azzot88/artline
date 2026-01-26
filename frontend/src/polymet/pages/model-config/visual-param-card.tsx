@@ -45,9 +45,8 @@ export function VisualParamCard({ param, config, onConfigChange }: VisualParamCa
 
     return (
         <Card
-            onClick={() => setIsOpen(true)}
             className={cn(
-                "group relative transition-all duration-300 hover:shadow-md border-border/50 cursor-pointer",
+                "group relative transition-all duration-300 hover:shadow-md border-border/50",
                 !isVisible && "opacity-60 grayscale-[0.5] border-dashed"
             )}>
             {/* Header: Identity */}
@@ -77,34 +76,72 @@ export function VisualParamCard({ param, config, onConfigChange }: VisualParamCa
                 />
             </CardHeader>
 
-            {/* Content: Metadata Preview */}
-            <CardContent className="p-4 py-2 text-xs text-muted-foreground min-h-[60px]">
-                {param.description && (
-                    <div className="line-clamp-2 mb-2">{param.description}</div>
-                )}
-                <div className="flex flex-wrap gap-1 mt-2">
-                    {/* Type Badge */}
-                    <Badge variant="secondary" className="text-[10px] h-5 px-1.5">{param.type}</Badge>
+            {/* Content: Inline Options or Metadata */}
+            <CardContent className="p-4 py-2 text-xs min-h-[60px]">
+                {param.options && param.options.length > 0 ? (
+                    <div className="flex flex-wrap gap-2 mt-1">
+                        {param.options.map(opt => {
+                            // Check if enabled (if allowed_values matches or is empty)
+                            // If allowed_values is set, only those in it are enabled.
+                            // If NOT set, ALL are enabled.
+                            const isOptionEnabled = !config.allowed_values || config.allowed_values.includes(opt.value)
 
-                    {/* Default Value */}
-                    {param.default !== undefined && (
-                        <Badge variant="outline" className="text-[10px] h-5 px-1.5 opacity-70">
-                            def: {String(param.default).substring(0, 10)}
-                        </Badge>
-                    )}
+                            return (
+                                <div
+                                    key={opt.value}
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        // Toggle Logic
+                                        let newAllowed: any[] | undefined
 
-                    {/* Options Preview */}
-                    {param.options && param.options.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1 w-full opacity-60">
-                            {param.options.slice(0, 3).map(o => (
-                                <span key={o.value} className="text-[9px] border px-1 rounded-sm bg-muted/50 truncate max-w-[60px]">
-                                    {o.label}
-                                </span>
-                            ))}
-                            {param.options.length > 3 && <span className="text-[9px] px-1">+ {param.options.length - 3}</span>}
+                                        if (!config.allowed_values) {
+                                            // Currently ALL enabled. Disabling this one means allowing ALL OTHERS.
+                                            newAllowed = param.options!.filter(o => o.value !== opt.value).map(o => o.value)
+                                        } else {
+                                            if (isOptionEnabled) {
+                                                // Disable it
+                                                newAllowed = config.allowed_values.filter(v => v !== opt.value)
+                                            } else {
+                                                // Enable it
+                                                newAllowed = [...config.allowed_values, opt.value]
+                                            }
+                                        }
+
+                                        // If we enabled everything back, reset to undefined to keep it clean
+                                        if (newAllowed && newAllowed.length === param.options!.length) {
+                                            newAllowed = undefined
+                                        }
+
+                                        onConfigChange(param.id, { allowed_values: newAllowed })
+                                    }}
+                                    className={cn(
+                                        "px-2 py-1 rounded-md border text-[10px] font-medium transition-all cursor-pointer select-none",
+                                        isOptionEnabled
+                                            ? "bg-primary/10 border-primary text-primary hover:bg-primary/20"
+                                            : "opacity-40 grayscale bg-muted hover:opacity-60 decoration-slice line-through"
+                                    )}
+                                    title={isOptionEnabled ? "Click to Disable" : "Click to Enable"}
+                                >
+                                    {opt.label}
+                                </div>
+                            )
+                        })}
+                    </div>
+                ) : (
+                    <>
+                        {param.description && (
+                            <div className="line-clamp-2 mb-2 text-muted-foreground">{param.description}</div>
+                        )}
+                        <div className="flex flex-wrap gap-1 mt-2 text-muted-foreground">
+                            <Badge variant="secondary" className="text-[10px] h-5 px-1.5">{param.type}</Badge>
+                            {param.default !== undefined && (
+                                <Badge variant="outline" className="text-[10px] h-5 px-1.5 opacity-70">
+                                    def: {String(param.default).substring(0, 10)}
+                                </Badge>
+                            )}
                         </div>
-                    )}
-                </div>
+                    </>
+                )}
             </CardContent>
 
             {/* Footer: Advanced Indicators */}
