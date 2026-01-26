@@ -1,10 +1,83 @@
 from typing import Any, List, Dict
 import re
+from app.domain.catalog.schemas import UIParameter, ParameterOption
 
 class ReplicateCapabilitiesService:
     """
     Parses Replicate OpenAI Schemas to derive UI capabilities (Modes, Resolutions, Durations).
     """
+    
+    def to_canonical(self, input_schema: Dict[str, Any], defaults: Dict[str, Any] = None) -> List[UIParameter]:
+        """
+        Converts raw Replicate schema into a list of Canonical UIParameters.
+        """
+        params = []
+        props = input_schema
+        
+        # Priority mapping for ordering
+        # Core params first
+        priority = ["prompt", "aspect_ratio", "width", "height", "output_quality", "num_outputs", "num_inference_steps", "guidance_scale", "seed"]
+        
+        # Sort keys by priority then alpha
+        keys = sorted(props.keys(), key=lambda k: (priority.index(k) if k in priority else 999, k))
+
+        for key in keys:
+            details = props[key]
+            
+            # Skip hidden/blacklisted params
+            if key in ["scheduler", "refine"]: # Example blacklist, maybe configurable? 
+                 # For now, include scheduler as advanced
+                 pass
+            
+            p_type = "text"
+            options = None
+            
+            # Determine Type
+            raw_type = details.get("type")
+            
+            if "enum" in details:
+                p_type = "select"
+                # Build options
+                options = [
+                    ParameterOption(label=str(val).title().replace("_", " "), value=val)
+                    for val in details["enum"]
+                ]
+            elif raw_type == "integer":
+                p_type = "number"
+            elif raw_type == "number":
+                p_type = "number"
+            elif raw_type == "boolean":
+                p_type = "boolean"
+            elif key == "prompt" or key == "negative_prompt":
+                p_type = "textarea"
+                
+            # Override for specific keys
+            if key == "aspect_ratio":
+                p_type = "select"
+                
+            # Create Param
+            param = UIParameter(
+                id=key,
+                label=details.get("title") or key.replace("_", " ").title(),
+                type=p_type,
+                default=details.get("default"),
+                description=details.get("description"),
+                min=details.get("minimum"),
+                max=details.get("maximum"),
+                step=1 if raw_type == "integer" else None,
+                options=options,
+                group_id="advanced" if key not in priority[:4] else "basic",
+                hidden=False
+            )
+            
+            # If prompt, make it basic and required (usually)
+            if key == "prompt":
+                param.group_id = "basic"
+                param.required = True
+                
+            params.append(param)
+            
+        return params
 
     def parse_capabilities(self, input_schema: Dict[str, Any]) -> Dict[str, Any]:
         """

@@ -493,6 +493,70 @@ async def like_job(
     likes = await like_job(db, job_id)
     return {"likes": likes}
 
+from app.domain.catalog.schemas import ModelUISpec, ParameterGroup
+from app.domain.providers.replicate_capabilities import ReplicateCapabilitiesService
+
+@router.get("/models/{model_id}/ui-spec", response_model=ModelUISpec)
+async def get_model_ui_spec(
+    model_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    # 1. Fetch Model
+    try:
+         mid = uuid.UUID(model_id)
+         stmt = select(AIModel).where(AIModel.id == mid)
+         res = await db.execute(stmt)
+         model = res.scalar_one_or_none()
+    except ValueError:
+         raise HTTPException(status_code=400, detail="Invalid UUID")
+         
+    if not model:
+         raise HTTPException(status_code=404, detail="Model not found")
+
+    # 2. Get Raw Schema
+    raw_schema = model.raw_schema_json
+    if not raw_schema:
+         # Fallback empty
+         return ModelUISpec(model_id=str(model.id), groups=[], parameters=[])
+         
+    # 3. Parse inputs from schema
+    # Replicate schema structure: components -> schemas -> Input -> properties
+    try:
+        input_props = raw_schema.get("components", {}).get("schemas", {}).get("Input", {}).get("properties", {})
+        if not input_props:
+             # Try direct properties if structure differs or legacy
+             input_props = raw_schema.get("properties", {})
+             
+        service = ReplicateCapabilitiesService()
+        params = service.to_canonical(input_props)
+        
+        # 4. Apply UI Config Overrides (Admin)
+        if model.ui_config:
+             for p in params:
+                 if p.id in model.ui_config:
+                      conf = model.ui_config[p.id]
+                      if "label" in conf: p.label = conf["label"]
+                      if "hidden" in conf: p.hidden = conf["hidden"]
+                      if "group" in conf: p.group_id = conf["group"]
+                      if "default" in conf: p.default = conf["default"]
+        
+        # 5. Define Groups
+        groups = [
+             ParameterGroup(id="basic", label="Basic Settings", collapsed_by_default=False),
+             ParameterGroup(id="advanced", label="Advanced Settings", collapsed_by_default=True)
+        ]
+        
+        return ModelUISpec(
+            model_id=str(model.id),
+            groups=groups,
+            parameters=params
+        )
+        
+    except Exception as e:
+        print(f"Spec Gen Error: {e}")
+        return ModelUISpec(model_id=str(model.id), groups=[], parameters=[])
+
+
 @router.get("/models")
 async def list_models(db: AsyncSession = Depends(get_db)):
     # Reuse logic roughly or query directly
@@ -514,7 +578,6 @@ async def list_models(db: AsyncSession = Depends(get_db)):
              "capabilities": m.capabilities or [],
              "ui_config": m.ui_config or {}
          })
-    return data
     return data
 
 

@@ -8,7 +8,9 @@ from app.domain.pricing.models import PricingQuote
 
 @pytest.fixture
 def mock_db():
-    return AsyncMock()
+    m = AsyncMock()
+    m.add = MagicMock()
+    return m
 
 @pytest.fixture
 def user_context():
