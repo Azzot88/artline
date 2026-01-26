@@ -37,9 +37,48 @@ class ParameterGroup(BaseModel):
     description: Optional[str] = None
     collapsed_by_default: bool = False
 
+
+class PricingRule(BaseModel):
+    id: str  # unique rule id
+    param_id: str
+    operator: Literal["eq", "neq", "gt", "gte", "lt", "lte", "in", "contains"]
+    value: Any
+    surcharge: int = 0
+    surcharge_percent: float = 0.0
+    
+    label: Optional[str] = None # Description for the bill, e.g. "High Resolution Fee"
+
+class UIParameterConfig(BaseModel):
+    """
+    Configuration overlay for a parameter.
+    Stored in AIModel.ui_config (keyed by param_id).
+    """
+    param_id: str
+    visible: bool = True
+    hidden: bool = False # Legacy compat
+    
+    # Tiered Access
+    # If None or empty, available to all.
+    # Otherwise, user must have one of these tiers.
+    access_tiers: Optional[List[str]] = ["starter", "pro", "studio"] 
+    
+    # Input Customization
+    label_override: Optional[str] = None
+    description_override: Optional[str] = None
+    
+    # File Input specific
+    allowed_file_types: Optional[List[str]] = None # e.g. ["image/png", "application/json"]
+    
+    # Validation constraints override
+    min_override: Optional[Union[int, float]] = None
+    max_override: Optional[Union[int, float]] = None
+    
+    model_config = ConfigDict(extra="ignore")
+
 class ModelUISpec(BaseModel):
     model_id: str
     groups: List[ParameterGroup]
     parameters: List[UIParameter]
+    pricing_rules: List[PricingRule] = [] # Exposed rules for frontend estimation if needed
     
     model_config = ConfigDict(protected_namespaces=())

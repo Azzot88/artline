@@ -59,6 +59,9 @@ class AIModel(Base):
     raw_schema_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     normalized_caps_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
+    # Dynamic Pricing Rules (List[PricingRule])
+    pricing_rules: Mapped[list[dict] | None] = mapped_column(JSON, nullable=True)
+
     # Pricing & Stats
     credits_per_generation: Mapped[int] = mapped_column(Integer, default=5)
     total_generations: Mapped[int] = mapped_column(Integer, default=0)
