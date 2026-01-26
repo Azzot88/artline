@@ -99,6 +99,17 @@ export function ModelConfig() {
             if (m.capabilities) setCapabilities(m.capabilities)
             else if (m.modes) setCapabilities(m.modes)
 
+            // D: Client-Side Enrichment (Force correct visuals if backend missed it)
+            // Ensure aspect_ratio, resolution, etc are Selects
+            if (spec.parameters) {
+                const enriched = enrichParameters(spec.parameters)
+                setParameters(enriched)
+            }
+
+        } catch (e) {
+            console.error(e)
+            toast.error("Error loading model")
+
         } catch (e) {
             console.error(e)
             toast.error("Error loading model")
@@ -255,7 +266,44 @@ export function ModelConfig() {
                         setDescription={setDescription}
                         coverImageUrl={coverImageUrl}
                         setCoverImageUrl={setCoverImageUrl}
-                        onUploadImage={handleUploadImage}
+
+                        // Helper to force better visuals
+                        function enrichParameters(params: any[]): any[] {
+    if (!params) return []
+    return params.map(p => {
+        // Force Select for Aspect Ratio
+        if (p.id === 'aspect_ratio' && p.type === 'string') {
+            return {
+                        ...p,
+                        type: 'select',
+                    options: [
+                    {label: "1:1 Square", value: "1:1" },
+                    {label: "16:9 Landscape", value: "16:9" },
+                    {label: "9:16 Portrait", value: "9:16" },
+                    {label: "3:2 Photo", value: "3:2" },
+                    {label: "2:3 Photo", value: "2:3" },
+                    {label: "4:5 Social", value: "4:5" }
+                    ]
+            }
+        }
+                    // Force Select for Resolution
+                    if (p.id === 'resolution' && p.type === 'string') {
+             return {
+                        ...p,
+                        type: 'select',
+                    options: [
+                    {label: "1024x1024", value: "1024x1024" },
+                    {label: "1152x896", value: "1152x896" },
+                    {label: "896x1152", value: "896x1152" },
+                    {label: "768x1344", value: "768x1344" },
+                    {label: "1344x768", value: "1344x768" }
+                    ]
+            }
+        }
+                    return p
+    })
+}
+                    onUploadImage={handleUploadImage}
                     />
                     <CapabilitiesCard
                         capabilities={capabilities}
