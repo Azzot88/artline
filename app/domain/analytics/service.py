@@ -45,7 +45,12 @@ class AnalyticsService:
         )
         
         db.add(activity)
-        # We assume the caller handles the commit/flush or it happens at the end of the request
+        try:
+            await db.commit()
+        except Exception:
+            # If commit fails (e.g. transaction closed), we might ignore to not break main flow
+            # or try to rollback. For analytics, silence is often preferred over crashing user request.
+            await db.rollback()
         
     @staticmethod
     async def get_recent_activity(
