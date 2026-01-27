@@ -70,17 +70,17 @@ class AnalyticsService:
         start_date = datetime.utcnow() - timedelta(days=days)
         
         # PostgreSQL specific: date_trunc('day', created_at)
-        # We use text() for the date_trunc to ensure compatibility or just use func.date_trunc if mapped
-        
+        day_expr = func.date_trunc('day', UserActivity.created_at)
+
         stmt = (
             select(
-                func.date_trunc('day', UserActivity.created_at).label('day'),
+                day_expr.label('day'),
                 func.count(func.distinct(UserActivity.guest_id)).label('visitors'),
                 func.count(UserActivity.id).label('actions')
             )
             .where(UserActivity.created_at >= start_date)
-            .group_by(text("date_trunc('day', created_at)"))
-            .order_by(text("date_trunc('day', created_at)"))
+            .group_by(day_expr)
+            .order_by(day_expr)
         )
         
         result = await db.execute(stmt)
