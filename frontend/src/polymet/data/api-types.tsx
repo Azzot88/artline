@@ -168,15 +168,17 @@ export interface GalleryResponse {
 // ============================================================================
 
 export interface PollingConfig {
-  initialInterval: number // 2000ms
+  initialInterval: number // 1000ms
   maxInterval: number // 5000ms
   backoffThreshold: number // 30000ms (30s)
+  maxErrors: number // Retry 20 times before failing
 }
 
 export const DEFAULT_POLLING_CONFIG: PollingConfig = {
-  initialInterval: 2000,
+  initialInterval: 1000,
   maxInterval: 5000,
   backoffThreshold: 30000,
+  maxErrors: 20
 }
 
 // ============================================================================

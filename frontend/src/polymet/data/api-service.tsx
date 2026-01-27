@@ -285,6 +285,7 @@ export async function pollJobStatus(
 ): Promise<Job> {
   const { onProgress, onSuccess, onError, signal } = options
   const startTime = Date.now()
+  let errorCount = 0
 
   return new Promise((resolve, reject) => {
     let timeoutId: NodeJS.Timeout
@@ -301,11 +302,11 @@ export async function pollJobStatus(
         const job = await apiService.getJob(jobId)
 
         if (!job) {
-          console.error(`[Polling] Job ${jobId} is undefined/null!`)
-          // Skip this iteration or specific logic?
-          // Throwing might be better to trigger retry logic
           throw new Error("Job response is empty")
         }
+
+        // Reset error count on success
+        errorCount = 0
 
         // Call progress callback
         onProgress?.(job)
@@ -322,18 +323,27 @@ export async function pollJobStatus(
           return
         }
 
-        // Calculate next interval (backoff after 30s)
-        const elapsed = Date.now() - startTime
-        const interval = elapsed > DEFAULT_POLLING_CONFIG.backoffThreshold
-          ? DEFAULT_POLLING_CONFIG.maxInterval
-          : DEFAULT_POLLING_CONFIG.initialInterval
-
-        // Schedule next poll
-        timeoutId = setTimeout(poll, interval)
       } catch (error) {
-        clearTimeout(timeoutId)
-        reject(error)
+        console.warn(`[Polling] Error fetching job ${jobId}:`, error)
+        errorCount++
+
+        // Retry logic
+        if (errorCount > (DEFAULT_POLLING_CONFIG.maxErrors || 20)) {
+          clearTimeout(timeoutId)
+          reject(error)
+          return
+        }
+        // Continue polling despite error (transient failure)
       }
+
+      // Calculate next interval (backoff after 30s)
+      const elapsed = Date.now() - startTime
+      const interval = elapsed > DEFAULT_POLLING_CONFIG.backoffThreshold
+        ? DEFAULT_POLLING_CONFIG.maxInterval
+        : DEFAULT_POLLING_CONFIG.initialInterval
+
+      // Schedule next poll
+      timeoutId = setTimeout(poll, interval)
     }
 
     // Start polling
