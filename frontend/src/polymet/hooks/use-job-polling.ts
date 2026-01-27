@@ -18,10 +18,10 @@ export function useJobPolling({ onSucceeded, onFailed }: UseJobPollingProps = {}
     // Track full generation objects, keyed by ID
     const [activeGenerations, setActiveGenerations] = useState<Map<string, Generation>>(new Map())
 
-    const startPolling = useCallback(async (jobId: string, initialData?: Partial<Generation>) => {
-        // Create a temporary generation object
+    // Add a temporary local generation to the list execution immediately
+    const addOptimistic = useCallback((id: string, data: Partial<Generation>) => {
         const tempGen: Generation = {
-            id: jobId,
+            id: id,
             status: 'queued',
             created_at: new Date().toISOString(),
             credits_spent: 0,
@@ -29,19 +29,76 @@ export function useJobPolling({ onSucceeded, onFailed }: UseJobPollingProps = {}
             is_curated: false,
             likes: 0,
             views: 0,
-            kind: initialData?.kind || 'image',
-            prompt: initialData?.prompt || '',
-            input_type: initialData?.input_type || 'text',
-            format: initialData?.format || 'square',
-            resolution: initialData?.resolution || '1080',
-            width: initialData?.width || 1024,
-            height: initialData?.height || 1024,
-            model_name: initialData?.model_name || 'AI',
-            ...initialData
+            kind: data?.kind || 'image',
+            prompt: data?.prompt || '',
+            input_type: data?.input_type || 'text',
+            format: data?.format || 'square',
+            resolution: data?.resolution || '1080',
+            width: data?.width || 1024,
+            height: data?.height || 1024,
+            model_name: data?.model_name || 'AI',
+            ...data
         }
 
         setActiveGenerations(prev => {
             const next = new Map(prev)
+            next.set(id, tempGen)
+            return next
+        })
+    }, [])
+
+    const removeGeneration = useCallback((id: string) => {
+        setActiveGenerations(prev => {
+            const next = new Map(prev)
+            next.delete(id)
+            return next
+        })
+    }, [])
+
+    const markAsFailed = useCallback((id: string, error: string) => {
+        setActiveGenerations(prev => {
+            const next = new Map(prev)
+            const existing = next.get(id)
+            if (existing) {
+                next.set(id, { ...existing, status: 'failed', error_message: error }) // Assuming Generation type has error_message or we handle it
+            }
+            return next
+        })
+
+        // Auto-remove after delay
+        setTimeout(() => {
+            removeGeneration(id)
+        }, 5000)
+    }, [])
+
+    const startPolling = useCallback(async (jobId: string, initialData?: Partial<Generation>, previousTempId?: string) => {
+        // If we have a temp ID, we want to atomically replace it to avoid flicker
+        setActiveGenerations(prev => {
+            const next = new Map(prev)
+            if (previousTempId) {
+                next.delete(previousTempId)
+            }
+
+            // Create proper generation object (initial)
+            const tempGen: Generation = {
+                id: jobId,
+                status: 'queued',
+                created_at: new Date().toISOString(),
+                credits_spent: 0,
+                is_public: false,
+                is_curated: false,
+                likes: 0,
+                views: 0,
+                kind: initialData?.kind || 'image',
+                prompt: initialData?.prompt || '',
+                input_type: initialData?.input_type || 'text',
+                format: initialData?.format || 'square',
+                resolution: initialData?.resolution || '1080',
+                width: initialData?.width || 1024,
+                height: initialData?.height || 1024,
+                model_name: initialData?.model_name || 'AI',
+                ...initialData
+            }
             next.set(jobId, tempGen)
             return next
         })
@@ -105,6 +162,9 @@ export function useJobPolling({ onSucceeded, onFailed }: UseJobPollingProps = {}
 
     return {
         startPolling,
+        addOptimistic,
+        removeGeneration,
+        markAsFailed,
         isPolling,
         anyPolling: activeGenerations.size > 0,
         activeGenerations: Array.from(activeGenerations.values())

@@ -314,6 +314,10 @@ export async function pollJobStatus(
         // Check if terminal status
         if (isTerminalStatus(job.status)) {
           if (job.status === "succeeded") {
+            if (!job.result_url) {
+              // Optimization: If succeeded but no URL, it might be S3 lag. Retry.
+              throw new Error("Job succeeded but result_url is missing")
+            }
             onSuccess?.(job)
             resolve(job)
           } else {
