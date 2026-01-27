@@ -312,11 +312,18 @@ async def create_spa_job(
         
     process_job.delay(job.id)
     
+    real_user_id = user.id if isinstance(user, User) else None
+    # If it's not a User but acts like one (Guest), we rely on cookie (handled inside log_activity) 
+    # OR we pass it explicitly if we have the object.
+    # Actually log_activity extracts guest_id from cookie if None. 
+    # But if we have a guest object 'user', we can pass its ID as guest_id explicitly if we want?
+    # Let's just fix the user_id passing.
+    
     await AnalyticsService.log_activity(
         db, 
         "generate", 
         details={"job_id": str(job.id), "model_id": req.model_id, "kind": req.kind},
-        user_id=user.id if hasattr(user, 'id') else None,
+        user_id=real_user_id,
         request=request 
     )
     return job
