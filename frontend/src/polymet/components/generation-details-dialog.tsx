@@ -255,13 +255,25 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                         {(generation.model_name || generation.model || t('generationDetails.unknownModel')).split('/').pop()?.split(':')[0].replace(/-/g, ' ') || "Generation"}
                                     </h3>
                                 </div>
-                                <div className="flex gap-1">
-                                    {/* Action Shortcuts could go here */}
+                                <div className="flex gap-1 items-center">
+                                    {/* Privacy Toggle (User) */}
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className={cn("h-8 w-8", privacy === 'private' ? "text-indigo-500 bg-indigo-500/10" : "text-muted-foreground hover:text-foreground")}
+                                        onClick={() => handlePrivacyChange(privacy === 'private' ? 'standard' : 'private')}
+                                        title={privacy === 'private' ? (t('generationDetails.privacy.hiddenDesc') || "Private Mode") : (t('generationDetails.privacy.visibleDesc') || "Standard Visibility")}
+                                        disabled={privacy === 'public' && !user?.is_admin}
+                                    >
+                                        {privacy === 'private' ? <EyeOffIcon className="w-4 h-4" /> : <GlobeIcon className="w-4 h-4" />}
+                                    </Button>
+
+                                    {/* Admin Curation Toggle */}
                                     {user?.is_admin && (
                                         <Button
                                             variant={isCurated ? "default" : "outline"}
                                             size="icon"
-                                            className={cn("h-8 w-8", isCurated ? "bg-yellow-500 hover:bg-yellow-600 text-white" : "")}
+                                            className={cn("h-8 w-8", isCurated ? "bg-amber-500 hover:bg-amber-600 text-white" : "")}
                                             onClick={handleCurate}
                                             title="Toggle for Community Gallery"
                                         >
