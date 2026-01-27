@@ -87,7 +87,7 @@ export function useJobPolling({ onSucceeded, onFailed }: UseJobPollingProps = {}
                     onFailed?.(job)
                 },
                 onProgress: (job) => {
-                    // Progress updates if needed
+                    // Safe
                 }
             })
             return finalJob

@@ -300,6 +300,13 @@ export async function pollJobStatus(
       try {
         const job = await apiService.getJob(jobId)
 
+        if (!job) {
+          console.error(`[Polling] Job ${jobId} is undefined/null!`)
+          // Skip this iteration or specific logic?
+          // Throwing might be better to trigger retry logic
+          throw new Error("Job response is empty")
+        }
+
         // Call progress callback
         onProgress?.(job)
 
