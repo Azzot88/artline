@@ -83,11 +83,10 @@ export function SystemHealthPage() {
 
     // Initial load? maybe user wants empty state until they click "Load"?
     // Or load once on mount? Let's load once on mount.
+    // Initial load
     useEffect(() => {
-        useEffect(() => {
-            fetchLogs()
-            fetchAnalytics()
-        }, [])
+        fetchLogs()
+        fetchAnalytics()
     }, [])
 
     const formatBytes = (bytes: number) => {
