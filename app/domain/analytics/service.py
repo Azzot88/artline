@@ -84,4 +84,4 @@ class AnalyticsService:
         )
         
         result = await db.execute(stmt)
-        return result.all()
+        return [r._mapping for r in result.all()]
