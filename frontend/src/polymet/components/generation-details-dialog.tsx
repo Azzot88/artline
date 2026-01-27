@@ -256,17 +256,19 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                     </h3>
                                 </div>
                                 <div className="flex gap-1 items-center">
-                                    {/* Privacy Toggle (User) */}
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className={cn("h-8 w-8", privacy === 'private' ? "text-indigo-500 bg-indigo-500/10" : "text-muted-foreground hover:text-foreground")}
-                                        onClick={() => handlePrivacyChange(privacy === 'private' ? 'standard' : 'private')}
-                                        title={privacy === 'private' ? (t('generationDetails.privacy.hiddenDesc') || "Private Mode") : (t('generationDetails.privacy.visibleDesc') || "Standard Visibility")}
-                                        disabled={privacy === 'public' && !user?.is_admin}
-                                    >
-                                        {privacy === 'private' ? <EyeOffIcon className="w-4 h-4" /> : <GlobeIcon className="w-4 h-4" />}
-                                    </Button>
+                                    {/* Privacy Toggle (User) - Hidden if Admin is Owner (per request) */}
+                                    {!(user?.is_admin && user.id === generation.user_id) && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className={cn("h-8 w-8", privacy === 'private' ? "text-indigo-500 bg-indigo-500/10" : "text-muted-foreground hover:text-foreground")}
+                                            onClick={() => handlePrivacyChange(privacy === 'private' ? 'standard' : 'private')}
+                                            title={privacy === 'private' ? (t('generationDetails.privacy.hiddenDesc') || "Private Mode") : (t('generationDetails.privacy.visibleDesc') || "Standard Visibility")}
+                                            disabled={privacy === 'public' && !user?.is_admin}
+                                        >
+                                            {privacy === 'private' ? <EyeOffIcon className="w-4 h-4" /> : <GlobeIcon className="w-4 h-4" />}
+                                        </Button>
+                                    )}
 
                                     {/* Admin Curation Toggle */}
                                     {user?.is_admin && (
