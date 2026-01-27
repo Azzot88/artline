@@ -4,8 +4,13 @@ from app.core.config import settings
 from app.web.routers import i18n
 from app.webhooks import router as webhooks_main
 from app.webhooks import stripe as webhooks_stripe
+from app.core.monitoring import setup_monitoring_handler
 
 app = FastAPI(title="ArtLine")
+
+@app.on_event("startup")
+async def startup_event():
+    setup_monitoring_handler()
 
 from app.web.middleware.guest import GuestMiddleware
 app.add_middleware(GuestMiddleware)

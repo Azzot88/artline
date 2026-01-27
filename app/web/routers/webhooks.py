@@ -24,7 +24,7 @@ async def replicate_webhook(
     db: AsyncSession = Depends(get_db)
 ):
     payload = await request.json()
-    logger.info(f"Replicate Webhook Received: {payload.get('id')} - {payload.get('status')}")
+    logging.getLogger("webhooks").info(f"Replicate Webhook Received: {payload.get('id')} - {payload.get('status')}")
     
     provider_job_id = payload.get("id")
     status = payload.get("status")

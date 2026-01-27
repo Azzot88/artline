@@ -18,27 +18,27 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
 
 @celery_app.task(bind=True, max_retries=3)
 def process_job(self, job_id: str):
-    print(f"DEBUG: Starting process_job for {job_id}")
+    logger = logging.getLogger("runner")
+    logger.info(f"Starting process_job for {job_id}")
     session = SessionLocal()
     try:
         # 1. Fetch Job & Provider Config
         job = session.execute(select(Job).where(Job.id == job_id)).scalar_one_or_none()
         if not job: 
-            print("DEBUG: Job NOT FOUND in DB!")
+            logger.error("Job NOT FOUND in DB!")
             # Debug: Dump all jobs to see what IS there
             all_jobs = session.execute(select(Job.id, Job.status, Job.prompt)).all()
-            print(f"DEBUG: Dump of Jobs in DB ({len(all_jobs)} found):")
-            for j in all_jobs:
-                print(f" -- {j.id} | {j.status} | {j.prompt}")
+            logger.debug(f"Dump of Jobs in DB ({len(all_jobs)} found)")
             return "Job not found"
-        print(f"DEBUG: Job found: {job.id}, Status: {job.status}")
+        
+        logger.info(f"Job found: {job.id}, Status: {job.status}")
 
         provider_cfg = session.execute(
             select(ProviderConfig).where(ProviderConfig.provider_id == 'replicate', ProviderConfig.is_active == True)
         ).scalars().first()
         
         if not provider_cfg:
-            print("DEBUG: No Active Replicate Provider Config found!")
+            logger.error("No Active Replicate Provider Config found!")
             job.status = "failed"
             job.error_message = "No active Replicate provider."
             session.commit()
@@ -46,9 +46,8 @@ def process_job(self, job_id: str):
 
         try:
             api_key = decrypt_key(provider_cfg.encrypted_api_key)
-            print("DEBUG: API Key decrypted successfully")
         except Exception as e:
-            print(f"DEBUG: Key Decryption Error: {e}")
+            logger.error(f"Key Decryption Error: {e}")
             job.status = "failed"
             job.error_message = "Key decryption failed."
             session.commit()
@@ -122,24 +121,22 @@ def process_job(self, job_id: str):
              webhook_url = f"{webhook_host}/webhooks/replicate"
         
         try:
-            print(f"DEBUG: Submitting prediction to Ref: {replicate_model_ref}")
+            logger.info(f"Submitting prediction to Ref: {replicate_model_ref}")
             provider_job_id = service.submit_prediction(
                 model_ref=replicate_model_ref,
                 input_data=payload,
                 webhook_url=webhook_url
             )
-            print(f"DEBUG: Submitted successfully. Provider ID: {provider_job_id}")
+            logger.info(f"Submitted successfully. Provider ID: {provider_job_id}")
             
             job.status = "running"
             job.provider_job_id = provider_job_id
             job.provider = "replicate"
             session.commit()
-            print("DEBUG: Job status updated to running and committed.")
             return f"Submitted: {provider_job_id}"
             
         except Exception as e:
-            print(f"DEBUG: Submission Exception: {e}")
-            logger.error(f"Submission Error: {e}")
+            logger.error(f"Submission Exception: {e}")
             job.status = "failed"
             job.error_message = str(e)
             session.commit()

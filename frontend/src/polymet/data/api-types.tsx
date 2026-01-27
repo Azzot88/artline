@@ -287,3 +287,33 @@ export interface ModelUISpec {
   groups: ParameterGroup[]
   parameters: UIParameter[]
 }
+
+// ============================================================================
+// System Health
+// ============================================================================
+
+export interface SystemLog {
+  timestamp: string
+  level: string
+  logger: string
+  message: string
+  module: string
+  func: string
+  lineno: number
+}
+
+export interface SystemHealth {
+  cpu_percent: number
+  memory: {
+    total: number
+    available: number
+    percent: number
+    used: number
+  }
+  disk: {
+    total: number
+    free: number
+    percent: number
+  }
+  timestamp: string
+}

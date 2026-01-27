@@ -645,4 +645,26 @@ async def sync_global_stats(
     # We can just call the endpoint handler logic, but it needs dependencies.
     # Let's just create a quick internal helper or copy-paste the minimal calc logic.
     # Calling get_admin_stats directly is cleaner if we mock deps, but easier to just Recalc here.
-    return await get_admin_stats(user, db)
+# ============================================================================
+# SYSTEM HEALTH (New)
+# ============================================================================
+
+from app.core.monitoring import LOG_BUFFER, SystemMonitor
+
+@router.get("/system/logs")
+async def get_system_logs(
+    user: User = Depends(get_admin_user)
+):
+    """
+    Returns the last 1000 logs from the in-memory buffer.
+    """
+    return list(LOG_BUFFER)
+
+@router.get("/system/health")
+async def get_system_health(
+    user: User = Depends(get_admin_user)
+):
+    """
+    Returns current system metrics (CPU, RAM, Disk).
+    """
+    return SystemMonitor.get_stats()

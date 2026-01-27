@@ -28,7 +28,7 @@ import { AdminUsers } from "@/polymet/pages/admin/users"
 import { AdminModels } from "@/polymet/pages/admin/models"
 import { AdminProviders } from "@/polymet/pages/admin/providers"
 import { AdminReports } from "@/polymet/pages/admin/reports"
-import { AdminSystem } from "@/polymet/pages/admin/system"
+import { SystemHealthPage as AdminSystem } from "@/polymet/pages/admin/system-health"
 
 import { Toaster } from "@/components/ui/sonner"
 

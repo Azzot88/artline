@@ -231,6 +231,18 @@ export const apiService = {
     // Let's assume standard behavior:
     return api.post<{ url: string }>("/admin/upload/image", formData)
   },
+
+  // ==========================================================================
+  // System Health
+  // ==========================================================================
+
+  async getSystemLogs() {
+    return api.get<import("./api-types").SystemLog[]>("/admin/system/logs")
+  },
+
+  async getSystemHealth() {
+    return api.get<import("./api-types").SystemHealth>("/admin/system/health")
+  },
 }
 
 
