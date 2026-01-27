@@ -402,7 +402,7 @@ async def get_job_status(
     return job
 
 @router.delete("/jobs/{job_id}")
-async def delete_job(
+async def remove_job(
     job_id: str,
     background_tasks: BackgroundTasks,
     user: User | object | None = Depends(get_current_user_optional),
@@ -616,7 +616,7 @@ async def toggle_curated(
     return {"is_curated": job.is_curated, "is_public": job.is_public}
 
 @router.post("/jobs/{job_id}/like")
-async def like_job(
+async def toggle_like(
     job_id: str,
     db: AsyncSession = Depends(get_db)
 ):
