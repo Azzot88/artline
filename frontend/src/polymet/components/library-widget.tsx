@@ -118,6 +118,7 @@ export function LibraryWidget({ refreshTrigger, newGeneration, activeGenerations
 
     // Merge active generations with persistent ones for display
     // Active ones go first
+    console.log("[LibraryWidget] Active Generations:", activeGenerations.map(g => ({ id: g.id, status: g.status })))
     const displayGenerations = [...activeGenerations, ...generations.filter(g => !activeGenerations.some(ag => ag.id === g.id))]
 
     if (!loading && displayGenerations.length === 0) {
