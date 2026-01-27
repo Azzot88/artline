@@ -13,9 +13,9 @@ from app.core.deps import get_current_user_optional, get_current_user
 from app.core.security import verify_password, create_access_token, get_password_hash
 from app.core.i18n import get_t
 from app.models import User, Job, AIModel, ProviderConfig, LedgerEntry
-from app.schemas import UserContext, JobRead, JobRequestSPA, UserRead, UserCreate, AdminStats, UserWithBalance, CreditGrantRequest
+from app.schemas import UserContext, JobRead, JobRequestSPA, UserRead, UserCreate, AdminStats, UserWithBalance, CreditGrantRequest, JobPrivacyUpdate
 from app.domain.billing.service import get_user_balance, add_ledger_entry
-from app.domain.jobs.service import create_job, get_user_jobs, get_public_jobs, get_review_jobs, delete_job, like_job, get_job_with_permission
+from app.domain.jobs.service import create_job, get_user_jobs, get_public_jobs, get_review_jobs, delete_job, like_job, get_job_with_permission, get_admin_feed
 from app.domain.jobs.runner import process_job
 from app.domain.users.guest_service import get_or_create_guest
 from app.domain.analytics.service import AnalyticsService
@@ -261,6 +261,17 @@ async def admin_review_jobs(
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Admin only")
     return await get_review_jobs(db, limit, offset)
+
+@router.get("/admin/feed", response_model=list[JobRead])
+async def admin_feed_jobs(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    limit: int = 30,
+    offset: int = 0
+):
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin only")
+    return await get_admin_feed(db, limit, offset)
 
 @router.post("/jobs", response_model=JobRead)
 async def create_spa_job(
@@ -521,6 +532,61 @@ async def toggle_public(
     job.is_public = not job.is_public
     await db.commit()
     return {"is_public": job.is_public}
+
+@router.patch("/jobs/{job_id}/privacy")
+async def update_job_privacy(
+    job_id: str,
+    body: JobPrivacyUpdate,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(Job).where(Job.id == job_id, Job.user_id == user.id)
+    result = await db.execute(stmt)
+    job = result.scalar_one_or_none()
+    
+    # If not found for user, check if admin (for future compatibility, though strictly modifying OWN privacy usually implies ownership)
+    # Requirement: "Users cannot make image public themselves". Only admins.
+    
+    if not job:
+        # If admin tries to modify another's job?
+        if user.is_admin:
+             stmt = select(Job).where(Job.id == job_id)
+             result = await db.execute(stmt)
+             job = result.scalar_one_or_none()
+        
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+
+    # Access Control Logic
+    # 'private' -> Stealth Mode (is_private=True, hidden from admin list typically)
+    # 'public' -> Gallery Mode (is_public=True)
+    # 'standard' (or implicity disabling private) -> Standard Mode (Visible to admin)
+    
+    if body.visibility == "public":
+        if not user.is_admin:
+            raise HTTPException(status_code=403, detail="Only admins can publish images")
+        job.is_public = True
+        job.is_private = False
+        
+    elif body.visibility == "private":
+        job.is_public = False
+        job.is_private = True
+        
+    elif body.visibility == "standard" or body.visibility == "unlisted":
+         # Reset to default
+        job.is_public = False
+        job.is_private = False
+        
+    # Validation for frontend 'hidden' legacy if passed during transition, map to private
+    elif body.visibility == "hidden":
+        job.is_public = False
+        job.is_private = True
+
+    else:
+        raise HTTPException(status_code=400, detail="Invalid visibility status")
+
+    await db.commit()
+    return {"ok": True, "visibility": body.visibility, "is_public": job.is_public, "is_private": job.is_private}
 
 @router.post("/jobs/{job_id}/curate")
 async def toggle_curated(

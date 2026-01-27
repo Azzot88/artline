@@ -228,6 +228,7 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
                 {[
                   { href: "/admin", label: t('admin.dashboard'), icon: LayoutDashboardIcon, exact: true },
                   { href: "/admin/users", label: t('admin.users'), icon: UserIcon },
+                  { href: "/admin/gallery", label: "Gallery", icon: ImageIcon }, // Universal Gallery
                   { href: "/admin/models", label: t('admin.models'), icon: SparklesIcon }, // Box/Sparkles for Models
                   { href: "/admin/providers", label: t('admin.providers'), icon: SlidersIcon }, // Shield/Sliders for Providers
                   { href: "/admin/reports", label: t('admin.reports'), icon: TrendingUpIcon },

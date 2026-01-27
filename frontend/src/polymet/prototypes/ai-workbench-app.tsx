@@ -70,6 +70,7 @@ export default function AIWorkbenchApp() {
                 <Route path="providers" element={<AdminProviders />} />
                 <Route path="reports" element={<AdminReports />} />
                 <Route path="system" element={<AdminSystem />} />
+                <Route path="gallery" element={<Gallery endpoint="/admin/feed" title="Universal Admin Gallery" subtitle="View all generated content" adminMode={true} />} />
               </Route>
               {/* Keep Review separate for now if needed, or integrate? */}
               <Route path="/admin/review" element={<AppLayout><AdminReview /></AppLayout>} />

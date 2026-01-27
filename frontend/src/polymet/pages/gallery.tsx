@@ -9,74 +9,112 @@ import { toast } from "sonner"
 import { Generation } from "@/polymet/data/types"
 import { Input } from "@/components/ui/input"
 
-export function Gallery() {
+import { useState, useEffect, useRef } from "react"
+import { GenerationCard } from "@/polymet/components/generation-card"
+import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { SearchIcon, Loader2 } from "lucide-react"
+import { useLanguage } from "@/polymet/components/language-provider"
+import { api } from "@/lib/api"
+import { toast } from "sonner"
+import { Generation } from "@/polymet/data/types"
+import { Input } from "@/components/ui/input"
+import { normalizeGeneration } from "@/polymet/data/transformers"
+
+interface GalleryProps {
+  endpoint?: string
+  title?: string
+  subtitle?: string
+  adminMode?: boolean
+}
+
+export function Gallery({
+  endpoint = "/gallery",
+  title,
+  subtitle,
+  adminMode = false
+}: GalleryProps) {
   const [generations, setGenerations] = useState<Generation[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [hasMore, setHasMore] = useState(true)
+  const offsetRef = useRef(0)
+  const observerTarget = useRef<HTMLDivElement>(null)
+
   const { t } = useLanguage()
 
-  const fetchGenerations = async () => {
-    try {
+  const LIMIT = 30
+
+  const fetchGenerations = async (isLoadMore = false) => {
+    // If not loading more (initial), reset
+    if (!isLoadMore) {
       setLoading(true)
-      const data = await api.get<Generation[]>("/gallery")
-      // Ensure data is array
+      offsetRef.current = 0
+      setHasMore(true)
+    } else {
+      setLoadingMore(true)
+    }
+
+    try {
+      // Build query
+      const url = `${endpoint}?limit=${LIMIT}&offset=${offsetRef.current}`
+
+      const data = await api.get<any[]>(url)
+
       if (Array.isArray(data)) {
-        // Map backend job to frontend generation interface if needed
-        // Assuming backend returns JobRead which is compatible or we map it
-        // For now trusting the shape or simple mapping
-        const mapped = data.map((job: any) => ({
-          id: job.id,
-          // Required Generation fields
-          kind: job.kind || "image",
-          status: job.status || "succeeded",
-          // Content
-          url: job.result_url || job.image || "https://placehold.co/600x400?text=Processing",
-          image: job.result_url || job.image, // Legacy support
-          prompt: job.prompt || "",
+        const mapped = data.map(normalizeGeneration)
 
-          model_name: job.model_id || "Flux",
-          model_id: job.model_id,
-          provider: "replicate",
+        if (data.length < LIMIT) {
+          setHasMore(false)
+        }
 
-          // Dimensions
-          width: job.width || (job.format === "portrait" ? 768 : job.format === "landscape" ? 1024 : 1024),
-          height: job.height || (job.format === "portrait" ? 1024 : job.format === "landscape" ? 768 : 1024),
+        if (isLoadMore) {
+          setGenerations(prev => [...prev, ...mapped])
+        } else {
+          setGenerations(mapped)
+        }
 
-          // Stats
-          credits_spent: job.credits_spent || 1,
-          likes: job.likes || 0,
-          views: job.views || 0,
-          is_public: true,
-          is_curated: false,
-
-          // User
-          user_name: "User",
-          user_avatar: "https://github.com/shadcn.png",
-
-          // Tech details
-          input_type: "text",
-          format: job.format || "square",
-          resolution: "1080",
-          created_at: job.created_at || new Date().toISOString()
-        } as Generation))
-        setGenerations(mapped)
+        offsetRef.current += LIMIT
+      } else {
+        setHasMore(false)
       }
     } catch (err) {
       console.error(err)
       toast.error("Failed to load gallery")
     } finally {
       setLoading(false)
+      setLoadingMore(false)
     }
   }
 
   useEffect(() => {
     fetchGenerations()
-  }, [])
+  }, [endpoint]) // Reload if endpoint changes
 
-  // Filter generations
+  // Infinite Scroll Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+          fetchGenerations(true)
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current)
+    }
+
+    return () => observer.disconnect()
+  }, [hasMore, loading, loadingMore])
+
+
+  // Filter generations (Client side for now, ideally backend search param)
   const filteredGenerations = generations.filter(gen => {
-    const matchesSearch = gen.prompt.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesSearch
+    if (!searchQuery) return true
+    return gen.prompt.toLowerCase().includes(searchQuery.toLowerCase())
   })
 
   return (
@@ -84,14 +122,14 @@ export function Gallery() {
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-          {t('gallery.title')}
+          {title || t('gallery.title')}
         </h1>
         <p className="text-muted-foreground">
-          {t('gallery.communityTitle')}
+          {subtitle || t('gallery.communityTitle')}
         </p>
       </div>
 
-      {/* Search and Filters Bar - Simplified for Now */}
+      {/* Search and Filters Bar */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -102,24 +140,29 @@ export function Gallery() {
             className="pl-9"
           />
         </div>
-        <Button variant="outline" onClick={fetchGenerations}>Refresh</Button>
+        <Button variant="outline" onClick={() => fetchGenerations(false)}>Refresh</Button>
       </div>
 
-      {/* Loading State */}
-      {loading && (
+      {/* Loading State (Initial) */}
+      {loading && !generations.length && (
         <div className="flex justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       )}
 
       {/* Masonry Gallery */}
-      {!loading && (
-        <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
-          {filteredGenerations.map((gen) => (
-            <GenerationCard key={gen.id} generation={gen} />
-          ))}
-        </div>
-      )}
+      <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4 pb-10">
+        {filteredGenerations.map((gen) => (
+          <div key={gen.id} className="break-inside-avoid mb-4">
+            <GenerationCard generation={gen} />
+          </div>
+        ))}
+      </div>
+
+      {/* Infinite Scroll Sentinel */}
+      <div ref={observerTarget} className="h-10 flex justify-center py-4">
+        {loadingMore && <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />}
+      </div>
 
       {/* Empty State */}
       {!loading && filteredGenerations.length === 0 && (
@@ -130,7 +173,7 @@ export function Gallery() {
             </div>
             <h3 className="text-lg font-semibold">{t('gallery.noGenerations')}</h3>
             <p className="text-sm text-muted-foreground">
-              {generations.length === 0 ? "Generate something first!" : "Try changing search terms"}
+              {generations.length === 0 ? "No images found." : "Try changing search terms"}
             </p>
           </div>
         </Card>

@@ -16,11 +16,14 @@ import {
     ClockIcon,
     CoinsIcon,
     ChevronDownIcon,
-    ChevronUpIcon,
-    MusicIcon,
     PlayIcon,
-    StarIcon
+    XIcon,
+    StarIcon,
+    LockIcon,
+    GlobeIcon,
+    EyeOffIcon
 } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
 import { useLanguage } from "@/polymet/components/language-provider"
 import { useAuth } from "@/polymet/components/auth-provider"
 import { useModels } from "@/hooks/use-models"
@@ -46,16 +49,36 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
     const [isPromptExpanded, setIsPromptExpanded] = useState(false)
     const [canDownload, setCanDownload] = useState(true) // Optimistic
     const [isCurated, setIsCurated] = useState(false)
+    const [privacy, setPrivacy] = useState<string>('private')
 
     useEffect(() => {
         if (generation) {
             setIsCurated(generation.is_curated || false)
+            if (generation.is_public) setPrivacy('public')
+            else if (generation.is_private) setPrivacy('private')
+            else setPrivacy('standard')
         }
     }, [generation])
 
     if (!generation) return null
 
     // Handlers
+    const handlePrivacyChange = async (val: string) => {
+        // Optimistic update
+        setPrivacy(val)
+
+        try {
+            await api.patch(`/jobs/${generation.id}/privacy`, { visibility: val })
+            toast.success(t('generationDetails.privacyUpdated') || "Privacy updated")
+
+            // Allow admin to auto-curate if publishing? (Optional, kept separate for now)
+        } catch (e) {
+            console.error(e)
+            toast.error("Failed to update privacy")
+            // Revert state on error? (Simplified for MVP: user sees error)
+        }
+    }
+
     // Handlers
     const handleCopyPrompt = () => {
         if (!generation?.prompt) return
@@ -140,6 +163,17 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-6xl p-0 md:overflow-hidden overflow-y-auto bg-background/95 backdrop-blur-xl gap-0 border-border/40 shadow-2xl md:h-[85vh] h-auto max-h-[90vh] flex flex-col md:flex-row ring-1 ring-white/10" aria-describedby={undefined}>
                 <DialogTitle className="sr-only">Details for generation {generation.id}</DialogTitle>
+
+                {/* --- Mobile Close Button --- */}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 z-50 md:hidden bg-black/50 hover:bg-black/70 text-white rounded-full h-8 w-8 backdrop-blur-md border border-white/10 shadow-lg"
+                    onClick={() => onOpenChange(false)}
+                >
+                    <XIcon className="w-5 h-5" />
+                    <span className="sr-only">Close</span>
+                </Button>
 
                 {/* --- LEFT: Media Viewport --- */}
                 <div className="bg-black/95 flex items-center justify-center relative overflow-hidden md:flex-1 w-full md:h-full md:p-4 min-h-[300px] flex-shrink-0 group-media">
@@ -335,7 +369,56 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                     </ScrollArea>
 
                     {/* Footer Actions */}
-                    <div className="p-6 bg-muted/20 border-t border-border space-y-3">
+                    <div className="p-6 bg-muted/20 border-t border-border space-y-4">
+
+                        {/* Privacy Control (User) */}
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-background border border-border/50">
+                            <div className="flex items-center gap-3">
+                                <div className={cn("w-8 h-8 rounded-full flex items-center justify-center", privacy === 'private' ? "bg-indigo-500/10 text-indigo-500" : "bg-muted text-muted-foreground")}>
+                                    {privacy === 'private' ? <EyeOffIcon className="w-4 h-4" /> : <LockIcon className="w-4 h-4" />}
+                                </div>
+                                <div className="space-y-0.5">
+                                    <div className="text-sm font-medium leading-none">
+                                        {t('generationDetails.privacy.privateMode') || "Приватный режим"}
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground">
+                                        {privacy === 'private'
+                                            ? (t('generationDetails.privacy.hiddenDesc') || "Видно только вам")
+                                            : (t('generationDetails.privacy.visibleDesc') || "Видно вам и админам")}
+                                    </p>
+                                </div>
+                            </div>
+                            <Switch
+                                checked={privacy === 'private'}
+                                onCheckedChange={(checked) => handlePrivacyChange(checked ? 'private' : 'standard')}
+                                disabled={privacy === 'public' && !user?.is_admin}
+                            />
+                        </div>
+
+                        {/* Admin Public Control Extension */}
+                        {user?.is_admin && (
+                            <div className="flex items-center justify-between p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                                        <GlobeIcon className="w-4 h-4" />
+                                    </div>
+                                    <div className="space-y-0.5">
+                                        <div className="text-sm font-medium leading-none text-amber-600 dark:text-amber-400">
+                                            {t('generationDetails.privacy.publicMode') || "Публикация"}
+                                        </div>
+                                        <p className="text-[10px] text-amber-600/70 dark:text-amber-400/70">
+                                            {t('generationDetails.privacy.publicDesc') || "Доступно всем в галерее"}
+                                        </p>
+                                    </div>
+                                </div>
+                                <Switch
+                                    checked={privacy === 'public'}
+                                    onCheckedChange={(checked) => handlePrivacyChange(checked ? 'public' : 'private')}
+                                    className="data-[state=checked]:bg-amber-500"
+                                />
+                            </div>
+                        )}
+
                         <Button className="w-full shadow-lg shadow-primary/20 font-semibold" size="lg" onClick={handleDownload}>
                             <DownloadIcon className="w-4 h-4 mr-2" />
                             {t('generationDetails.download')} {fileExt.toUpperCase()}

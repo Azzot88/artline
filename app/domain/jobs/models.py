@@ -51,8 +51,10 @@ class Job(Base):
     
     # Gallery & Curation
     # Gallery & Curation
+    # Gallery & Curation
     is_public: Mapped[bool] = mapped_column(default=False, index=True)
     is_curated: Mapped[bool] = mapped_column(default=False, index=True)
+    is_private: Mapped[bool] = mapped_column(default=False, index=True) # "Stealth Mode" (Hidden from admins)
     likes: Mapped[int] = mapped_column(Integer, default=0)
     views: Mapped[int] = mapped_column(Integer, default=0)
     

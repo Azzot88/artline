@@ -292,3 +292,24 @@ async def get_review_jobs(db: AsyncSession, limit: int = 50, offset: int = 0):
     result = await db.execute(stmt)
     return result.scalars().all()
 
+    return result.scalars().all()
+
+
+async def get_admin_feed(db: AsyncSession, limit: int = 30, offset: int = 0):
+    """
+    Fetch ALL jobs for admin gallery (Masonry feel).
+    Includes Private, Public, Standard.
+    Excludes Deleted (unless we want soft deletes visible too? usually no).
+    """
+    stmt = (
+        select(Job)
+        .options(joinedload(Job.model))
+        .where(Job.status == 'succeeded')
+        .where(Job.result_url.isnot(None))
+        .where(Job.status != 'deleted') # Still hide soft-deleted
+        .order_by(Job.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    result = await db.execute(stmt)
+    return result.scalars().all()

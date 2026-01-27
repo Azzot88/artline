@@ -90,6 +90,7 @@ export function normalizeGeneration(raw: any): Generation {
         // Social
         is_public: !!raw.is_public,
         is_curated: !!raw.is_curated,
+        is_private: !!raw.is_private, // Map new field
         likes: raw.likes || 0,
         views: raw.views || 0,
 

@@ -88,9 +88,11 @@ export interface GenerationProgressMessage {
 export interface GenerationFilters {
   kind?: "image" | "video"
   status?: "queued" | "running" | "succeeded" | "failed"
-  is_public?: boolean
-  is_curated?: boolean
-  user_id?: string
+  is_public: boolean
+  is_curated: boolean
+  is_private?: boolean
+  likes: number
+  views: number
   model_id?: string
 }
 

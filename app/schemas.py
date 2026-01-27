@@ -30,6 +30,9 @@ class JobCreate(BaseModel):
     kind: str  # "image" or "video"
     prompt: str
 
+class JobPrivacyUpdate(BaseModel):
+    visibility: str # "private", "public", "hidden"
+
 class JobRead(BaseModel):
     id: str
     kind: str
@@ -57,6 +60,7 @@ class JobRead(BaseModel):
     # Social
     is_public: bool = False
     is_curated: bool = False
+    is_private: bool = False
     likes: int = 0
     views: int = 0
     
