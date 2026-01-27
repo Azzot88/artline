@@ -6,6 +6,7 @@ interface AuthContextType {
     user: User | null
     isLoading: boolean
     isGuest: boolean
+    guestId: string | null
     balance: number
     login: (user: User) => void
     logout: () => void
@@ -18,6 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null)
     const [balance, setBalance] = useState(0)
     const [isGuest, setIsGuest] = useState(false)
+    const [guestId, setGuestId] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(true)
 
     async function refreshUser() {
@@ -33,15 +35,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     balance: data.balance // Ensure balance is sync
                 } as User)
                 setIsGuest(false)
+                setGuestId(null)
             } else {
                 // Guest mode
                 setUser(null)
                 setIsGuest(true)
+                setGuestId(data.guest_id || null)
 
                 // If guest_id is missing/null but we expected guest, apiService.guestInit() might be needed?
                 // Backend usually ensures guest_id is set if is_guest is true.
                 if (!data.guest_id) {
-                    await apiService.guestInit()
+                    const init = await apiService.guestInit()
+                    setGuestId(init.guest_id)
                 }
             }
             setBalance(data.balance)
@@ -70,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <AuthContext.Provider value={{ user, isLoading, isGuest, balance, login, logout, refreshUser }}>
+        <AuthContext.Provider value={{ user, isLoading, isGuest, guestId, balance, login, logout, refreshUser }}>
             {children}
         </AuthContext.Provider>
     )

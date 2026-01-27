@@ -43,7 +43,7 @@ interface GenerationDetailsDialogProps {
 
 export function GenerationDetailsDialog({ open, onOpenChange, generation, onDelete, onUsePrompt }: GenerationDetailsDialogProps) {
     const { t } = useLanguage()
-    const { user } = useAuth()
+    const { user, guestId } = useAuth()
     const { models } = useModels()
     const [isDeleting, setIsDeleting] = useState(false)
     const [isPromptExpanded, setIsPromptExpanded] = useState(false)
@@ -264,7 +264,11 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                             className={cn("h-8 w-8", privacy === 'private' ? "text-indigo-500 bg-indigo-500/10" : "text-muted-foreground hover:text-foreground")}
                                             onClick={() => handlePrivacyChange(privacy === 'private' ? 'standard' : 'private')}
                                             title={privacy === 'private' ? (t('generationDetails.privacy.hiddenDesc') || "Private Mode") : (t('generationDetails.privacy.visibleDesc') || "Standard Visibility")}
-                                            disabled={privacy === 'public' && !user?.is_admin}
+                                            // Disabled if public/admin-locked OR if not owner (and not admin)
+                                            disabled={
+                                                (privacy === 'public' && !user?.is_admin) ||
+                                                (!user?.is_admin && user?.id !== generation.user_id && guestId !== generation.user_id)
+                                            }
                                         >
                                             {privacy === 'private' ? <EyeOffIcon className="w-4 h-4" /> : <GlobeIcon className="w-4 h-4" />}
                                         </Button>
