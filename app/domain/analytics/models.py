@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
-from app.core.database import Base
+from app.core.db import Base
 
 class UserActivity(Base):
     __tablename__ = "user_activity"
