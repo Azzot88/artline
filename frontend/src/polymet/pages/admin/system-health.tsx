@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react"
 import { apiService } from "@/polymet/data/api-service"
-import type { SystemLog, SystemHealth } from "@/polymet/data/api-types"
+import type { SystemLog, SystemHealth, UserActivity, VisitorStat } from "@/polymet/data/api-types"
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,6 +16,9 @@ export function SystemHealthPage() {
     const [logs, setLogs] = useState<SystemLog[]>([])
     const [isLoadingLogs, setIsLoadingLogs] = useState(false)
     const [isLive, setIsLive] = useState(false) // Default to false (manual mode)
+    const [activities, setActivities] = useState<UserActivity[]>([])
+    const [visitors, setVisitors] = useState<VisitorStat[]>([])
+    const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false)
 
     // Polling for HEALTH stats (always active for monitoring)
     useEffect(() => {
@@ -56,10 +61,33 @@ export function SystemHealthPage() {
         return () => clearInterval(interval)
     }, [isLive])
 
+    // Analytics Fetching
+    const fetchAnalytics = async () => {
+        setIsLoadingAnalytics(true)
+        try {
+            const [acts, visits] = await Promise.all([
+                apiService.getAnalyticsActivity(100),
+                apiService.getAnalyticsVisitors(30)
+            ])
+            setActivities(acts)
+            setVisitors(visits)
+        } catch (e) {
+            console.error(e)
+            toast.error("Failed to fetch analytics")
+        } finally {
+            setIsLoadingAnalytics(false)
+        }
+    }
+
+    // Initial load? maybe user wants empty state until they click "Load"?
+
     // Initial load? maybe user wants empty state until they click "Load"?
     // Or load once on mount? Let's load once on mount.
     useEffect(() => {
-        fetchLogs()
+        useEffect(() => {
+            fetchLogs()
+            fetchAnalytics()
+        }, [])
     }, [])
 
     const formatBytes = (bytes: number) => {
@@ -209,6 +237,134 @@ export function SystemHealthPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Analytics Section */}
+            <div className="pt-6">
+                <div className="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 className="text-2xl font-bold tracking-tight">User Analytics</h3>
+                        <p className="text-muted-foreground">Persistent activity logs from database.</p>
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={fetchAnalytics}
+                        disabled={isLoadingAnalytics}
+                    >
+                        <RefreshCw className={`mr-2 h-4 w-4 ${isLoadingAnalytics ? 'animate-spin' : ''}`} />
+                        Refresh Data
+                    </Button>
+                </div>
+
+                {/* Charts */}
+                <div className="grid gap-4 md:grid-cols-2 mb-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Daily Unique Visitors (30d)</CardTitle>
+                        </CardHeader>
+                        <CardContent className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={visitors}>
+                                    <XAxis
+                                        dataKey="day"
+                                        tickFormatter={(str) => format(new Date(str), 'MM/dd')}
+                                        fontSize={12}
+                                    />
+                                    <YAxis fontSize={12} />
+                                    <Tooltip
+                                        labelFormatter={(label) => format(new Date(label), 'MMM dd, yyyy')}
+                                    />
+                                    <Bar dataKey="visitors" fill="#2563eb" radius={[4, 4, 0, 0]} name="Unique Visitors" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Daily Actions (30d)</CardTitle>
+                        </CardHeader>
+                        <CardContent className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={visitors}>
+                                    <XAxis
+                                        dataKey="day"
+                                        tickFormatter={(str) => format(new Date(str), 'MM/dd')}
+                                        fontSize={12}
+                                    />
+                                    <YAxis fontSize={12} />
+                                    <Tooltip
+                                        labelFormatter={(label) => format(new Date(label), 'MMM dd, yyyy')}
+                                    />
+                                    <Bar dataKey="actions" fill="#16a34a" radius={[4, 4, 0, 0]} name="Total Actions" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Activity Table */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>User Activity Log</CardTitle>
+                        <CardDescription>Latest 100 recorded actions (Persistent)</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="border rounded-md">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Time</TableHead>
+                                        <TableHead>User / Guest</TableHead>
+                                        <TableHead>Action</TableHead>
+                                        <TableHead>Details</TableHead>
+                                        <TableHead className="text-right">IP</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {activities.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="h-24 text-center">
+                                                No activity recorded yet.
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        activities.map((act) => (
+                                            <TableRow key={act.id}>
+                                                <TableCell className="whitespace-nowrap font-mono text-xs text-muted-foreground">
+                                                    {format(new Date(act.created_at), 'MMM dd HH:mm:ss')}
+                                                </TableCell>
+                                                <TableCell component="th" scope="row">
+                                                    {act.user_id ? (
+                                                        <Badge variant="outline" className="border-blue-500/50 text-blue-500">User</Badge>
+                                                    ) : (
+                                                        <div className="flex flex-col">
+                                                            <Badge variant="secondary" className="w-fit text-xs">Guest</Badge>
+                                                            <span className="text-[10px] text-muted-foreground truncate w-20" title={act.guest_id || ''}>
+                                                                {act.guest_id?.slice(0, 8)}...
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant={act.action.includes('error') || act.action.includes('fail') ? "destructive" : "default"}>
+                                                        {act.action}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="max-w-[300px] truncate text-xs font-mono" title={JSON.stringify(act.details)}>
+                                                    {act.details ? JSON.stringify(act.details) : '-'}
+                                                </TableCell>
+                                                <TableCell className="text-right text-xs text-muted-foreground">
+                                                    {act.ip_address}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     )
 }
