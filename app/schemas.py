@@ -42,6 +42,10 @@ class JobRead(BaseModel):
     result_url: Optional[str] = None
     logs: Optional[str] = None
     
+    # Owner Identity
+    user_id: Optional[uuid.UUID] = None
+    guest_id: Optional[uuid.UUID] = None
+    
     # Metadata
     model_id: Optional[uuid.UUID] = None
     model_name: Optional[str] = None

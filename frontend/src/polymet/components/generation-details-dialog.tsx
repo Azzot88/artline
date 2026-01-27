@@ -401,15 +401,6 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                             {isDeleting ? t('generationDetails.deleting') : t('generationDetails.deleteFromLibrary')}
                         </Button>
                     </div>
-                    {/* DEBUG INFO (Temporary) */}
-                    <div className="p-4 bg-black/5 text-[10px] font-mono text-muted-foreground break-all border-t">
-                        <p>DEBUG:</p>
-                        <p>GuestID (Auth): {guestId || "null"}</p>
-                        <p>UserID (Auth): {user?.id || "null"}</p>
-                        <p>OwnerID (Job): {generation.user_id}</p>
-                        <p>IsAdmin: {user?.is_admin ? "true" : "false"}</p>
-                        <p>Privacy: {privacy}</p>
-                    </div>
                 </div>
             </DialogContent>
         </Dialog>

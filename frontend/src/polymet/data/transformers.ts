@@ -99,7 +99,7 @@ export function normalizeGeneration(raw: any): Generation {
         completed_at: raw.completed_at,
 
         // User
-        user_id: raw.user_id,
+        user_id: raw.user_id || raw.guest_id, // Coalesce for ownership checks
         user_name: raw.user_name || raw.userName || (raw.user_id ? "User" : "Guest"),
         user_avatar: raw.user_avatar || raw.userAvatar,
 
