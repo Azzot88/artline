@@ -317,3 +317,25 @@ export interface SystemHealth {
   }
   timestamp: string
 }
+
+// ============================================================================
+// Analytics
+// ============================================================================
+
+export interface UserActivity {
+  id: string
+  user_id: string | null
+  guest_id: string | null
+  action: string
+  details: any
+  path: string | null
+  ip_address: string | null
+  user_agent: string | null
+  created_at: string
+}
+
+export interface VisitorStat {
+  day: string
+  visitors: number
+  actions: number
+}

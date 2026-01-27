@@ -243,6 +243,18 @@ export const apiService = {
   async getSystemHealth() {
     return api.get<import("./api-types").SystemHealth>("/admin/system/health")
   },
+
+  // ==========================================================================
+  // Analytics
+  // ==========================================================================
+
+  async getAnalyticsActivity(limit = 100, offset = 0) {
+    return api.get<import("./api-types").UserActivity[]>(`/admin/analytics/activity?limit=${limit}&offset=${offset}`)
+  },
+
+  async getAnalyticsVisitors(days = 30) {
+    return api.get<import("./api-types").VisitorStat[]>(`/admin/analytics/visitors?days=${days}`)
+  },
 }
 
 

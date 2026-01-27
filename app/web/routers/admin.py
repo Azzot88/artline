@@ -668,3 +668,26 @@ async def get_system_health(
     Returns current system metrics (CPU, RAM, Disk).
     """
     return SystemMonitor.get_stats()
+
+# ============================================================================
+# ANALYTICS (New)
+# ============================================================================
+
+from app.domain.analytics.service import AnalyticsService
+
+@router.get("/analytics/activity")
+async def get_analytics_activity(
+    limit: int = 100,
+    offset: int = 0,
+    user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db)
+):
+    return await AnalyticsService.get_recent_activity(db, limit, offset)
+
+@router.get("/analytics/visitors")
+async def get_analytics_visitors(
+    days: int = 30,
+    user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db)
+):
+    return await AnalyticsService.get_daily_visitors(db, days)

@@ -25,7 +25,10 @@ class AnalyticsService:
         if request:
             path = request.url.path
             ip_address = request.client.host if request.client else None
-            user_agent = request.headers.get("user-agent")
+            try:
+                user_agent = request.headers.get("user-agent")
+            except:
+                pass 
             
             # Try to get guest_id from cookies if not provided
             if not guest_id:
@@ -71,8 +74,8 @@ class AnalyticsService:
                 func.count(UserActivity.id).label('actions')
             )
             .where(UserActivity.created_at >= start_date)
-            .group_by(text('day'))
-            .order_by(text('day'))
+            .group_by(text("date_trunc('day', created_at)"))
+            .order_by(text("date_trunc('day', created_at)"))
         )
         
         result = await db.execute(stmt)

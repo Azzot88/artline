@@ -28,6 +28,7 @@ import { AdminUsers } from "@/polymet/pages/admin/users"
 import { AdminModels } from "@/polymet/pages/admin/models"
 import { AdminProviders } from "@/polymet/pages/admin/providers"
 import { AdminReports } from "@/polymet/pages/admin/reports"
+import { AnalyticsPage as AdminAnalytics } from "@/polymet/pages/admin/analytics"
 import { SystemHealthPage as AdminSystem } from "@/polymet/pages/admin/system-health"
 
 import { Toaster } from "@/components/ui/sonner"
@@ -70,6 +71,7 @@ export default function AIWorkbenchApp() {
                 <Route path="providers" element={<AdminProviders />} />
                 <Route path="reports" element={<AdminReports />} />
                 <Route path="system" element={<AdminSystem />} />
+                <Route path="analytics" element={<AdminAnalytics />} />
               </Route>
               {/* Keep Review separate for now if needed, or integrate? */}
               <Route path="/admin/review" element={<AppLayout><AdminReview /></AppLayout>} />

@@ -18,6 +18,7 @@ from app.domain.billing.service import get_user_balance, add_ledger_entry
 from app.domain.jobs.service import create_job, get_user_jobs, get_public_jobs, get_review_jobs, delete_job, like_job, get_job_with_permission
 from app.domain.jobs.runner import process_job
 from app.domain.users.guest_service import get_or_create_guest
+from app.domain.analytics.service import AnalyticsService
 import boto3
 import asyncio
 from botocore.exceptions import ClientError
@@ -43,6 +44,7 @@ class GuestInitResponse(BaseModel):
 @router.post("/auth/login")
 async def spa_login(
     creds: LoginRequest,
+    request: Request,
     response: Response,
     db: AsyncSession = Depends(get_db)
 ):
@@ -67,6 +69,8 @@ async def spa_login(
         samesite="lax",
         secure=False 
     )
+    
+    await AnalyticsService.log_activity(db, "login", user_id=user.id, request=request) 
     return {"ok": True, "user": UserRead.model_validate(user)}
 
 @router.post("/auth/logout")
@@ -127,6 +131,7 @@ async def spa_register(
         samesite="lax",
         secure=False 
     )
+    await AnalyticsService.log_activity(db, "register", user_id=new_user.id, request=request)
     return {"ok": True, "user": UserRead.model_validate(new_user)}
 
 @router.post("/auth/guest/init", response_model=GuestInitResponse)
@@ -260,6 +265,7 @@ async def admin_review_jobs(
 @router.post("/jobs", response_model=JobRead)
 async def create_spa_job(
     req: JobRequestSPA,
+    request: Request,
     response: Response,
     user: User | object | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db)
@@ -305,6 +311,14 @@ async def create_spa_job(
         raise HTTPException(status_code=400, detail={"code": code, "message": error})
         
     process_job.delay(job.id)
+    
+    await AnalyticsService.log_activity(
+        db, 
+        "generate", 
+        details={"job_id": str(job.id), "model_id": req.model_id, "kind": req.kind},
+        user_id=user.id if hasattr(user, 'id') else None,
+        request=request 
+    )
     return job
 
 @router.get("/jobs/{job_id}", response_model=JobRead)
