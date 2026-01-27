@@ -52,12 +52,23 @@ export function useJobPolling({ onSucceeded, onFailed }: UseJobPollingProps = {}
                     toast.success(t('workbench.toasts.jobStarted'))
                     const generation = normalizeGeneration(job)
 
-                    // Remove from active list (it will be handled by the main list now)
+                    // Update the active generation with the final result immediately
+                    // This ensures it transitions from spinner to image in the active list
                     setActiveGenerations(prev => {
                         const next = new Map(prev)
-                        next.delete(jobId)
+                        next.set(jobId, generation)
                         return next
                     })
+
+                    // Schedule removal from active list to allow 'generations' list to catch up
+                    // This prevents flicker/disappearance
+                    setTimeout(() => {
+                        setActiveGenerations(prev => {
+                            const next = new Map(prev)
+                            next.delete(jobId)
+                            return next
+                        })
+                    }, 5000)
 
                     onSucceeded?.(generation)
                 },
