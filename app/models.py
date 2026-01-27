@@ -7,3 +7,4 @@ from app.domain.providers.models import ProviderConfig, AIModel
 from app.domain.users.guest_models import GuestProfile
 from app.domain.users.likes_model import Like
 from app.domain.pricing.models import PricingQuote
+from app.domain.analytics.models import UserActivity
