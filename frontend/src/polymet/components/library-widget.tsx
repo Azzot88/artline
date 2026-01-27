@@ -116,6 +116,24 @@ export function LibraryWidget({ refreshTrigger, newGeneration, activeGenerations
         setDetailsOpen(true)
     }
 
+    const scrollContainerRef = useRef<HTMLDivElement>(null)
+    const prevActiveCount = useRef(0)
+
+    // Auto-scroll logic: when active generations increase (new one added), scroll to start
+    useEffect(() => {
+        if (activeGenerations.length > prevActiveCount.current) {
+            // New active generation added, scroll left
+            if (scrollContainerRef.current) {
+                console.log("[LibraryWidget] Scrolling to start for new generation")
+                scrollContainerRef.current.scrollTo({
+                    left: 0,
+                    behavior: 'smooth'
+                })
+            }
+        }
+        prevActiveCount.current = activeGenerations.length
+    }, [activeGenerations.length])
+
     // Merge active generations with persistent ones for display
     // Active ones go first
     const displayGenerations = [...activeGenerations, ...generations.filter(g => !activeGenerations.some(ag => ag.id === g.id))]
@@ -150,6 +168,7 @@ export function LibraryWidget({ refreshTrigger, newGeneration, activeGenerations
                     <div className="relative">
                         {/* Horizontal Scroll Container - Filmstrip Mode */}
                         <div
+                            ref={scrollContainerRef}
                             className="flex items-start overflow-x-auto pb-6 gap-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 h-[320px]"
                             style={{ overflowAnchor: 'none' }}
                         >
