@@ -327,8 +327,9 @@ export async function pollJobStatus(
         clearTimeout(timeoutId)
         reject(error)
       }
+    }
 
-      // Start polling
-      poll()
-    })
+    // Start polling
+    poll()
+  })
 }
