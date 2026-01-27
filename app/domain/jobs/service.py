@@ -208,13 +208,13 @@ async def get_job_with_permission(db: AsyncSession, job_id: str, user: User | ob
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
 
-async def delete_job(db: AsyncSession, job_id: str, user: User | object) -> str | None:
+async def delete_job(db: AsyncSession, job_id: str, user: User | object) -> tuple[bool, str | None]:
     """
-    Soft delete a job if owned by user. Returns the S3 URL for cleanup.
+    Soft delete a job if owned by user. Returns (success, s3_url_to_delete).
     """
     job = await get_job_with_permission(db, job_id, user)
     if not job:
-        return None
+        return False, None
         
     old_url = job.result_url
     
@@ -228,7 +228,7 @@ async def delete_job(db: AsyncSession, job_id: str, user: User | object) -> str 
     job.input_image_url = None
     
     await db.commit()
-    return old_url
+    return True, old_url
 
 async def like_job(db: AsyncSession, job_id: str) -> int:
     """

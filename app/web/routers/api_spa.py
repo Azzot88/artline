@@ -411,12 +411,9 @@ async def remove_job(
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    deleted_url = await delete_job(db, job_id, user)
+    success, deleted_url = await delete_job(db, job_id, user)
     
-    if deleted_url is None:
-         # If it returned None, it means job wasn't found or permission denied (though permission checked in get_job)
-         # Actually get_job_with_permission returns None if not found/no perm.
-         # So we raise 404.
+    if not success:
          raise HTTPException(status_code=404, detail="Job not found")
          
     # Trigger S3 deletion in background
@@ -427,27 +424,43 @@ async def remove_job(
             # format: https://bucket.s3.region.amazonaws.com/path/to/key
             path = urlparse(deleted_url).path.lstrip('/')
             if path:
-                background_tasks.add_task(delete_s3_object_bg, path)
+                background_tasks.add_task(archive_s3_object_bg, path)
         except Exception as e:
             print(f"Error parsing S3 URL for deletion: {e}")
     
     return {"ok": True}
 
 # Renamed to strictly imply background usage (synchronous wrapper for boto3)
-def delete_s3_object_bg(key: str):
+def archive_s3_object_bg(key: str):
     if not settings.AWS_ACCESS_KEY_ID:
         return
     try:
-        print(f"DEBUG: Deleting S3 Object: {key}")
         s3 = boto3.client(
             's3',
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
             region_name=settings.AWS_REGION
         )
+        
+        # Archiving Logic: Move to 'deleted/' prefix
+        # 1. Copy
+        source = {'Bucket': settings.AWS_BUCKET_NAME, 'Key': key}
+        dest_key = f"deleted/{key}"
+        print(f"DEBUG: Archiving S3 Object: {key} -> {dest_key}")
+        
+        s3.copy_object(CopySource=source, Bucket=settings.AWS_BUCKET_NAME, Key=dest_key)
+        
+        # 2. Delete Original
         s3.delete_object(Bucket=settings.AWS_BUCKET_NAME, Key=key)
+        
+    except ClientError as e:
+         # If 404, maybe already deleted?
+         if e.response['Error']['Code'] == "404":
+             print(f"WARN: S3 Object {key} not found for archiving")
+         else:
+             print(f"ERROR: Failed to archive S3 object {key}: {e}")
     except Exception as e:
-        print(f"ERROR: Failed to delete S3 object {key}: {e}")
+        print(f"ERROR: Failed to archive S3 object {key}: {e}")
 
 # Removed async wrapper as we use BackgroundTasks which runs in threadpool for sync functions
 # (FastAPI handles it if def is not async)
