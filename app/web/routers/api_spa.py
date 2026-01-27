@@ -411,22 +411,25 @@ async def delete_job(
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    success = await delete_job(db, job_id, user)
+    deleted_url = await delete_job(db, job_id, user)
     
-    if not success:
+    if deleted_url is None:
+         # If it returned None, it means job wasn't found or permission denied (though permission checked in get_job)
+         # Actually get_job_with_permission returns None if not found/no perm.
+         # So we raise 404.
          raise HTTPException(status_code=404, detail="Job not found")
          
-    # We still need to trigger S3 deletion in background, but we need the result_url which was on the job
-    # The service method mutates the job object but it's attached to session? 
-    # Actually service method refreshes or we need to fetch before?
-    # service.delete_job fetches the job. 
-    # Optimally, service.delete_job should return the old s3_url or handle the deletion itself via a callback?
-    # For now, let's just stick to DB update in service. 
-    # Re-Design: service should handle side effects or return them.
-    # To keep it simple: Let's assume service handles DB state. background S3 is fine if we miss it (orphan file).
-    # But clean is better. 
-    # Re-implementing delete_job in router to use service implies service does everything. 
-    # Service returned bool. 
+    # Trigger S3 deletion in background
+    if deleted_url:
+        from urllib.parse import urlparse
+        try:
+            # Extract key from URL
+            # format: https://bucket.s3.region.amazonaws.com/path/to/key
+            path = urlparse(deleted_url).path.lstrip('/')
+            if path:
+                background_tasks.add_task(delete_s3_object_bg, path)
+        except Exception as e:
+            print(f"Error parsing S3 URL for deletion: {e}")
     
     return {"ok": True}
 

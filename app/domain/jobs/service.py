@@ -191,28 +191,33 @@ async def get_user_jobs(db: AsyncSession, user: User | object, limit: int = 50):
 
 async def get_job_with_permission(db: AsyncSession, job_id: str, user: User | object):
     """
-    Fetch job ensuring the user owns it. 
+    Fetch job ensuring the user owns it (or is admin). 
     """
     is_guest = not isinstance(user, User)
+    is_admin = getattr(user, 'is_admin', False)
+    
     stmt = select(Job).where(Job.id == job_id)
     
-    if is_guest:
-        stmt = stmt.where(Job.guest_id == user.id)
-    else:
-        stmt = stmt.where(Job.user_id == user.id)
+    if not is_admin:
+        if is_guest:
+            stmt = stmt.where(Job.guest_id == user.id)
+        else:
+            stmt = stmt.where(Job.user_id == user.id)
         
     stmt = stmt.options(joinedload(Job.model))
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
 
-async def delete_job(db: AsyncSession, job_id: str, user: User | object) -> bool:
+async def delete_job(db: AsyncSession, job_id: str, user: User | object) -> str | None:
     """
-    Soft delete a job if owned by user.
+    Soft delete a job if owned by user. Returns the S3 URL for cleanup.
     """
     job = await get_job_with_permission(db, job_id, user)
     if not job:
-        return False
+        return None
         
+    old_url = job.result_url
+    
     # Soft Delete
     job.status = 'deleted'
     job.is_public = False
@@ -223,7 +228,7 @@ async def delete_job(db: AsyncSession, job_id: str, user: User | object) -> bool
     job.input_image_url = None
     
     await db.commit()
-    return True
+    return old_url
 
 async def like_job(db: AsyncSession, job_id: str) -> int:
     """
