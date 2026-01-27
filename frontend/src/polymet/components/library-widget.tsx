@@ -13,10 +13,11 @@ import { GenerationDetailsDialog } from "@/polymet/components/generation-details
 interface LibraryWidgetProps {
     refreshTrigger: number
     newGeneration?: Generation | null
+    activeGenerations?: Generation[] // New prop
     onUsePrompt?: (prompt: string) => void
 }
 
-export function LibraryWidget({ refreshTrigger, newGeneration, onUsePrompt }: LibraryWidgetProps) {
+export function LibraryWidget({ refreshTrigger, newGeneration, activeGenerations = [], onUsePrompt }: LibraryWidgetProps) {
     const { t } = useLanguage()
     const [generations, setGenerations] = useState<Generation[]>([])
     const [loading, setLoading] = useState(true)
@@ -115,8 +116,11 @@ export function LibraryWidget({ refreshTrigger, newGeneration, onUsePrompt }: Li
         setDetailsOpen(true)
     }
 
+    // Merge active generations with persistent ones for display
+    // Active ones go first
+    const displayGenerations = [...activeGenerations, ...generations.filter(g => !activeGenerations.some(ag => ag.id === g.id))]
 
-    if (!loading && generations.length === 0) {
+    if (!loading && displayGenerations.length === 0) {
         return null
     }
 
@@ -149,7 +153,7 @@ export function LibraryWidget({ refreshTrigger, newGeneration, onUsePrompt }: Li
                             className="flex items-start overflow-x-auto pb-6 gap-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 h-[320px]"
                             style={{ overflowAnchor: 'none' }}
                         >
-                            {generations.slice(0, 10).map((gen) => {
+                            {displayGenerations.slice(0, 10).map((gen) => {
                                 // Calculate strict width for 280px height to avoid CSS layout issues
                                 const aspect = gen.width / gen.height;
                                 const width = 280 * aspect; // e.g. 280 * (9/16) = 157.5

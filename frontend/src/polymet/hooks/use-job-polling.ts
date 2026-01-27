@@ -15,52 +15,84 @@ interface UseJobPollingProps {
 export function useJobPolling({ onSucceeded, onFailed }: UseJobPollingProps = {}) {
     const { t } = useLanguage()
     const { refreshUser } = useAuth()
-    const [pollingJobs, setPollingJobs] = useState<Set<string>>(new Set())
+    // Track full generation objects, keyed by ID
+    const [activeGenerations, setActiveGenerations] = useState<Map<string, Generation>>(new Map())
 
-    const startPolling = useCallback(async (jobId: string) => {
-        setPollingJobs(prev => new Set(prev).add(jobId))
+    const startPolling = useCallback(async (jobId: string, initialData?: Partial<Generation>) => {
+        // Create a temporary generation object
+        const tempGen: Generation = {
+            id: jobId,
+            status: 'queued',
+            created_at: new Date().toISOString(),
+            credits_spent: 0,
+            is_public: false,
+            is_curated: false,
+            likes: 0,
+            views: 0,
+            kind: initialData?.kind || 'image',
+            prompt: initialData?.prompt || '',
+            input_type: initialData?.input_type || 'text',
+            format: initialData?.format || 'square',
+            resolution: initialData?.resolution || '1080',
+            width: initialData?.width || 1024,
+            height: initialData?.height || 1024,
+            model_name: initialData?.model_name || 'AI',
+            ...initialData
+        }
+
+        setActiveGenerations(prev => {
+            const next = new Map(prev)
+            next.set(jobId, tempGen)
+            return next
+        })
 
         try {
             const finalJob = await pollJobStatus(jobId, {
                 onSuccess: async (job) => {
                     toast.success(t('workbench.toasts.jobStarted'))
                     const generation = normalizeGeneration(job)
-                    onSucceeded?.(generation)
-                    setPollingJobs(prev => {
-                        const next = new Set(prev)
+
+                    // Remove from active list (it will be handled by the main list now)
+                    setActiveGenerations(prev => {
+                        const next = new Map(prev)
                         next.delete(jobId)
                         return next
                     })
+
+                    onSucceeded?.(generation)
                 },
                 onError: async (job) => {
                     await refreshUser()
                     toast.error("Generation failed", {
                         description: job.error_message || "An error occurred during generation."
                     })
-                    onFailed?.(job)
-                    setPollingJobs(prev => {
-                        const next = new Set(prev)
+
+                    setActiveGenerations(prev => {
+                        const next = new Map(prev)
                         next.delete(jobId)
                         return next
                     })
+
+                    onFailed?.(job)
                 }
             })
             return finalJob
         } catch (error: any) {
             console.error("Polling error:", error)
-            setPollingJobs(prev => {
-                const next = new Set(prev)
+            setActiveGenerations(prev => {
+                const next = new Map(prev)
                 next.delete(jobId)
                 return next
             })
         }
     }, [onSucceeded, onFailed, t, refreshUser])
 
-    const isPolling = (jobId: string) => pollingJobs.has(jobId)
+    const isPolling = (jobId: string) => activeGenerations.has(jobId)
 
     return {
         startPolling,
         isPolling,
-        anyPolling: pollingJobs.size > 0
+        anyPolling: activeGenerations.size > 0,
+        activeGenerations: Array.from(activeGenerations.values())
     }
 }

@@ -105,7 +105,7 @@ export function Workbench() {
   const [lastGeneration, setLastGeneration] = useState<Generation | null>(null)
 
   // Polling Hook
-  const { startPolling, anyPolling } = useJobPolling({
+  const { startPolling, anyPolling, activeGenerations } = useJobPolling({
     onSucceeded: (generation) => {
       setLastGeneration(generation)
       setRefreshLibrary(prev => prev + 1)
@@ -226,9 +226,22 @@ export function Workbench() {
 
       const res: any = await api.post<any>("/jobs", payload)
 
+      const aspect = creationType === 'image' ? (parameterValues['format'] === 'landscape' ? 1024 / 576 : parameterValues['format'] === 'portrait' ? 576 / 1024 : 1) : 16 / 9;
+      const width = creationType === 'image' ? (parameterValues['format'] === 'landscape' ? 1024 : parameterValues['format'] === 'portrait' ? 576 : 1024) : 1920;
+      const height = creationType === 'image' ? (parameterValues['format'] === 'landscape' ? 576 : parameterValues['format'] === 'portrait' ? 1024 : 1024) : 1080;
+
       // Optimistic UI logic could go here, but useJobPolling handles the real state
-      toast.info("Generation started...")
-      startPolling(res.id)
+      // toast.info("Generation started...")
+      startPolling(res.id, {
+        prompt: prompt,
+        kind: creationType,
+        width: width,
+        height: height,
+        model_name: selectedModel?.name,
+        input_type: inputType,
+        format: parameterValues['format'] || 'square',
+        resolution: parameterValues['resolution'] || '1080'
+      })
 
       if (inputType === "text") {
         setPrompt("")
@@ -411,6 +424,7 @@ export function Workbench() {
         <LibraryWidget
           refreshTrigger={refreshLibrary}
           newGeneration={lastGeneration}
+          activeGenerations={activeGenerations}
           onUsePrompt={(text) => {
             setPrompt(prev => {
               const spacer = prev.trim().length > 0 ? "\n" : ""
