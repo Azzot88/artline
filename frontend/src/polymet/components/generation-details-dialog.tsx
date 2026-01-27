@@ -138,11 +138,11 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-6xl p-0 overflow-hidden bg-background/95 backdrop-blur-xl gap-0 border-border/40 shadow-2xl md:h-[85vh] h-[95vh] flex flex-col md:flex-row ring-1 ring-white/10" aria-describedby={undefined}>
+            <DialogContent className="max-w-6xl p-0 md:overflow-hidden overflow-y-auto bg-background/95 backdrop-blur-xl gap-0 border-border/40 shadow-2xl md:h-[85vh] h-auto max-h-[90vh] flex flex-col md:flex-row ring-1 ring-white/10" aria-describedby={undefined}>
                 <DialogTitle className="sr-only">Details for generation {generation.id}</DialogTitle>
 
                 {/* --- LEFT: Media Viewport --- */}
-                <div className="flex-1 bg-black/95 flex items-center justify-center p-4 relative overflow-hidden md:h-full h-[45vh] group-media">
+                <div className="bg-black/95 flex items-center justify-center relative overflow-hidden md:flex-1 w-full md:h-full md:p-4 min-h-[300px] flex-shrink-0 group-media">
                     {/* Atmospheric Background Blur - Optimized */}
                     {/* Using will-change-transform and limiting blur radius helps performance */}
                     <div
@@ -165,12 +165,12 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                     controls
                                     autoPlay
                                     loop
-                                    className="max-w-full max-h-full w-auto h-auto object-contain rounded-sm shadow-2xl box-shadow-xl ring-1 ring-white/10"
+                                    className="max-w-full max-h-full w-full md:w-auto h-auto object-contain md:object-contain md:rounded-sm shadow-2xl box-shadow-xl ring-1 ring-white/10"
                                     poster={generation.thumbnailUrl}
                                 />
                             </div>
                         ) : generation.kind === 'audio' ? (
-                            <div className="w-full max-w-md bg-white/5 backdrop-blur-2xl rounded-2xl p-8 flex flex-col items-center gap-8 border border-white/10 shadow-2xl">
+                            <div className="w-full max-w-md bg-white/5 backdrop-blur-2xl rounded-2xl p-8 flex flex-col items-center gap-8 border border-white/10 shadow-2xl m-8">
                                 <div className="w-40 h-40 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg animate-pulse-slow">
                                     <MusicIcon className="w-20 h-20 text-white" />
                                 </div>
@@ -195,15 +195,15 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                             <img
                                 src={generation.url}
                                 alt={generation.prompt}
-                                className="max-w-full max-h-full w-auto h-auto object-contain rounded-sm shadow-2xl ring-1 ring-white/10"
+                                className="w-full md:w-auto md:max-w-full h-auto md:max-h-full object-contain md:rounded-sm shadow-2xl ring-1 ring-white/10"
                             />
                         )}
                     </div>
                 </div>
 
                 {/* --- RIGHT: Information Sidebar --- */}
-                <div className="w-full md:w-[420px] flex flex-col bg-background/50 backdrop-blur-md border-l border-border h-full">
-                    <ScrollArea className="flex-1 w-full">
+                <div className="w-full md:w-[420px] flex flex-col bg-background/50 backdrop-blur-md border-l border-border h-auto md:h-full">
+                    <ScrollArea className="flex-1 w-full md:h-full" type={typeof window !== 'undefined' && window.innerWidth < 768 ? "always" : "hover"}>
                         <div className="p-6 space-y-8">
 
                             {/* Header Info */}
