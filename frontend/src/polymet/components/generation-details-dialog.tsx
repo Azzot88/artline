@@ -371,53 +371,24 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                     {/* Footer Actions */}
                     <div className="p-6 bg-muted/20 border-t border-border space-y-4">
 
-                        {/* Privacy Control (User) */}
-                        <div className="flex items-center justify-between p-3 rounded-lg bg-background border border-border/50">
-                            <div className="flex items-center gap-3">
-                                <div className={cn("w-8 h-8 rounded-full flex items-center justify-center", privacy === 'private' ? "bg-indigo-500/10 text-indigo-500" : "bg-muted text-muted-foreground")}>
-                                    {privacy === 'private' ? <EyeOffIcon className="w-4 h-4" /> : <LockIcon className="w-4 h-4" />}
-                                </div>
-                                <div className="space-y-0.5">
-                                    <div className="text-sm font-medium leading-none">
-                                        {t('generationDetails.privacy.privateMode') || "Приватный режим"}
-                                    </div>
-                                    <p className="text-[10px] text-muted-foreground">
-                                        {privacy === 'private'
-                                            ? (t('generationDetails.privacy.hiddenDesc') || "Видно только вам")
-                                            : (t('generationDetails.privacy.visibleDesc') || "Видно вам и админам")}
-                                    </p>
-                                </div>
+                        {/* Compact Privacy Control (User) */}
+                        <div className="flex items-center justify-between px-1">
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                {privacy === 'private' ? <EyeOffIcon className="w-3 h-3" /> : <GlobeIcon className="w-3 h-3" />}
+                                <span>{privacy === 'private' ? t('generationDetails.privacy.privateMode') : t('generationDetails.privacy.publicMode')}</span>
                             </div>
-                            <Switch
-                                checked={privacy === 'private'}
-                                onCheckedChange={(checked) => handlePrivacyChange(checked ? 'private' : 'standard')}
-                                disabled={privacy === 'public' && !user?.is_admin}
-                            />
-                        </div>
-
-                        {/* Admin Public Control Extension */}
-                        {user?.is_admin && (
-                            <div className="flex items-center justify-between p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                                        <GlobeIcon className="w-4 h-4" />
-                                    </div>
-                                    <div className="space-y-0.5">
-                                        <div className="text-sm font-medium leading-none text-amber-600 dark:text-amber-400">
-                                            {t('generationDetails.privacy.publicMode') || "Публикация"}
-                                        </div>
-                                        <p className="text-[10px] text-amber-600/70 dark:text-amber-400/70">
-                                            {t('generationDetails.privacy.publicDesc') || "Доступно всем в галерее"}
-                                        </p>
-                                    </div>
-                                </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-muted-foreground opacity-70">
+                                    {privacy === 'private' ? (t('generationDetails.privacy.hiddenDesc') || "Visible to you only") : (t('generationDetails.privacy.visibleDesc') || "Standard visibility")}
+                                </span>
                                 <Switch
-                                    checked={privacy === 'public'}
-                                    onCheckedChange={(checked) => handlePrivacyChange(checked ? 'public' : 'private')}
-                                    className="data-[state=checked]:bg-amber-500"
+                                    checked={privacy === 'private'}
+                                    onCheckedChange={(checked) => handlePrivacyChange(checked ? 'private' : 'standard')}
+                                    disabled={privacy === 'public' && !user?.is_admin}
+                                    className="scale-75 origin-right"
                                 />
                             </div>
-                        )}
+                        </div>
 
                         <Button className="w-full shadow-lg shadow-primary/20 font-semibold" size="lg" onClick={handleDownload}>
                             <DownloadIcon className="w-4 h-4 mr-2" />
