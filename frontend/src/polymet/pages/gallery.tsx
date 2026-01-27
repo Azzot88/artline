@@ -21,6 +21,8 @@ import { Generation } from "@/polymet/data/types"
 import { Input } from "@/components/ui/input"
 import { normalizeGeneration } from "@/polymet/data/transformers"
 
+import { GenerationDetailsDialog } from "@/polymet/components/generation-details-dialog"
+
 interface GalleryProps {
   endpoint?: string
   title?: string
@@ -35,6 +37,7 @@ export function Gallery({
   adminMode = false
 }: GalleryProps) {
   const [generations, setGenerations] = useState<Generation[]>([])
+  const [selectedGeneration, setSelectedGeneration] = useState<Generation | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -154,7 +157,10 @@ export function Gallery({
       <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4 pb-10">
         {filteredGenerations.map((gen) => (
           <div key={gen.id} className="break-inside-avoid mb-4">
-            <GenerationCard generation={gen} />
+            <GenerationCard
+              generation={gen}
+              onClick={(g) => setSelectedGeneration(g)}
+            />
           </div>
         ))}
       </div>
@@ -163,6 +169,13 @@ export function Gallery({
       <div ref={observerTarget} className="h-10 flex justify-center py-4">
         {loadingMore && <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />}
       </div>
+
+      {/* Details Dialog */}
+      <GenerationDetailsDialog
+        open={!!selectedGeneration}
+        onOpenChange={(open) => !open && setSelectedGeneration(null)}
+        generation={selectedGeneration}
+      />
 
       {/* Empty State */}
       {!loading && filteredGenerations.length === 0 && (

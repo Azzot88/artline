@@ -383,24 +383,7 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                     {/* Footer Actions */}
                     <div className="p-6 bg-muted/20 border-t border-border space-y-4">
 
-                        {/* Compact Privacy Control (User) */}
-                        <div className="flex items-center justify-between px-1">
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                {privacy === 'private' ? <EyeOffIcon className="w-3 h-3" /> : <GlobeIcon className="w-3 h-3" />}
-                                <span>{privacy === 'private' ? t('generationDetails.privacy.privateMode') : t('generationDetails.privacy.publicMode')}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-[10px] text-muted-foreground opacity-70">
-                                    {privacy === 'private' ? (t('generationDetails.privacy.hiddenDesc') || "Visible to you only") : (t('generationDetails.privacy.visibleDesc') || "Standard visibility")}
-                                </span>
-                                <Switch
-                                    checked={privacy === 'private'}
-                                    onCheckedChange={(checked) => handlePrivacyChange(checked ? 'private' : 'standard')}
-                                    disabled={privacy === 'public' && !user?.is_admin}
-                                    className="scale-75 origin-right"
-                                />
-                            </div>
-                        </div>
+                        {/* Compact Privacy Control Removed - Moved to Header */}
 
                         <Button className="w-full shadow-lg shadow-primary/20 font-semibold" size="lg" onClick={handleDownload}>
                             <DownloadIcon className="w-4 h-4 mr-2" />
