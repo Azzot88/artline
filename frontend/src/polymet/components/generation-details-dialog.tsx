@@ -304,7 +304,7 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                 </div>
                                 <div className="relative group">
                                     <div className={cn(
-                                        "p-4 rounded-xl bg-muted/40 border border-border/50 text-sm leading-relaxed text-foreground transition-all duration-300 font-medium break-words whitespace-pre-wrap",
+                                        "p-4 rounded-xl bg-muted/40 border border-border/50 text-sm leading-relaxed text-foreground font-medium break-words whitespace-pre-wrap",
                                         !isPromptExpanded && isPromptLong && "max-h-[140px] overflow-hidden mask-bottom-gradient"
                                     )}>
                                         {generation.prompt}

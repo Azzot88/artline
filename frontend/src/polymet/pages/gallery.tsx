@@ -175,6 +175,10 @@ export function Gallery({
         open={!!selectedGeneration}
         onOpenChange={(open) => !open && setSelectedGeneration(null)}
         generation={selectedGeneration}
+        onDelete={(id) => {
+          setGenerations((prev) => prev.filter((g) => g.id !== id))
+          setSelectedGeneration(null)
+        }}
       />
 
       {/* Empty State */}
