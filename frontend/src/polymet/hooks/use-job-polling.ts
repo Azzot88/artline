@@ -47,18 +47,14 @@ export function useJobPolling({ onSucceeded, onFailed }: UseJobPollingProps = {}
         })
 
         try {
-            console.log(`[Polling] Starting polling for ${jobId}`)
             const finalJob = await pollJobStatus(jobId, {
                 onSuccess: async (job) => {
-                    console.log(`[Polling] Success for ${jobId}`, job)
                     toast.success(t('workbench.toasts.jobStarted'))
                     const generation = normalizeGeneration(job)
-                    console.log(`[Polling] Normalized generation:`, generation)
 
                     // Update the active generation with the final result immediately
                     // This ensures it transitions from spinner to image in the active list
                     setActiveGenerations(prev => {
-                        console.log(`[Polling] Updating active generation ${jobId} to succeeded`)
                         const next = new Map(prev)
                         next.set(jobId, generation)
                         return next
@@ -67,7 +63,6 @@ export function useJobPolling({ onSucceeded, onFailed }: UseJobPollingProps = {}
                     // Schedule removal from active list to allow 'generations' list to catch up
                     // This prevents flicker/disappearance
                     setTimeout(() => {
-                        console.log(`[Polling] Removing ${jobId} from active list`)
                         setActiveGenerations(prev => {
                             const next = new Map(prev)
                             next.delete(jobId)
@@ -78,7 +73,6 @@ export function useJobPolling({ onSucceeded, onFailed }: UseJobPollingProps = {}
                     onSucceeded?.(generation)
                 },
                 onError: async (job) => {
-                    console.log(`[Polling] Error for ${jobId}`, job)
                     await refreshUser()
                     toast.error("Generation failed", {
                         description: job.error_message || "An error occurred during generation."
@@ -93,7 +87,7 @@ export function useJobPolling({ onSucceeded, onFailed }: UseJobPollingProps = {}
                     onFailed?.(job)
                 },
                 onProgress: (job) => {
-                    console.log(`[Polling] Progress ${jobId}: ${job.status}`)
+                    // Progress updates if needed
                 }
             })
             return finalJob

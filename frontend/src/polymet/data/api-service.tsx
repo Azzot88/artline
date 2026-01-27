@@ -298,39 +298,39 @@ export async function pollJobStatus(
       }
 
       try {
-        const response = await apiService.getJob(jobId)
-        const job = response.job
+        try {
+          const job = await apiService.getJob(jobId)
 
-        // Call progress callback
-        onProgress?.(job)
+          // Call progress callback
+          onProgress?.(job)
 
-        // Check if terminal status
-        if (isTerminalStatus(job.status)) {
-          if (job.status === "succeeded") {
-            onSuccess?.(job)
-            resolve(job)
-          } else {
-            onError?.(job)
-            reject(new Error(job.error_message || "Job failed"))
+          // Check if terminal status
+          if (isTerminalStatus(job.status)) {
+            if (job.status === "succeeded") {
+              onSuccess?.(job)
+              resolve(job)
+            } else {
+              onError?.(job)
+              reject(new Error(job.error_message || "Job failed"))
+            }
+            return
           }
-          return
+
+          // Calculate next interval (backoff after 30s)
+          const elapsed = Date.now() - startTime
+          const interval = elapsed > DEFAULT_POLLING_CONFIG.backoffThreshold
+            ? DEFAULT_POLLING_CONFIG.maxInterval
+            : DEFAULT_POLLING_CONFIG.initialInterval
+
+          // Schedule next poll
+          timeoutId = setTimeout(poll, interval)
+        } catch (error) {
+          clearTimeout(timeoutId)
+          reject(error)
         }
-
-        // Calculate next interval (backoff after 30s)
-        const elapsed = Date.now() - startTime
-        const interval = elapsed > DEFAULT_POLLING_CONFIG.backoffThreshold
-          ? DEFAULT_POLLING_CONFIG.maxInterval
-          : DEFAULT_POLLING_CONFIG.initialInterval
-
-        // Schedule next poll
-        timeoutId = setTimeout(poll, interval)
-      } catch (error) {
-        clearTimeout(timeoutId)
-        reject(error)
       }
-    }
 
     // Start polling
     poll()
-  })
+    })
 }

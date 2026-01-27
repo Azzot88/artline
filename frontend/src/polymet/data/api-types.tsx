@@ -118,17 +118,22 @@ export interface CreateJobRequest {
   is_public: boolean
 }
 
-export interface CreateJobResponse {
-  job: Job
-}
+// export interface CreateJobResponse {
+//   job: Job
+// }
 
-export interface GetJobResponse {
-  job: Job
-}
+// export interface GetJobResponse {
+//   job: Job
+// }
 
-export interface ListJobsResponse {
-  jobs: Job[]
-}
+// export interface ListJobsResponse {
+//   jobs: Job[]
+// }
+
+// Direct mapping to Backend Response Models
+export type CreateJobResponse = Job
+export type GetJobResponse = Job
+export type ListJobsResponse = Job[]
 
 // ============================================================================
 // Models
