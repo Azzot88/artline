@@ -97,19 +97,31 @@ def process_job(self, job_id: str):
                      "name": p.id,
                      "type": p.type,
                      # Extract raw values for enum check
-                     "options": [o.value for o in p.options] if p.options else None
+                     "options": [o.value for o in p.options] if p.options else None,
+                     "min": p.min,
+                     "max": p.max,
+                     "default": p.default
                  })
                  
         raw_params["prompt"] = prompt_text
               
         if allowed_inputs:
-             payload = service.build_payload(raw_params, allowed_inputs)
-             # Safety: Ensure prompt exists if allowed_inputs was somehow missing it or empty
-             if "prompt" not in payload and "prompt" in raw_params:
-                  payload["prompt"] = raw_params["prompt"] 
+             # Pass as "inputs" to match Normalizer expectation
+             schema = {"inputs": allowed_inputs}
+             payload = service.normalize_payload(raw_params, schema)
         else:
-             logger.info("Using permissive sanitization (No schema)")
-             payload = service.sanitize_input(raw_params)
+             logger.info("Using permissive normalization (No strict schema)")
+             # If no schema, we pass empty schema but might want basic sanitization?
+             # Normalizer handles "unknown" fields by dropping them unless 'prompt'.
+             # Let's pass a dummy schema that allows everything? 
+             # Or better, just rely on raw params if we trust them (unsafe).
+             # For now, let's try to normalize "prompt" at least.
+             payload = service.normalize_payload(raw_params, {"inputs": [{"name": "prompt", "type": "string"}]})
+             # Merge back other params if we want to be loose? 
+             # Actually, without a schema, "strict" normalization drops everything. 
+             # Let's trust raw_params if no schema found, but maybe warn.
+             if not payload: payload = raw_params
+
 
         # 5. Execute
         webhook_host = settings.WEBHOOK_HOST or 'https://api.artline.dev'

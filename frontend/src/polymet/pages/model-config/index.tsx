@@ -18,6 +18,8 @@ import { ModelConfigLayout } from "./layout"
 import { BasicSettings } from "./basic-settings"
 import { CapabilitiesCard } from "./capabilities-card"
 import { SchemaConnector } from "./schema-connector"
+import { NormalizedSchemaViewer } from "./normalized-schema-viewer"
+
 
 export function ModelConfig() {
     const { modelId } = useParams()
@@ -251,6 +253,14 @@ export function ModelConfig() {
                             />
                         </div>
                     )}
+
+                    {/* Backend Verification View */}
+                    {model && (
+                        <div className="mt-8">
+                            <NormalizedSchemaViewer model={model} />
+                        </div>
+                    )}
+
                 </>
             }
             sidebar={

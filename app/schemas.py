@@ -177,6 +177,7 @@ class AIModelRead(BaseModel):
     # Advanced
     capabilities: Optional[list[str]] = []
     ui_config: Optional[dict] = None
+    normalized_caps_json: Optional[dict] = None
     
     created_at: datetime
     updated_at: Optional[datetime] = None

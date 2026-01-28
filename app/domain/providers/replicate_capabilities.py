@@ -1,12 +1,134 @@
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Optional
 import re
 from app.domain.catalog.schemas import UIParameter, ParameterOption
 
 class ReplicateCapabilitiesService:
     """
-    Parses Replicate OpenAI Schemas to derive UI capabilities (Modes, Resolutions, Durations).
+    Parses Replicate OpenAI Schemas to derive:
+    1. UI capabilities (Modes, Resolutions, Durations)
+    2. Strict Normalization Schema (for backend validation)
     """
     
+    def generate_strict_schema(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Analyzes the raw Replicate model data and produces the standardized normalization schema.
+        Matches the structure required by ReplicateNormalizer.
+        """
+        caps = {
+            "inputs": [],
+            "defaults": {}
+        }
+        
+        # Extract Schema Properties
+        latest_version = data.get("latest_version")
+        if not latest_version:
+            return caps
+
+        schema = latest_version.get("openapi_schema", {})
+        
+        # Locate Input Properties
+        input_component = {}
+        if "components" in schema and "schemas" in schema["components"]:
+             input_component = schema["components"]["schemas"].get("Input", {})
+        elif "properties" in schema:
+             input_component = schema
+             
+        input_props = input_component.get("properties", {})
+        required_fields = input_component.get("required", [])
+        
+        self.root_schema = schema # Context for ref resolution
+        
+        normalized_inputs = []
+        
+        for key, details in input_props.items():
+            # Resolve Refs/AllOf
+            prop = self._resolve_schema(details)
+            
+            # Basic Field Definition
+            field = {
+                "name": key,
+                "label": prop.get("title", key.replace("_", " ").title()),
+                "type": self._map_type_strict(prop, key),
+                "required": key in required_fields,
+                "default": prop.get("default"),
+                "help": prop.get("description", ""),
+                "hidden": False
+            }
+            
+            # --- Apply Specific Normalization Rules (Per User Spec) ---
+            
+            # 1. String Rules
+            if field["type"] == "string":
+                # User Rule: Limit length (e.g. 2000 for prompt)
+                if key == "prompt":
+                    field["maxLength"] = 2000
+                elif "maxLength" in prop:
+                    field["maxLength"] = prop["maxLength"]
+                    
+                # User Rule: Lowercase needed? (scheduler) - handled in Normalizer logic usually, 
+                # but we can flag it here.
+                if key == "scheduler":
+                    field["format"] = "lowercase"
+
+            # 2. Number Rules (Int/Float)
+            if field["type"] in ["integer", "float"]:
+                if "minimum" in prop: field["min"] = prop["minimum"]
+                if "maximum" in prop: field["max"] = prop["maximum"]
+                if "multipleOf" in prop: field["step"] = prop["multipleOf"]
+                
+                # User Rule: Seed -1 handling
+                if key == "seed":
+                     # Ensure we allow -1 even if API says min 0
+                     current_min = field.get("min", 0)
+                     if current_min > -1: field["min"] = -1
+                     
+            # 3. Enum Handling
+            # Use resolved enum
+            if "enum" in prop:
+                field["type"] = "select" # Enforce select for enums
+                field["options"] = prop["enum"]
+                
+                # User Rule: Scheduler casing?
+                # If scheduler, ensure lowercase versions exist or rely on normalizer fuzzy match
+                
+            # 4. Special Aspect Ratio Handling
+            if key == "aspect_ratio":
+                field["type"] = "select"
+                if "options" not in field:
+                     field["options"] = ["1:1", "16:9", "9:16", "3:2", "2:3", "4:5", "5:4"]
+            
+            normalized_inputs.append(field)
+            
+            if "default" in prop:
+                caps["defaults"][key] = prop["default"]
+
+        caps["inputs"] = normalized_inputs
+        return caps
+
+    def _map_type_strict(self, prop: Dict, key: str) -> str:
+        """
+        Maps OpenAPI types to Strict Internal Types:
+        select, integer, float, boolean, string, image, file, list, object
+        """
+        t = prop.get("type", "string")
+        fmt = prop.get("format", "")
+        
+        if "enum" in prop: return "select"
+        
+        if t == "integer": return "integer"
+        if t == "number": return "float"
+        if t == "boolean": return "boolean"
+        
+        if t == "string":
+            if fmt == "uri": return "file"
+            if key in ["image", "input_image", "mask", "video", "audio"]: return "file"
+            return "string"
+            
+        if t == "array": return "list"
+        if t == "object": return "object"
+        
+        return "string"
+
     def to_canonical(self, input_schema: Dict[str, Any], root_schema: Dict[str, Any] = None) -> List[UIParameter]:
         """
         Converts raw Replicate schema into a list of Canonical UIParameters.
@@ -38,6 +160,7 @@ class ReplicateCapabilitiesService:
             # Logic: If 'enum' is in resolved, use it.
             effective_enum = details.get("enum") or resolved_details.get("enum")
             effective_type = details.get("type") or resolved_details.get("type")
+            raw_type = effective_type
 
             p_type = "text"
             options = None
