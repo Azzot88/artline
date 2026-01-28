@@ -17,7 +17,10 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && \
+    find /opt/venv -name "tests" -type d -exec rm -rf {} + && \
+    find /opt/venv -name "__pycache__" -type d -exec rm -rf {} + && \
+    find /opt/venv -name "*.pyc" -delete
 
 # Final Stage
 FROM python:3.12-slim

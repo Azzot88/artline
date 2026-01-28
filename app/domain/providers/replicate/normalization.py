@@ -10,24 +10,15 @@ import tempfile
 import requests
 from urllib.parse import urlparse
 
+import subprocess
+
 # Optional imports for media processing (handled if missing)
 try:
     from PIL import Image
-    import numpy as np
 except ImportError:
     Image = None
-    np = None
 
-try:
-    import moviepy.editor as mp
-except ImportError:
-    mp = None
-
-try:
-    import librosa
-    import matplotlib.pyplot as plt
-except ImportError:
-    librosa = None
+# numpy, moviepy, librosa removed to save space
 
 logger = logging.getLogger(__name__)
 
@@ -258,36 +249,36 @@ class ReplicateNormalizer:
         return value
 
 
-    # --- Media Processing (The "Worker" Aspect) ---
+    # --- Media Processing (Lite Version via ffmpeg) ---
     
     def generate_video_thumbnail(self, video_url: str) -> Optional[str]:
         """
-        Downloads video, extracts middle frame, saves/uploads, returns URL.
+        Downloads video, extracts a frame using ffmpeg, saves/uploads, returns URL.
         """
-        if not mp or not np:
-             logger.warning("MoviePy/Numpy not available for thumbnail generation")
-             return None
-             
         try:
              with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp_vid:
                  self._download_file(video_url, tmp_vid.name)
                  
-                 clip = mp.VideoFileClip(tmp_vid.name)
-                 duration = clip.duration
-                 frame_time = duration / 2.0
+                 out_path = tmp_vid.name + "_thumb.jpg"
                  
-                 # Extract frame
-                 frame = clip.get_frame(frame_time) # Numpy array
+                 # ffmpeg -i input.mp4 -ss 00:00:01 -vframes 1 output.jpg
+                 # We use a fixed offset of 1s or 10%? Let's try 1s roughly.
+                 # -y to overwrite
+                 cmd = [
+                     "ffmpeg", "-y",
+                     "-ss", "00:00:01",
+                     "-i", tmp_vid.name,
+                     "-vframes", "1",
+                     "-q:v", "2", 
+                     out_path
+                 ]
                  
-                 # Save frame
-                 if Image:
-                     img = Image.fromarray(frame)
-                     out_path = tmp_vid.name + "_thumb.jpg"
-                     img.save(out_path, quality=85)
-                     
-                     # Result: For now, return file path or mock S3 upload
-                     # In real prod, this would optimize to S3
-                     return self._mock_upload(out_path)
+                 subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+                 
+                 if os.path.exists(out_path):
+                      return self._mock_upload(out_path)
+                 
+                 return None
                      
         except Exception as e:
             logger.error(f"Thumbnail generation failed: {e}")
@@ -295,31 +286,29 @@ class ReplicateNormalizer:
             
     def generate_audio_waveform(self, audio_url: str) -> Optional[str]:
         """
-        Generates waveform image from audio.
+        Generates waveform image from audio using ffmpeg showwavespic.
         """
-        if not librosa or not np or not Image:
-             logger.warning("Librosa unavailable")
-             return None
-             
         try:
             with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp_audio:
                  self._download_file(audio_url, tmp_audio.name)
                  
-                 y, sr = librosa.load(tmp_audio.name, duration=30)
-                 
-                 import matplotlib
-                 matplotlib.use('Agg') # Non-interactive backend
-                 
-                 plt.figure(figsize=(10, 2))
-                 librosa.display.waveshow(y, sr=sr, color="blue")
-                 plt.axis('off')
-                 plt.tight_layout()
-                 
                  out_path = tmp_audio.name + "_wave.png"
-                 plt.savefig(out_path, transparent=True)
-                 plt.close()
                  
-                 return self._mock_upload(out_path)
+                 # ffmpeg -i input.mp3 -filter_complex "showwavespic=s=600x120:colors=blue" -frames:v 1 output.png
+                 cmd = [
+                     "ffmpeg", "-y",
+                     "-i", tmp_audio.name,
+                     "-filter_complex", "aformat=channel_layouts=mono,showwavespic=s=600x120:colors=0x0000ff",
+                     "-frames:v", "1",
+                     out_path
+                 ]
+                 
+                 subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+                 
+                 if os.path.exists(out_path):
+                     return self._mock_upload(out_path)
+                 
+                 return None
                  
         except Exception as e:
             logger.error(f"Waveform generation failed: {e}")
