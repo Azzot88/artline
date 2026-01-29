@@ -56,20 +56,9 @@ export function useJobPolling({ onSucceeded, onFailed }: UseJobPollingProps = {}
     }, [])
 
     const markAsFailed = useCallback((id: string, error: string) => {
-        setActiveGenerations(prev => {
-            const next = new Map(prev)
-            const existing = next.get(id)
-            if (existing) {
-                next.set(id, { ...existing, status: 'failed', error_message: error }) // Assuming Generation type has error_message or we handle it
-            }
-            return next
-        })
-
-        // Auto-remove after delay
-        setTimeout(() => {
-            removeGeneration(id)
-        }, 5000)
-    }, [])
+        // Remove immediately to avoid clutter, assuming Toast handles the notification
+        removeGeneration(id)
+    }, [removeGeneration])
 
     const startPolling = useCallback(async (jobId: string, initialData?: Partial<Generation>, previousTempId?: string) => {
         // If we have a temp ID, we want to atomically replace it to avoid flicker

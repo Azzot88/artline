@@ -200,8 +200,36 @@ def process_job(self, job_id: str):
             raise self.retry(exc=e, countdown=10)
 
     except Exception as e:
+        logger.exception(f"Worker Crash for job {job_id}")
         session.rollback()
-        logger.exception("Worker Crash")
+        
+        # Check if this is the last retry for unexpected crashes
+        current_retries = self.request.retries or 0
+        max_retries = self.max_retries or 3
+        
+        if current_retries >= max_retries:
+            logger.error(f"Max retries exceeded (Worker Crash) for job {job_id}. Marking as failed and refunding.")
+            try:
+                # Re-fetch job since rollback detached/expired it
+                job_final = session.execute(select(Job).where(Job.id == job_id)).scalar_one_or_none()
+                if job_final:
+                    job_final.status = "failed"
+                    job_final.error_message = f"Worker Crash: {str(e)}"
+                    
+                    if job_final.user_id and job_final.cost_credits > 0:
+                        refund = LedgerEntry(
+                            user_id=job_final.user_id,
+                            amount=job_final.cost_credits,
+                            reason=f"Refund for failed job {job_final.id} (Worker Crash)",
+                            related_job_id=job_final.id,
+                            currency="credits"
+                        )
+                        session.add(refund)
+                    
+                    session.commit()
+            except Exception as final_e:
+                 logger.error(f"Critical: Failed to safe-fail job {job_id}: {final_e}")
+        
         raise self.retry(exc=e, countdown=5)
     finally:
         session.close()

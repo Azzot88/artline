@@ -9,7 +9,7 @@ import { FormatResolutionIndicator } from "@/polymet/components/format-resolutio
 import { Card, CardContent } from "@/components/ui/card"
 import { CommunityGallery } from "@/polymet/components/community-gallery"
 import { Textarea } from "@/components/ui/textarea"
-import { PlusIcon, SparklesIcon } from "lucide-react"
+import { PlusIcon, SparklesIcon, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/polymet/components/language-provider"
 import { useAuth } from "@/polymet/components/auth-provider"
@@ -24,7 +24,7 @@ import { normalizeModelInputs } from "@/polymet/data/transformers"
 import type { ParameterValues, ImageFormatType, VideoFormatType, Generation } from "@/polymet/data/types"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
+
 import { useLocation, useSearchParams } from "react-router-dom"
 import { useModelSpec } from "@/polymet/hooks/use-model-spec"
 
