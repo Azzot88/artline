@@ -2,7 +2,6 @@
 import React from 'react'
 import { useNavigate } from "react-router-dom"
 import { useModelEditor } from '../hooks/use-model-editor'
-import { ParameterCard } from './ParameterCard'
 import { Button } from "@/components/ui/button"
 import { Loader2, Save, Undo, Eye, Image as ImageIcon, ArrowLeft } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
