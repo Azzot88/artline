@@ -4,7 +4,7 @@ import { AIModel, PricingRule } from "@/polymet/data/types"
 import { RichParameter, RichOption, ModelEditorState } from "../types"
 import { useModel } from "@/polymet/hooks/use-models"
 import { toast } from "sonner"
-import api from "@/polymet/lib/api"
+import { api } from "@/polymet/data/api-client"
 
 export function useModelEditor(modelId: string) {
     const { model, isLoading, mutate } = useModel(modelId)
