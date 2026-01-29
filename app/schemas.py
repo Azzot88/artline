@@ -179,6 +179,11 @@ class AIModelRead(BaseModel):
     ui_config: Optional[dict] = None
     normalized_caps_json: Optional[dict] = None
     
+    # Schema Fields
+    param_schema: Optional[dict] = None
+    raw_schema_json: Optional[dict] = None
+    pricing_rules: Optional[list[dict]] = None
+    
     created_at: datetime
     updated_at: Optional[datetime] = None
 
