@@ -13,55 +13,92 @@ export function useModelEditor(modelId: string) {
 
     // Transform Backend Spec -> Frontend State
     const initFromModel = useCallback((m: AIModel) => {
-        // 1. Get Schema source
-        const schema = m.raw_schema_json || m.param_schema || {}
-        const props = schema.inputs || schema.properties || schema
-
         const uiConfig = m.ui_config || {}
         const pricingRules = m.pricing_rules || []
 
-        // 2. Map to RichParameters (if props exist)
-        const params: RichParameter[] = props ? Object.keys(props).map(key => {
-            const raw = props[key]
-            const config = uiConfig[key] || {}
+        let params: RichParameter[] = []
 
-            // Handle Options
-            let options: RichOption[] | undefined = undefined
+        // 1. Priority: Backend Normalized Parameters
+        // Accessed via m.param_schema.parameters (canonical list)
+        const canonical = m.param_schema && (m.param_schema as any).parameters
 
-            const rawEnum = raw.enum || raw.allowed_values || (raw.anyOf ? raw.anyOf.map((x: any) => x.const || x) : null)
+        if (canonical && Array.isArray(canonical)) {
+            params = canonical.map((p: any) => {
+                const config = uiConfig[p.id] || {}
 
-            if (rawEnum && Array.isArray(rawEnum)) {
-                options = rawEnum.map((val: any, idx: number) => {
-                    const rule = pricingRules.find(r => r.param_id === key && r.operator === 'eq' && r.value === val)
+                // Merge Options Pricing
+                let options: RichOption[] | undefined = undefined
+                if (p.options) {
+                    options = p.options.map((opt: any, idx: number) => {
+                        const val = opt.value || opt
+                        const rule = pricingRules.find(r => r.param_id === p.id && r.operator === 'eq' && r.value === val)
+                        return {
+                            value: val,
+                            label: opt.label || val.toString(), // Canonical has label
+                            price: rule ? rule.surcharge : 0,
+                            accessTiers: [],
+                            order: idx
+                        }
+                    })
+                }
+
+                return {
+                    id: p.id,
+                    type: p.type, // "select", "integer", "string", "boolean"
+                    label: config.label_override || p.label || p.id,
+                    default: p.default,
+                    required: !!p.required,
+                    description: p.description || p.help,
+
+                    hidden: config.visible === false || p.hidden,
+                    visibleToTiers: config.access_tiers || ["starter", "pro", "studio"],
+                    labelOverride: config.label_override,
+
+                    min: p.min,
+                    max: p.max,
+                    step: p.step,
+
+                    options
+                }
+            })
+        } else {
+            // 2. Fallback: Raw Logic
+            const schema = m.raw_schema_json || m.param_schema || {}
+            let props = schema.inputs || schema.properties
+            if (!props) {
+                const deepSchema = schema.latest_version?.openapi_schema || schema.openapi_schema
+                if (deepSchema) {
+                    props = deepSchema.components?.schemas?.Input?.properties || deepSchema.properties
+                }
+            }
+            if (!props && Object.values(schema).some((v: any) => v && (v.type || v.default))) {
+                props = schema
+            }
+
+            if (props) {
+                params = Object.keys(props).map(key => {
+                    const raw = props[key]
+                    const config = uiConfig[key] || {}
+
+                    // Basic parsing for fallback
                     return {
-                        value: val,
-                        label: val.toString(),
-                        price: rule ? rule.surcharge : 0,
-                        accessTiers: [],
-                        order: idx
+                        id: key,
+                        type: raw.type || "string",
+                        label: config.label_override || raw.title || key,
+                        default: raw.default,
+                        required: !!raw.required, // Simplified
+                        description: raw.description,
+                        hidden: config.visible === false,
+                        visibleToTiers: config.access_tiers || ["starter", "pro", "studio"],
+                        labelOverride: config.label_override,
+                        min: raw.minimum,
+                        max: raw.maximum,
+                        step: raw.step,
+                        options: undefined
                     }
                 })
             }
-
-            return {
-                id: key,
-                type: raw.type || "string",
-                label: config.label_override || raw.title || key,
-                default: raw.default,
-                required: Array.isArray(schema.required) ? schema.required.includes(key) : !!raw.required,
-                description: raw.description,
-
-                hidden: config.visible === false,
-                visibleToTiers: config.access_tiers || ["starter", "pro", "studio"],
-                labelOverride: config.label_override,
-
-                min: raw.minimum ?? raw.min,
-                max: raw.maximum ?? raw.max,
-                step: raw.step,
-
-                options
-            }
-        }) : []
+        }
 
         setState({
             modelId: m.id,

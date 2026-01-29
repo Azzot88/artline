@@ -463,19 +463,34 @@ async def fetch_model_schema_endpoint(
                  props = schema.get("components", {}).get("schemas", {}).get("Input", {}).get("properties", {})
                  
             if props:
+                # 1. Detect Modes
                 parsed = cap_service.parse_capabilities(props)
                 detected_modes = parsed.get("modes", [])
+                
+                # 2. Generate Canonical UI Parameters (Backend Normalization)
+                # We need the root schema for Ref resolution
+                root = raw.get("latest_version", {}).get("openapi_schema", {})
+                canonical_params = cap_service.to_canonical(props, root_schema=root)
+                
+                canonical_json = [p.dict() for p in canonical_params]
+                
         except Exception as e:
             print(f"Error parsing capabilities: {e}")
+            canonical_json = []
 
         if existing_models:
             for m in existing_models:
                 m.raw_schema_json = result.get("raw_response")
                 m.normalized_caps_json = result.get("normalized_caps")
                 
+                # Save normalized params
+                if canonical_json:
+                    m.param_schema = {"parameters": canonical_json}
+                
                 # UPDATE MODES from detected technical potential
                 if detected_modes:
-                    m.modes = detected_modes
+                    modes_update = list(set((m.modes or []) + detected_modes))
+                    m.modes = modes_update
                 
                 # Also update version_id if available
                 latest = result.get("raw_response", {}).get("latest_version", {})
