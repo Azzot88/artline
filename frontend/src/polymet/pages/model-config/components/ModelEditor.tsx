@@ -126,6 +126,7 @@ export function ModelEditor({ modelId }: ModelEditorProps) {
         isSaving,
         updateMetadata,
         updateParameter,
+        updateConfig,
         save,
         reset,
         fetchSchema
