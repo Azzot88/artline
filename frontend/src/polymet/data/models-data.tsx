@@ -25,6 +25,11 @@ export interface AIModel {
   }
   cover_image_url?: string               // Model cover image
 
+  // Backend Schema Fields
+  raw_schema_json?: any
+  param_schema?: any
+  pricing_rules?: any[]
+
   // Capabilities
   modes?: CapabilityType[]               // Available modes (JSON in backend)
   resolutions?: string[]                 // Available resolutions (JSON in backend)
