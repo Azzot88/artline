@@ -248,6 +248,18 @@ export interface ModelParameterConfig {
   access_tiers?: string[] // ["starter", "pro", "studio"]
   allowed_file_types?: string[]
   pricing_rules?: PricingRule[]
+
+  // Phase 8: Advanced Value Config
+  values?: ParameterValue[]
+}
+
+export interface ParameterValue {
+  value: any
+  label?: string
+  enabled: boolean
+  is_default: boolean
+  price: number
+  access_tiers: string[] // ["starter", "pro", "studio"]
 }
 
 

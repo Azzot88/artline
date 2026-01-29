@@ -48,6 +48,21 @@ class PricingRule(BaseModel):
     
     label: Optional[str] = None # Description for the bill, e.g. "High Resolution Fee"
 
+
+class ParameterValueConfig(BaseModel):
+    """
+    Configuration for a specific value of a parameter.
+    Used for granular control over options in Select, or step values in Integer/Number.
+    """
+    value: Any
+    label: Optional[str] = None
+    enabled: bool = True
+    is_default: bool = False
+    price: float = 0.0
+    access_tiers: List[str] = ["starter", "pro", "studio"]
+    
+    model_config = ConfigDict(extra="ignore")
+
 class UIParameterConfig(BaseModel):
     """
     Configuration overlay for a parameter.
@@ -72,6 +87,9 @@ class UIParameterConfig(BaseModel):
     # Validation constraints override
     min_override: Optional[Union[int, float]] = None
     max_override: Optional[Union[int, float]] = None
+    
+    # Granular Value Configuration (Phase 2)
+    values: Optional[List[ParameterValueConfig]] = None
     
     model_config = ConfigDict(extra="ignore")
 

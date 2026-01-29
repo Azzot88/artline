@@ -1,7 +1,7 @@
 
 import { UIParameter } from "@/polymet/data/api-types"
 import { ModelParameterConfig } from "@/polymet/data/types"
-import { VisualParamCard } from "./visual-param-card"
+import { ParameterCard } from "./parameter-card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SearchIcon, SlidersHorizontalIcon } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -51,7 +51,7 @@ export function ConfigurationGrid({ parameters, configs, onConfigChange }: Confi
                     <TabsContent value="all" className="mt-0">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                             {filterParams(parameters).map((param) => (
-                                <VisualParamCard
+                                <ParameterCard
                                     key={param.id}
                                     param={param}
                                     config={configs[param.id] || { parameter_id: param.id, enabled: true, display_order: 0 }}
@@ -64,7 +64,7 @@ export function ConfigurationGrid({ parameters, configs, onConfigChange }: Confi
                     <TabsContent value="basic" className="mt-0">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                             {filterParams(basicParams).map((param) => (
-                                <VisualParamCard
+                                <ParameterCard
                                     key={param.id}
                                     param={param}
                                     config={configs[param.id] || { parameter_id: param.id, enabled: true, display_order: 0 }}
@@ -77,7 +77,7 @@ export function ConfigurationGrid({ parameters, configs, onConfigChange }: Confi
                     <TabsContent value="advanced" className="mt-0">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                             {filterParams(advancedParams).map((param) => (
-                                <VisualParamCard
+                                <ParameterCard
                                     key={param.id}
                                     param={param}
                                     config={configs[param.id] || { parameter_id: param.id, enabled: true, display_order: 0 }}
