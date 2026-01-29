@@ -25,11 +25,9 @@ export function ModelEditor({ modelId }: ModelEditorProps) {
         reset
     } = useModelEditor(modelId)
 
-    if (isLoading || !state) {
-        return <div className="flex items-center justify-center p-12"><Loader2 className="animate-spin text-muted-foreground" /></div>
-    }
-
     const diffPreview = React.useMemo(() => {
+        if (!state) return null
+
         const config: Record<string, any> = {}
         const pricing: any[] = []
 
@@ -52,6 +50,10 @@ export function ModelEditor({ modelId }: ModelEditorProps) {
             pricing_rules: pricing
         }
     }, [state])
+
+    if (isLoading || !state) {
+        return <div className="flex items-center justify-center p-12"><Loader2 className="animate-spin text-muted-foreground" /></div>
+    }
 
     return (
         <div className="h-full flex flex-col space-y-4">
