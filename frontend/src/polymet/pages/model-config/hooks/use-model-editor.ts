@@ -161,6 +161,21 @@ export function useModelEditor(modelId: string) {
         }
     }
 
+    const fetchSchema = async () => {
+        if (!model) return
+        setIsSaving(true)
+        try {
+            await api.post("/admin/fetch-model-schema", { model_ref: model.model_ref })
+            toast.success("Schema fetched successfully")
+            await mutate()
+        } catch (e) {
+            console.error(e)
+            toast.error("Failed to fetch schema")
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
     const reset = () => {
         if (model) initFromModel(model)
     }
@@ -172,6 +187,7 @@ export function useModelEditor(modelId: string) {
         updateMetadata,
         updateParameter,
         save,
+        fetchSchema,
         reset
     }
 }

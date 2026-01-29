@@ -1,9 +1,10 @@
 
 import React from 'react'
+import { useNavigate } from "react-router-dom"
 import { useModelEditor } from '../hooks/use-model-editor'
 import { ParameterCard } from './ParameterCard'
 import { Button } from "@/components/ui/button"
-import { Loader2, Save, Undo, Eye, Image as ImageIcon } from "lucide-react"
+import { Loader2, Save, Undo, Eye, Image as ImageIcon, ArrowLeft } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -15,6 +16,7 @@ interface ModelEditorProps {
 }
 
 export function ModelEditor({ modelId }: ModelEditorProps) {
+    const navigate = useNavigate()
     const {
         state,
         isLoading,
@@ -22,7 +24,8 @@ export function ModelEditor({ modelId }: ModelEditorProps) {
         updateMetadata,
         updateParameter,
         save,
-        reset
+        reset,
+        fetchSchema
     } = useModelEditor(modelId)
 
     const diffPreview = React.useMemo(() => {
@@ -60,6 +63,9 @@ export function ModelEditor({ modelId }: ModelEditorProps) {
             {/* Header */}
             <div className="flex items-center justify-between border-b pb-4">
                 <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => navigate("/admin/models")}>
+                        <ArrowLeft className="w-4 h-4" />
+                    </Button>
                     <h2 className="text-2xl font-bold tracking-tight">Configuration: {state.displayName}</h2>
                     {state.isDirty && <span className="text-xs text-amber-500 font-mono font-bold bg-amber-500/10 px-2 py-1 rounded">(Unsaved Changes)</span>}
                 </div>
@@ -93,8 +99,12 @@ export function ModelEditor({ modelId }: ModelEditorProps) {
                                 />
                             ))}
                             {state.parameters.length === 0 && (
-                                <div className="text-center p-8 border border-dashed rounded text-muted-foreground">
-                                    No parameters found in schema definition.
+                                <div className="text-center p-8 border border-dashed rounded text-muted-foreground flex flex-col items-center gap-4">
+                                    <p>No parameters found in schema definition.</p>
+                                    <Button variant="outline" onClick={fetchSchema} disabled={isSaving}>
+                                        {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                                        Fetch Schema from Replicate
+                                    </Button>
                                 </div>
                             )}
                         </div>
