@@ -107,6 +107,7 @@ export function useModelEditor(modelId: string) {
             coverImageUrl: m.cover_image_url || "",
             creditsPerGeneration: m.credits_per_generation || 5,
             parameters: params,
+            configs: m.ui_config || {},
             isDirty: false
         })
     }, [])
@@ -120,6 +121,23 @@ export function useModelEditor(modelId: string) {
     // Actions
     const updateMetadata = (updates: Partial<Pick<ModelEditorState, 'displayName' | 'description' | 'coverImageUrl' | 'creditsPerGeneration'>>) => {
         setState(prev => prev ? ({ ...prev, ...updates, isDirty: true }) : null)
+    }
+
+    const updateConfig = (paramId: string, newConfig: Partial<ModelParameterConfig>) => {
+        setState(prev => {
+            if (!prev) return null
+            const currentConfigs = prev.configs || {}
+            const existing = currentConfigs[paramId] || { parameter_id: paramId, enabled: true, display_order: 0 }
+
+            return {
+                ...prev,
+                isDirty: true,
+                configs: {
+                    ...currentConfigs,
+                    [paramId]: { ...existing, ...newConfig }
+                }
+            }
+        })
     }
 
     const updateParameter = (paramId: string, updates: Partial<RichParameter>) => {
@@ -141,49 +159,37 @@ export function useModelEditor(modelId: string) {
 
         try {
             // Reconstruct UI Config and Pricing Rules
-            const newUiConfig: Record<string, any> = { ...model.ui_config }
-            const newPricingRules: PricingRule[] = []
+            // Start with base from state.configs (New Advanced System)
+            const newUiConfig: Record<string, any> = { ...state.configs }
 
-            const existingRules = (model.pricing_rules || []).filter(r =>
-                !state.parameters.some(p => p.id === r.param_id)
-            )
+            // Legacy merge (for fields not yet fully migrated to configs state if any)
+            // Ideally we move fully to state.configs, but for safety let's ensure compatibility.
+            // The RichParameter state is still used for basic fields like 'hidden'.
+            // Let's sync RichParameter 'hidden' back to ui_config 'enabled' if missing.
 
             state.parameters.forEach(p => {
-                // 1. UI Config
-                newUiConfig[p.id] = {
-                    ...newUiConfig[p.id],
-                    visible: !p.hidden,
-                    access_tiers: p.visibleToTiers,
-                    label_override: p.labelOverride
+                if (!newUiConfig[p.id]) {
+                    newUiConfig[p.id] = {
+                        parameter_id: p.id,
+                        enabled: !p.hidden,
+                        display_order: 0
+                    }
                 }
-
-                // 2. Pricing Rules (Options)
-                if (p.options) {
-                    p.options.forEach(opt => {
-                        if (opt.price !== 0) {
-                            newPricingRules.push({
-                                id: `pr_${p.id}_${opt.value}`,
-                                param_id: p.id,
-                                operator: "eq",
-                                value: opt.value,
-                                surcharge: opt.price,
-                                label: `${p.label}: ${opt.label}`
-                            })
-                        }
-                    })
-                }
+                // Sync basic toggle if not explicitly set in advanced config
+                // (or assume advanced config 'enabled' is source of truth)
             })
 
-            const finalRules = [...existingRules, ...newPricingRules]
-
-            // Send PUT (Backend uses exclude_unset=True)
+            // Construct Payload
             await api.put(`/admin/models/${modelId}`, {
                 display_name: state.displayName,
                 description: state.description,
                 cover_image_url: state.coverImageUrl,
                 credits_per_generation: state.creditsPerGeneration,
                 ui_config: newUiConfig,
-                pricing_rules: finalRules
+                // Pricing rules might still be needed if backend relies on them for ledger?? 
+                // But new system puts price in `values`. 
+                // Let's keep existing rules for now to avoid breaking legacy billing.
+                pricing_rules: model.pricing_rules
             })
 
             toast.success("Configuration saved")
@@ -223,6 +229,7 @@ export function useModelEditor(modelId: string) {
         isSaving,
         updateMetadata,
         updateParameter,
+        updateConfig,
         save,
         fetchSchema,
         reset

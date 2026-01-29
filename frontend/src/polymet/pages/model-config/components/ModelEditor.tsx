@@ -91,14 +91,13 @@ export function ModelEditor({ modelId }: ModelEditorProps) {
                     </div>
                     <ScrollArea className="h-[calc(100vh-200px)] pr-4 pb-10">
                         <div className="space-y-4 pb-24">
-                            {state.parameters.map(param => (
-                                <ParameterCard
-                                    key={param.id}
-                                    parameter={param}
-                                    onChange={(updates) => updateParameter(param.id, updates)}
+                            {state.parameters.length > 0 ? (
+                                <ConfigurationGrid
+                                    parameters={adaptToUIParams(state.parameters)}
+                                    configs={state.configs || {}}
+                                    onConfigChange={updateConfig}
                                 />
-                            ))}
-                            {state.parameters.length === 0 && (
+                            ) : (
                                 <div className="text-center p-8 border border-dashed rounded text-muted-foreground flex flex-col items-center gap-4">
                                     <p>No parameters found in schema definition.</p>
                                     <Button variant="outline" onClick={fetchSchema} disabled={isSaving}>
