@@ -71,7 +71,7 @@ function ConfigurationGrid({ parameters, configs, onConfigChange }: Configuratio
 
                 <div className="mt-6">
                     <TabsContent value="all" className="mt-0">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <div className="flex flex-col space-y-4">
                             {filterParams(parameters).map((param) => (
                                 <ParameterCard
                                     key={param.id}
@@ -84,7 +84,7 @@ function ConfigurationGrid({ parameters, configs, onConfigChange }: Configuratio
                     </TabsContent>
 
                     <TabsContent value="basic" className="mt-0">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <div className="flex flex-col space-y-4">
                             {filterParams(basicParams).map((param) => (
                                 <ParameterCard
                                     key={param.id}
@@ -97,7 +97,7 @@ function ConfigurationGrid({ parameters, configs, onConfigChange }: Configuratio
                     </TabsContent>
 
                     <TabsContent value="advanced" className="mt-0">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <div className="flex flex-col space-y-4">
                             {filterParams(advancedParams).map((param) => (
                                 <ParameterCard
                                     key={param.id}
