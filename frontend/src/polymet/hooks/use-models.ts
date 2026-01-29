@@ -85,3 +85,39 @@ export function useModel(modelId: string | undefined) {
         mutate: fetchModel
     }
 }
+
+export function useAdminModel(modelId: string | undefined) {
+    const [model, setModel] = useState<AIModel | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<Error | null>(null)
+
+    const fetchModel = useCallback(async () => {
+        if (!modelId) return
+
+        try {
+            setIsLoading(true)
+            const response = await apiService.getAdminModel(modelId)
+            setModel(response as any as AIModel)
+            setError(null)
+        } catch (e) {
+            console.error(`Failed to fetch admin model ${modelId}`, e)
+            setError(e as Error)
+            setModel(null)
+        } finally {
+            setIsLoading(false)
+        }
+    }, [modelId])
+
+    useEffect(() => {
+        if (modelId) {
+            fetchModel()
+        }
+    }, [modelId, fetchModel])
+
+    return {
+        model,
+        isLoading,
+        error,
+        mutate: fetchModel
+    }
+}
