@@ -100,6 +100,66 @@ export function useModelEditor(modelId: string) {
             }
         }
 
+        // 3. Robust Config Initialization (Migration Logic)
+        const initialConfigs: Record<string, any> = { ...uiConfig }
+
+        // We need to ensure that if we have pricing rules for a param, they show up as values
+        // even if 'values' is not yet in uiConfig.
+
+        // Get all unique param IDs from schema params
+        const allParamIds = new Set(params.map(p => p.id))
+
+        allParamIds.forEach(paramId => {
+            const currentConfig = initialConfigs[paramId] || { parameter_id: paramId, enabled: true, display_order: 0 }
+
+            // If values already exist, trust them (User has saved new config)
+            // If NOT, try to migrate from pricing rules + schema options
+            if (!currentConfig.values) {
+                const paramRules = pricingRules.filter(r => r.param_id === paramId)
+                const schemaParam = params.find(p => p.id === paramId)
+
+                let newValues: any[] = []
+
+                // A. From Schema Options
+                if (schemaParam?.options) {
+                    newValues = schemaParam.options.map((opt: RichOption) => {
+                        // Check for rule
+                        const rule = paramRules.find(r => r.value === opt.value) // Assuming value match
+                        return {
+                            value: opt.value,
+                            label: opt.label,
+                            enabled: true,
+                            is_default: schemaParam.default === opt.value,
+                            price: rule ? rule.surcharge : 0,
+                            access_tiers: ["starter", "pro", "studio"] // Default logic or infer?
+                        }
+                    })
+                }
+
+                // B. From Orphan Rules (Custom values added via old UI?)
+                // If the rule value wasn't in schema options, we should add it too
+                paramRules.forEach(rule => {
+                    const val = rule.value
+                    if (!newValues.some(v => v.value === val)) {
+                        newValues.push({
+                            value: val,
+                            label: rule.label?.split(': ').pop() || String(val),
+                            enabled: true,
+                            is_default: false,
+                            price: rule.surcharge,
+                            access_tiers: ["starter", "pro", "studio"]
+                        })
+                    }
+                })
+
+                if (newValues.length > 0) {
+                    currentConfig.values = newValues
+                }
+            }
+
+            initialConfigs[paramId] = currentConfig
+        })
+
         setState({
             modelId: m.id,
             displayName: m.display_name,
@@ -107,7 +167,7 @@ export function useModelEditor(modelId: string) {
             coverImageUrl: m.cover_image_url || "",
             creditsPerGeneration: m.credits_per_generation || 5,
             parameters: params,
-            configs: m.ui_config || {},
+            configs: initialConfigs,
             isDirty: false
         })
     }, [])

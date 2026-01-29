@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -9,27 +8,34 @@ import { Badge } from "@/components/ui/badge"
 interface AddValuePointModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
+    type?: string
     min?: number
     max?: number
-    existingValues: number[]
-    onAdd: (val: number) => void
+    existingValues: (string | number)[]
+    onAdd: (val: string | number) => void
 }
 
-export function AddValuePointModal({ open, onOpenChange, min = 0, max = 100, existingValues, onAdd }: AddValuePointModalProps) {
+export function AddValuePointModal({ open, onOpenChange, type = "number", min = 0, max = 100, existingValues, onAdd }: AddValuePointModalProps) {
     const [val, setVal] = useState<string>("")
-    const numVal = Number(val)
+
+    const isNumber = type === 'integer' || type === 'number'
+
+    // Parse value for validation
+    const numVal = isNumber ? Number(val) : 0
 
     // Validation
-    const exists = existingValues.includes(numVal)
-    const outOfRange = numVal < min || numVal > max
+    const exists = existingValues.includes(isNumber ? numVal : val)
+    const outOfRange = isNumber && (numVal < min || numVal > max)
     const isValid = val !== "" && !exists && !outOfRange
 
-    // Presets
-    const presets = [10, 25, 50, 75, 100].filter(p => p >= min && p <= max && !existingValues.includes(p))
+    // Presets (Only for numbers for now)
+    const presets = isNumber
+        ? [10, 25, 50, 75, 100].filter(p => p >= min && p <= max && !existingValues.includes(p))
+        : []
 
     const handleSubmit = () => {
         if (isValid) {
-            onAdd(numVal)
+            onAdd(isNumber ? numVal : val)
             onOpenChange(false)
             setVal("")
         }
@@ -39,7 +45,7 @@ export function AddValuePointModal({ open, onOpenChange, min = 0, max = 100, exi
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[400px]">
                 <DialogHeader>
-                    <DialogTitle>Add Value Point</DialogTitle>
+                    <DialogTitle>Add Value {isNumber ? "Point" : "Option"}</DialogTitle>
                 </DialogHeader>
 
                 <div className="grid gap-4 py-4">
@@ -47,14 +53,17 @@ export function AddValuePointModal({ open, onOpenChange, min = 0, max = 100, exi
                         <Label>Value</Label>
                         <div className="flex items-center gap-2">
                             <Input
-                                type="number"
+                                type={isNumber ? "number" : "text"}
                                 value={val}
                                 onChange={e => setVal(e.target.value)}
                                 autoFocus
+                                placeholder={isNumber ? "0" : "Enter value..."}
                             />
-                            <div className="text-xs text-muted-foreground whitespace-nowrap">
-                                Range: {min} - {max}
-                            </div>
+                            {isNumber && (
+                                <div className="text-xs text-muted-foreground whitespace-nowrap">
+                                    Range: {min} - {max}
+                                </div>
+                            )}
                         </div>
                         {exists && <p className="text-xs text-destructive">Value already exists</p>}
                         {outOfRange && val !== "" && <p className="text-xs text-destructive">Out of allowed range</p>}
@@ -81,7 +90,7 @@ export function AddValuePointModal({ open, onOpenChange, min = 0, max = 100, exi
 
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                    <Button onClick={handleSubmit} disabled={!isValid}>Add Value</Button>
+                    <Button onClick={handleSubmit} disabled={!isValid}>Add</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

@@ -53,6 +53,7 @@ export function ParameterValuesList({ values, type, min, max, onChange }: Parame
 
     // Determine Mode
     const isInteger = type === 'integer' || type === 'number'
+    const supportsCustomValues = isInteger || type === 'string' // Allow strings too
 
     // Sort values if integer (robustness)
     const displayValues = isInteger
@@ -70,7 +71,7 @@ export function ParameterValuesList({ values, type, min, max, onChange }: Parame
                     </div>
                 </h4>
 
-                {isInteger && (
+                {supportsCustomValues && (
                     <Button
                         size="sm"
                         variant="secondary"
@@ -108,9 +109,10 @@ export function ParameterValuesList({ values, type, min, max, onChange }: Parame
             <AddValuePointModal
                 open={isAddOpen}
                 onOpenChange={setIsAddOpen}
+                type={type}
                 min={min}
                 max={max}
-                existingValues={values.map(v => Number(v.value))}
+                existingValues={values.map(v => v.value)}
                 onAdd={handleAdd}
             />
         </div>
