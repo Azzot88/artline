@@ -11,18 +11,18 @@ interface TierBadgeProps {
 export function TierBadge({ tier, active, onClick, size = "md" }: TierBadgeProps) {
     const isInteractive = !!onClick
 
-    // Base Colors
+    // Base Colors (Inactive / Outline)
     const tiers: Record<string, string> = {
-        starter: "bg-zinc-200 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300",
-        pro: "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300",
-        studio: "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300"
+        starter: "bg-zinc-100/80 text-zinc-600 border border-transparent hover:border-zinc-300 dark:bg-zinc-800 dark:text-zinc-400",
+        pro: "bg-violet-50/50 text-violet-600 border border-transparent hover:border-violet-300 dark:bg-violet-900/10 dark:text-violet-300",
+        studio: "bg-amber-50/50 text-amber-600 border border-transparent hover:border-amber-300 dark:bg-amber-900/10 dark:text-amber-300"
     }
 
-    // Active State Colors (Vibrant)
+    // Active State Colors (Vibrant Gradients)
     const activeTiers: Record<string, string> = {
-        starter: "bg-zinc-600 text-white hover:bg-zinc-700 dark:bg-zinc-600",
-        pro: "bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-600",
-        studio: "bg-amber-500 text-white hover:bg-amber-600 dark:bg-amber-600"
+        starter: "bg-zinc-600 text-white shadow-sm hover:bg-zinc-700 dark:bg-zinc-600",
+        pro: "bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-sm hover:from-violet-600 hover:to-indigo-700",
+        studio: "bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-sm hover:from-amber-500 hover:to-orange-600"
     }
 
     const baseClass = active ? activeTiers[tier] : tiers[tier]

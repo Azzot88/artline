@@ -21,7 +21,7 @@ export function ParameterValuesList({ values, type, min, max, onChange }: Parame
     // Handlers
     const handleUpdate = (id: string, updates: Partial<ParameterValue>) => {
         const next = values.map(v => {
-            if (v.value === id) { // Using value as ID for simplicity or strict ID if available
+            if (v.value === id) { // Using value as ID 
                 return { ...v, ...updates }
             }
             // Enforce Single Default Logic
@@ -53,7 +53,6 @@ export function ParameterValuesList({ values, type, min, max, onChange }: Parame
 
     // Determine Mode
     const isInteger = type === 'integer' || type === 'number'
-    const isSelect = type === 'select'
 
     // Sort values if integer (robustness)
     const displayValues = isInteger
@@ -61,21 +60,39 @@ export function ParameterValuesList({ values, type, min, max, onChange }: Parame
         : values
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-4">
             {/* Header Actions */}
             <div className="flex items-center justify-between">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Configured Values ({values.length})
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                    Configured Values
+                    <div className="bg-primary/10 text-primary px-1.5 rounded-sm text-[10px] font-mono">
+                        {values.filter(v => v.enabled).length}/{values.length}
+                    </div>
                 </h4>
+
                 {isInteger && (
-                    <Button size="sm" variant="outline" onClick={() => setIsAddOpen(true)} className="h-7 text-xs">
+                    <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setIsAddOpen(true)}
+                        className="h-7 text-xs shadow-sm hover:translate-y-[1px] transition-all"
+                    >
                         <PlusIcon className="w-3 h-3 mr-1.5" /> Add Value Point
                     </Button>
                 )}
             </div>
 
             {/* List */}
-            <div className="grid gap-2">
+            <div className="grid gap-2 relative">
+                {/* Visual Connector Line? Maybe clutter. Keeping clean. */}
+
+                {displayValues.length === 0 && (
+                    <div className="text-center py-6 text-muted-foreground bg-muted/20 border border-dashed rounded-lg">
+                        <div className="text-sm">No values configured</div>
+                        {isInteger && <div className="text-xs opacity-70 mt-1">Add a value point to get started</div>}
+                    </div>
+                )}
+
                 {displayValues.map((v) => (
                     <ParameterValueRow
                         key={v.value}

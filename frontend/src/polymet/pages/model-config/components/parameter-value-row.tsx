@@ -3,7 +3,7 @@ import { ParameterValue } from "@/polymet/data/types"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { StarIcon, MoreVerticalIcon, CopyIcon, TrashIcon } from "lucide-react"
+import { StarIcon, MoreVerticalIcon, TrashIcon } from "lucide-react"
 import { TierBadge } from "./tier-badge"
 import {
     DropdownMenu,
@@ -21,7 +21,15 @@ interface ParameterValueRowProps {
 }
 
 export function ParameterValueRow({ value, onUpdate, onDelete, canDelete }: ParameterValueRowProps) {
-    const tiers = ["starter", "pro", "studio"]
+    const allTiers = ["starter", "pro", "studio"]
+    const hasAllTiers = allTiers.every(t => value.access_tiers.includes(t))
+
+    // Border Logic
+    let borderClass = "border-l-4 border-l-muted opacity-60 grayscale-[0.5]" // Disabled (Gray)
+    if (value.enabled) {
+        if (hasAllTiers) borderClass = "border-l-4 border-l-emerald-500 shadow-sm" // Full Access (Green)
+        else borderClass = "border-l-4 border-l-amber-500 shadow-sm" // Restricted (Orange)
+    }
 
     const toggleTier = (tier: string) => {
         const current = value.access_tiers || []
@@ -33,14 +41,14 @@ export function ParameterValueRow({ value, onUpdate, onDelete, canDelete }: Para
 
     return (
         <div className={cn(
-            "flex items-center gap-3 p-3 rounded-lg border bg-card transition-all group",
-            value.enabled ? "border-l-4 border-l-emerald-500" : "border-l-4 border-l-muted opacity-80"
+            "flex items-center gap-3 p-3 rounded-lg border bg-card transition-all group hover:bg-zinc-50 dark:hover:bg-zinc-900/50",
+            borderClass
         )}>
             {/* 1. Master Toggle */}
             <Checkbox
                 checked={value.enabled}
                 onCheckedChange={(c) => onUpdate({ enabled: c as boolean })}
-                className="w-5 h-5 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+                className={cn("w-5 h-5", value.enabled ? "data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500" : "")}
             />
 
             {/* 2. Label & Price */}
@@ -49,7 +57,7 @@ export function ParameterValueRow({ value, onUpdate, onDelete, canDelete }: Para
                     <Input
                         value={value.label || String(value.value)}
                         onChange={(e) => onUpdate({ label: e.target.value })}
-                        className="h-7 text-xs font-medium border-transparent hover:border-input focus:border-input bg-transparent px-1"
+                        className="h-7 text-xs font-semibold border-transparent hover:border-input focus:border-input bg-transparent px-1 placeholder:text-muted-foreground/50"
                         placeholder="Label"
                     />
                     <div className="text-[10px] text-muted-foreground font-mono px-1">
@@ -65,14 +73,14 @@ export function ParameterValueRow({ value, onUpdate, onDelete, canDelete }: Para
                         min="0"
                         value={value.price}
                         onChange={(e) => onUpdate({ price: parseFloat(e.target.value) })}
-                        className="h-7 pl-6 text-xs w-full"
+                        className="h-7 pl-6 text-xs w-full font-mono font-medium"
                     />
                 </div>
             </div>
 
             {/* 3. Tiers */}
-            <div className="flex items-center gap-1.5 px-2 border-l border-r h-8">
-                {tiers.map(t => (
+            <div className="flex items-center gap-1.5 px-2 border-l border-r h-8 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-sm">
+                {allTiers.map(t => (
                     <TierBadge
                         key={t}
                         tier={t}
@@ -87,8 +95,11 @@ export function ParameterValueRow({ value, onUpdate, onDelete, canDelete }: Para
             <Button
                 variant="ghost"
                 size="icon"
-                className={cn("h-8 w-8", value.is_default ? "text-amber-500 hover:text-amber-600" : "text-muted-foreground opacity-20 hover:opacity-100")}
-                onClick={() => onUpdate({ is_default: !value.is_default })}
+                className={cn(
+                    "h-8 w-8 transition-all",
+                    value.is_default ? "text-amber-500 hover:text-amber-600 scale-110" : "text-muted-foreground opacity-10 hover:opacity-100"
+                )}
+                onClick={() => onUpdate({ is_default: !value.is_default, enabled: true })}
                 title={value.is_default ? "Default Value" : "Set as Default"}
             >
                 <StarIcon className={cn("w-4 h-4", value.is_default && "fill-current")} />
@@ -97,7 +108,7 @@ export function ParameterValueRow({ value, onUpdate, onDelete, canDelete }: Para
             {/* 5. Menu */}
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground opacity-50 hover:opacity-100">
                         <MoreVerticalIcon className="w-4 h-4" />
                     </Button>
                 </DropdownMenuTrigger>

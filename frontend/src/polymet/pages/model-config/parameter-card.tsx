@@ -42,14 +42,25 @@ export function ParameterCard({ param, config, onConfigChange }: ParameterCardPr
 
     const handleValuesChange = (newValues: ParameterValue[]) => {
         setValues(newValues)
+        // Immediate sync? Or wait for save? 
+        // Sync configs
         onConfigChange(param.id, { values: newValues })
     }
 
+    // Border Logic for Card
+    // Green: Visible
+    // Gray: Hidden
+    // (Orange concept applies more to specific values, but here could mean restricted visibility? 
+    //  For now, param-level visibility is binary: Visible or Not).
+    const borderClass = isVisible
+        ? "border-l-primary shadow-sm"  // Active 
+        : "border-l-muted opacity-60 grayscale-[0.5]" // Inactive
+
     return (
         <Card className={cn(
-            "transition-all duration-300 border-l-4",
-            isVisible ? "border-l-primary" : "border-l-muted opacity-60",
-            expanded ? "ring-1 ring-primary/20 shadow-lg" : "hover:shadow-md"
+            "transition-all duration-300 border-l-4 group/card",
+            borderClass,
+            expanded ? "ring-1 ring-primary/20 shadow-md" : "hover:shadow-md"
         )}>
             {/* Header */}
             <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0 cursor-pointer" onClick={() => setExpanded(!expanded)}>
@@ -117,30 +128,52 @@ export function ParameterCard({ param, config, onConfigChange }: ParameterCardPr
     )
 }
 
-// Init Helper
+// Init Helper with Merge Logic
 function initValues(param: UIParameter, config: ModelParameterConfig): ParameterValue[] {
+    const savedValues = config.values || []
+
+    // 1. If Select/Enum type: Merge Schema Options with Saved Values
     if (param.options) {
-        return param.options.map(opt => ({
-            value: opt.value,
-            label: opt.label,
-            enabled: true,
-            is_default: opt.value === param.default,
-            price: 0.0,
-            access_tiers: ["starter", "pro", "studio"]
-        }))
+        return param.options.map(opt => {
+            // Check if we have a saved config for this value
+            const saved = savedValues.find(v => v.value === opt.value)
+
+            if (saved) {
+                return saved
+            }
+
+            // Not saved yet -> Auto-discover as "Available but Unconfigured"
+            // Rule: Default to Enabled for discovery, Price 0, All Tiers
+            // But if there IS a saved config (meaning user has edited *some* values), 
+            // should we default new ones to disabled? 
+            // User requested: "Admin configures...". Let's default to Enabled so they see it.
+            return {
+                value: opt.value,
+                label: opt.label, // Use schema label as default
+                enabled: true,    // Default enabled for discovery
+                is_default: opt.value === param.default,
+                price: 0.0,
+                access_tiers: ["starter", "pro", "studio"]
+            }
+        })
     }
 
-    // For Integer/Range, init with default if exists
-    if ((param.type === 'integer' || param.type === 'number') && param.default !== undefined) {
-        return [{
-            value: param.default,
-            label: `${param.default}`,
-            enabled: true,
-            is_default: true,
-            price: 0.0,
-            access_tiers: ["starter", "pro", "studio"]
-        }]
+    // 2. For Integer/Range, just use saved values. 
+    // If NO saved values, init with default if exists
+    if ((param.type === 'integer' || param.type === 'number')) {
+        if (savedValues.length > 0) return savedValues
+
+        if (param.default !== undefined) {
+            return [{
+                value: param.default,
+                label: `${param.default}`,
+                enabled: true,
+                is_default: true,
+                price: 0.0,
+                access_tiers: ["starter", "pro", "studio"]
+            }]
+        }
     }
 
-    return []
+    return savedValues
 }
