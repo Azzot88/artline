@@ -176,11 +176,10 @@ async def get_user_jobs(db: AsyncSession, user: User | object, limit: int = 50):
     
     stmt = stmt.where(
         or_(
-            Job.status.in_(['queued', 'running', 'failed']), # Show failed too so user knows
+            Job.status.in_(['queued', 'running']), # Hide failed
             and_(
                 Job.status == 'succeeded',
-                # Job.result_url.isnot(None), # RELAXED
-                # Job.result_url != ''
+                # Job.result_url.isnot(None), 
             )
         )
     )
