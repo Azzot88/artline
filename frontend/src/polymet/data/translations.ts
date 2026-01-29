@@ -47,7 +47,6 @@ export const translations = {
             gallery: "Галерея",
             dashboard: "Дашборд",
             account: "Аккаунт",
-            account: "Аккаунт",
             admin: "Админ",
         },
         admin: {
