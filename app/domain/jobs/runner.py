@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 from app.domain.jobs.models import Job
 from app.models import User
+from app.domain.billing.models import LedgerEntry
 from app.domain.providers.models import ProviderConfig, AIModel
 from app.domain.providers.replicate_service import ReplicateService
 from app.domain.providers.service import decrypt_key
@@ -41,6 +42,17 @@ def process_job(self, job_id: str):
             logger.error("No Active Replicate Provider Config found!")
             job.status = "failed"
             job.error_message = "No active Replicate provider."
+            
+            if job.user_id and job.cost_credits > 0:
+                refund = LedgerEntry(
+                    user_id=job.user_id,
+                    amount=job.cost_credits,
+                    reason=f"Refund for failed job {job.id} (No Provider)",
+                    related_job_id=job.id,
+                    currency="credits"
+                )
+                session.add(refund)
+                
             session.commit()
             return "No Provider"
 
@@ -50,6 +62,17 @@ def process_job(self, job_id: str):
             logger.error(f"Key Decryption Error: {e}")
             job.status = "failed"
             job.error_message = "Key decryption failed."
+            
+            if job.user_id and job.cost_credits > 0:
+                refund = LedgerEntry(
+                    user_id=job.user_id,
+                    amount=job.cost_credits,
+                    reason=f"Refund for failed job {job.id} (Key Error)",
+                    related_job_id=job.id,
+                    currency="credits"
+                )
+                session.add(refund)
+                
             session.commit()
             return "Key Error"
             
@@ -149,9 +172,31 @@ def process_job(self, job_id: str):
             
         except Exception as e:
             logger.error(f"Submission Exception: {e}")
-            job.status = "failed"
-            job.error_message = str(e)
-            session.commit()
+            
+            # Check if this is the last retry
+            current_retries = self.request.retries or 0
+            max_retries = self.max_retries or 3
+            
+            if current_retries >= max_retries:
+                logger.error(f"Max retries exceeded for job {job.id}. Marking as failed and refunding.")
+                job.status = "failed"
+                job.error_message = str(e)
+                
+                if job.user_id and job.cost_credits > 0:
+                    refund = LedgerEntry(
+                        user_id=job.user_id,
+                        amount=job.cost_credits,
+                        reason=f"Refund for failed job {job.id} (Submission Failed)",
+                        related_job_id=job.id,
+                        currency="credits"
+                    )
+                    session.add(refund)
+                
+                session.commit()
+            else:
+                logger.warning(f"Submission failed, retrying ({current_retries + 1}/{max_retries})...")
+                # Do NOT mark as failed yet, leave as is (queued/processing)
+            
             raise self.retry(exc=e, countdown=10)
 
     except Exception as e:

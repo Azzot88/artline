@@ -132,12 +132,10 @@ class ReplicateService:
         """
         Submits a prediction job to Replicate.
         """
-        sanitized_input = self.sanitize_input(input_data)
-        
-        payload = {"input": sanitized_input}
+        input_data_payload = {"input": input_data}
         if webhook_url:
-            payload["webhook"] = webhook_url
-            payload["webhook_events_filter"] = ["completed"]
+            input_data_payload["webhook"] = webhook_url
+            input_data_payload["webhook_events_filter"] = ["completed"]
 
         if ":" in model_ref:
              owner_name, version = model_ref.split(":", 1)
@@ -150,7 +148,7 @@ class ReplicateService:
 
         try:
             with httpx.Client(timeout=30.0) as client:
-                resp = client.post(url, json=payload, headers=self.headers)
+                resp = client.post(url, json=input_data_payload, headers=self.headers)
                 
                 if resp.status_code not in [200, 201]:
                     # Log error body for debug
