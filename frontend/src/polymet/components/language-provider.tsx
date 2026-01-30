@@ -19,9 +19,35 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const saved = localStorage.getItem(LANGUAGE_KEY) as Language
-    if (saved && (saved === 'ru' || saved === 'kk' || saved === 'ky')) {
-      setLanguageState(saved)
+
+    const initLanguage = async () => {
+      // If valid language is saved, use it
+      if (saved && (saved === 'ru' || saved === 'kk' || saved === 'ky')) {
+        setLanguageState(saved)
+        return
+      }
+
+      // Otherwise ensure we have a safe default while we check
+      setLanguageState('ru')
+
+      try {
+        // Check with backend for suggested language (e.g. based on IP/Region)
+        const response = await fetch('/api/lang/detect')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.code && (data.code === 'ru' || data.code === 'kk' || data.code === 'ky')) {
+            setLanguageState(data.code)
+            // Note: We do NOT save to localStorage here so that the header logic 
+            // applies every time until the user explicitly makes a choice.
+            // If we saved it, they would be "locked" into that choice even if they moved regions.
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to detect language preference:', error)
+      }
     }
+
+    initLanguage()
   }, [])
 
   const setLanguage = (lang: Language) => {
