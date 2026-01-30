@@ -51,3 +51,17 @@ async def set_language_api(payload: LanguageSchema):
     )
     
     return response
+
+@router.get("/api/lang/detect")
+async def detect_language(request: Request):
+    """
+    Detect language based on X-Region header (set by reverse proxy).
+    Defaults to 'ru' if header is missing or not 'kk'.
+    """
+    region = request.headers.get("X-Region")
+    
+    # Simple logic: if region is 'kk', return Kazakh, else Russian
+    if region == "kk":
+        return {"code": "kk"}
+        
+    return {"code": "ru"}
