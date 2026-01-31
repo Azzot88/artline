@@ -20,7 +20,7 @@ interface ParameterCardProps {
     onConfigChange: (paramId: string, newConfig: Partial<ModelParameterConfig>) => void
 }
 
-export function ParameterCard({ param, config, onConfigChange }: ParameterCardProps) {
+export function ParameterCard({ param, config, onConfigChange, onSync }: ParameterCardProps) {
     const [expanded, setExpanded] = useState(false)
     const isVisible = config.enabled !== false
 
