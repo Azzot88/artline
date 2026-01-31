@@ -46,6 +46,16 @@ class ReplicateSchemaParser:
             # Special Handling
             if key == "prompt": field["maxLength"] = 25000
             
+            # Standardize Resolution
+            if key == "resolution":
+                 field["type"] = "select"
+                 if not field["options"]:
+                     field["options"] = [
+                         "1024x1024", "1152x896", "896x1152", 
+                         "1216x832", "832x1216", "1344x768", "768x1344",
+                         "1536x640", "640x1536"
+                     ]
+            
             normalized_inputs.append(field)
             if "default" in prop:
                  defaults[key] = prop["default"]
@@ -97,6 +107,11 @@ class ReplicateSchemaParser:
         if t == "string":
             if prop.get("format") == "uri": return "file"
             if key in ["image", "input_image", "mask", "video", "audio"]: return "file"
+            
+            # Standardize Resolution
+            if key == "resolution":
+                return "select"
+                
             return "string"
         if t == "array": return "list"
         return "string"

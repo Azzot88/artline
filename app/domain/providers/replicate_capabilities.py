@@ -138,26 +138,38 @@ class ReplicateCapabilitiesService:
         self.root_schema = root_schema or {}
         
         # Priority mapping for ordering
-        # Core params first
-        priority = ["prompt", "aspect_ratio", "width", "height", "output_quality", "num_outputs", "num_inference_steps", "guidance_scale", "seed"]
+        priority = ["prompt", "orientation", "format", "output_quality", "num_outputs", "num_inference_steps", "guidance_scale", "seed"]
         
         # Sort keys by priority then alpha
         keys = sorted(props.keys(), key=lambda k: (priority.index(k) if k in priority else 999, k))
 
+        # Track capabilities for Format injection
+        max_dim = 1024
+        if "width" in props:
+             w_prop = props["width"]
+             if "maximum" in w_prop: max_dim = max(max_dim, w_prop["maximum"])
+        if "height" in props:
+             h_prop = props["height"]
+             if "maximum" in h_prop: max_dim = max(max_dim, h_prop["maximum"])
+
+        # Inject Synthetic Parameters Flag
+        orientation_injected = False
+        format_injected = False
+
         for key in keys:
             details = props[key]
             
+            # Hide raw dimensions/resolution in favor of Cinema Logic
+            if key in ["width", "height", "aspect_ratio", "resolution"]:
+                continue
+
             # Skip hidden/blacklisted params
             if key in ["scheduler", "refine"]: 
                  pass
             
             # RESOLVE REF / ALLOF
-            # If details itself has $ref or allOf, resolve it to get the "real" type/enum
             resolved_details = self._resolve_schema(details) 
-            # Merge resolved props back into details for parsing (but keep original overrides like description)
-            # We prioritize resolved_details for type/enum, but details for title/default
             
-            # Logic: If 'enum' is in resolved, use it.
             effective_enum = details.get("enum") or resolved_details.get("enum")
             effective_type = details.get("type") or resolved_details.get("type")
             raw_type = effective_type
@@ -167,38 +179,14 @@ class ReplicateCapabilitiesService:
             
             if effective_enum:
                 p_type = "select"
-                # Build options
+                unique_vals = sorted(list(set([v for v in effective_enum if v is not None])), key=lambda x: str(x))
                 options = [
                     ParameterOption(label=str(val).title().replace("_", " "), value=val)
-                    for val in effective_enum
+                    for val in unique_vals
                 ]
-            # Handle anyOf / oneOf (common in newer schemas)
             elif "anyOf" in details or "oneOf" in details or "allOf" in details:
-                # Aggregate schemas from all possible combinators
-                schemas = []
-                if "anyOf" in details: schemas.extend(details["anyOf"])
-                if "oneOf" in details: schemas.extend(details["oneOf"])
-                # allOf is handled by _resolve_schema mostly, but mixed cases might exist
-                
-                # Look for const/enum inside schema list
-                found_enum = []
-                for s in schemas:
-                    # Resolve sub-schema too
-                    s_res = self._resolve_schema(s)
-                    if "enum" in s_res:
-                         found_enum.extend(s_res["enum"])
-                    elif "const" in s_res:
-                         found_enum.append(s_res["const"])
-                
-                if found_enum:
-                    p_type = "select"
-                    # Dedupe and Sort (Filter out None/null)
-                    unique_vals = sorted(list(set([v for v in found_enum if v is not None])), key=lambda x: str(x))
-                    
-                    options = [
-                        ParameterOption(label=str(val).title().replace("_", " "), value=val) 
-                        for val in unique_vals
-                    ]
+                 # Simplified logic for AnyOf/OneOf enums
+                 p_type = "text"
             elif raw_type == "integer":
                 p_type = "number"
             elif raw_type == "number":
@@ -207,10 +195,6 @@ class ReplicateCapabilitiesService:
                 p_type = "boolean"
             elif key == "prompt" or key == "negative_prompt":
                 p_type = "textarea"
-                
-            # Override for specific keys
-            if key == "aspect_ratio":
-                p_type = "select"
                 
             # Create Param
             param = UIParameter(
@@ -227,21 +211,57 @@ class ReplicateCapabilitiesService:
                 hidden=False
             )
             
-            # If prompt, make it basic and required (usually)
             if key == "prompt":
                 param.group_id = "basic"
                 param.required = True
                 
-            # User Request: Seed should be a simple text field for copy-paste
             if key == "seed":
-                p_type = "text"
                 param.type = "text"
                 param.group_id = "advanced"
-                # Clear options if any were auto-detected
                 param.options = None
 
             params.append(param)
             
+        # --- INJECT CINEMA PARAMETERS ---
+        
+        # 1. Orientation (Always Present)
+        params.insert(1, UIParameter(
+            id="orientation",
+            label="Orientation",
+            type="select",
+            default="portrait",
+            description="Aspect ratio orientation of the generated image.",
+            group_id="basic",
+            required=True,
+            options=[
+                ParameterOption(label="Portrait (9:16)", value="portrait"),
+                ParameterOption(label="Landscape (16:9)", value="landscape"),
+                ParameterOption(label="Square (1:1)", value="square")
+            ]
+        ))
+
+        # 2. Format (Dynamic based on Max Dim)
+        format_opts = [
+            ParameterOption(label="Standard (1MP)", value="standard")
+        ]
+        
+        if max_dim >= 1920:
+            format_opts.append(ParameterOption(label="HD (1080p / 720p)", value="hd"))
+            
+        if max_dim >= 3840:
+            format_opts.append(ParameterOption(label="4K (UHD)", value="4k"))
+
+        params.insert(2, UIParameter(
+            id="format",
+            label="Quality Format",
+            type="select",
+            default="standard",
+            description="Resolution quality tier. Note: Higher tiers require model support.",
+            group_id="basic",
+            required=True,
+            options=format_opts
+        ))
+
         return params
 
     def parse_capabilities(self, input_schema: Dict[str, Any]) -> Dict[str, Any]:
