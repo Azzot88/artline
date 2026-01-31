@@ -22,6 +22,7 @@ interface ParameterCardProps {
 
 export function ParameterCard({ param, config, onConfigChange, onSync }: ParameterCardProps) {
     const [expanded, setExpanded] = useState(false)
+    const [isSyncing, setIsSyncing] = useState(false)
     const isVisible = config.enabled !== false
 
     // Initialize Values if empty
