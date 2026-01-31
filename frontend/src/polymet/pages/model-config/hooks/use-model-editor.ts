@@ -80,10 +80,34 @@ export function useModelEditor(modelId: string) {
                     const raw = props[key]
                     const config = uiConfig[key] || {}
 
-                    // Basic parsing for fallback
+                    // Robust Type Inference for Fallback
+                    let type = raw.type || "string"
+                    let options: RichOption[] | undefined = undefined
+
+                    if (raw.enum) {
+                        type = "select"
+                        options = raw.enum.map((v: any, idx: number) => ({
+                            value: v,
+                            label: String(v),
+                            price: 0,
+                            accessTiers: [],
+                            order: idx
+                        }))
+                    } else if (key === "aspect_ratio" && !raw.enum) {
+                        // Heuristic for aspect_ratio if missing enum
+                        type = "select"
+                        options = ["1:1", "16:9", "9:16", "4:3", "3:4"].map((v, idx) => ({
+                            value: v,
+                            label: v,
+                            price: 0,
+                            accessTiers: [],
+                            order: idx
+                        }))
+                    }
+
                     return {
                         id: key,
-                        type: raw.type || "string",
+                        type: type,
                         label: config.label_override || raw.title || key,
                         default: raw.default,
                         required: !!raw.required, // Simplified
@@ -93,8 +117,8 @@ export function useModelEditor(modelId: string) {
                         labelOverride: config.label_override,
                         min: raw.minimum,
                         max: raw.maximum,
-                        step: raw.step,
-                        options: undefined
+                        step: raw.step || (type === "integer" ? 1 : undefined),
+                        options: options
                     }
                 })
             }

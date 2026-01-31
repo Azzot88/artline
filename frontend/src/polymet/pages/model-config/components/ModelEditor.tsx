@@ -174,6 +174,10 @@ export function ModelEditor({ modelId }: ModelEditorProps) {
                     {state.isDirty && <span className="text-xs text-amber-500 font-mono font-bold bg-amber-500/10 px-2 py-1 rounded">(Unsaved Changes)</span>}
                 </div>
                 <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={fetchSchema} disabled={isSaving}>
+                        {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <SearchIcon className="w-4 h-4 mr-2" />}
+                        Fetch Schema
+                    </Button>
                     <Button variant="outline" size="sm" onClick={reset} disabled={!state.isDirty}>
                         <Undo className="w-4 h-4 mr-2" /> Reset
                     </Button>
