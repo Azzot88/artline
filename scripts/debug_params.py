@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.append(os.getcwd())
+
 import asyncio
 from app.db.session import async_session
 from app.domain.providers.models import AIModel
