@@ -192,7 +192,16 @@ class ReplicateCapabilitiesService:
             if raw_type == "string":
                  fmt = details.get("format") or resolved_details.get("format")
                  if fmt == "uri": is_file = True
-                 if key in ["image", "input_image", "mask", "video", "audio", "init_image", "image_path"]: is_file = True
+                 # Explicit file parameter names from known models (Kling, Flux, Wan, etc.)
+                 file_keys = [
+                    "image", "input_image", "mask", "video", "audio", "init_image", "image_path",
+                    "start_image", "end_image",               # Kling
+                    "input_images", "image_input",            # Flux, Nano Banana
+                    "character_image",                        # Wan
+                    "input_reference",                        # Sora
+                    "style_reference_images"                  # Ideogram
+                 ]
+                 if key in file_keys: is_file = True
 
             if effective_enum:
                 p_type = "select"
