@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react"
+import { ChevronDownIcon, ChevronUpIcon, RefreshCw } from "lucide-react"
 
 import { ParameterValuesList } from "./components/parameter-values-list"
 
@@ -47,6 +47,15 @@ export function ParameterCard({ param, config, onConfigChange }: ParameterCardPr
         onConfigChange(param.id, { values: newValues })
     }
 
+    const handleSync = async (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (onSync) {
+            setIsSyncing(true)
+            await onSync(param.id)
+            setIsSyncing(false)
+        }
+    }
+
     // Border Logic for Card
     // Green: Visible
     // Gray: Hidden
@@ -69,7 +78,20 @@ export function ParameterCard({ param, config, onConfigChange }: ParameterCardPr
                         {param.type.substring(0, 3).toUpperCase()}
                     </div>
                     <div>
-                        <div className="text-sm font-semibold">{config.custom_label || param.label}</div>
+                        <div className="flex items-center gap-2">
+                            <div className="text-sm font-semibold">{config.custom_label || param.label}</div>
+                            {onSync && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-4 w-4 text-muted-foreground hover:text-primary"
+                                    onClick={handleSync}
+                                    title="Sync this parameter with model schema"
+                                >
+                                    <RefreshCw className={cn("w-3 h-3", isSyncing && "animate-spin")} />
+                                </Button>
+                            )}
+                        </div>
                         <div className="text-[10px] text-muted-foreground leading-tight max-w-[300px] line-clamp-2" title={param.description}>
                             {param.description || param.id}
                         </div>

@@ -303,6 +303,26 @@ export function useModelEditor(modelId: string) {
         }
     }
 
+    const syncParameter = async (paramId: string) => {
+        if (!model) return
+        setIsSaving(true) // Show global busy state or local?
+        try {
+            // We fetch the full schema because Replicate API gives everything at once.
+            // In the future this could be optimized if the backend supported partial fetches.
+            await api.post("/admin/fetch-model-schema", { model_ref: model.model_ref })
+
+            // Trigger re-validation of state
+            await mutate()
+
+            toast.success(`Synced parameter: ${paramId}`)
+        } catch (e) {
+            console.error(e)
+            toast.error(`Failed to sync ${paramId}`)
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
     const reset = () => {
         if (model) initFromModel(model)
     }
@@ -316,6 +336,7 @@ export function useModelEditor(modelId: string) {
         updateConfig,
         save,
         fetchSchema,
+        syncParameter,
         reset
     }
 }

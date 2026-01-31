@@ -78,6 +78,7 @@ function ConfigurationGrid({ parameters, configs, onConfigChange }: Configuratio
                                     param={param}
                                     config={configs[param.id] || { parameter_id: param.id, enabled: true, display_order: 0 }}
                                     onConfigChange={onConfigChange}
+                                    onSync={() => onSyncParameter(param.id)}
                                 />
                             ))}
                         </div>
@@ -91,6 +92,7 @@ function ConfigurationGrid({ parameters, configs, onConfigChange }: Configuratio
                                     param={param}
                                     config={configs[param.id] || { parameter_id: param.id, enabled: true, display_order: 0 }}
                                     onConfigChange={onConfigChange}
+                                    onSync={() => onSyncParameter(param.id)}
                                 />
                             ))}
                         </div>

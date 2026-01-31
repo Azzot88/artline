@@ -240,23 +240,22 @@ class ReplicateCapabilitiesService:
             ]
         ))
 
-        # 2. Format (Dynamic based on Max Dim)
+        # 2. Format (Always Full Range - Admin Override)
         format_opts = [
-            ParameterOption(label="Standard (1MP)", value="standard")
+            ParameterOption(label="Standard (1MP)", value="standard"),
+            ParameterOption(label="HD (2MP+)", value="hd"),
+            ParameterOption(label="4K (8MP+)", value="4k")
         ]
         
-        if max_dim >= 1920:
-            format_opts.append(ParameterOption(label="HD (1080p / 720p)", value="hd"))
-            
-        if max_dim >= 3840:
-            format_opts.append(ParameterOption(label="4K (UHD)", value="4k"))
+        # Note: We expose all options so Admins can test/force capabilities 
+        # that might be hidden by conservative schemas.
 
         params.insert(2, UIParameter(
             id="format",
             label="Quality Format",
             type="select",
             default="standard",
-            description="Resolution quality tier. Note: Higher tiers require model support.",
+            description="Resolution quality tier. Select higher tiers for 2K/4K scaling (requires model support).",
             group_id="basic",
             required=True,
             options=format_opts
