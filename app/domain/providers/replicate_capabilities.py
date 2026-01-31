@@ -159,6 +159,9 @@ class ReplicateCapabilitiesService:
         for key in keys:
             details = props[key]
             
+            # RESOLVE REF / ALLOF (Do this early to check for Enums)
+            resolved_details = self._resolve_schema(details)
+
             # Hide raw dimensions. 
             # Smart Logic: Hide 'resolution'/'aspect_ratio' ONLY if they are raw inputs. 
             # If they are explicit Enums (like Ideogram's list), expose them!
@@ -167,7 +170,7 @@ class ReplicateCapabilitiesService:
             
             if key in ["aspect_ratio", "resolution"]:
                 # If it's NOT an enum, hide it (assume generic capability)
-                if not prop.get("enum"):
+                if not resolved_details.get("enum"):
                     continue
                 # If it IS an enum, let it pass through (native model capability)
 
@@ -175,9 +178,7 @@ class ReplicateCapabilitiesService:
             # Skip hidden/blacklisted params
             if key in ["scheduler", "refine"]: 
                  pass
-            
-            # RESOLVE REF / ALLOF
-            resolved_details = self._resolve_schema(details) 
+ 
             
             effective_enum = details.get("enum") or resolved_details.get("enum")
             effective_type = details.get("type") or resolved_details.get("type")
