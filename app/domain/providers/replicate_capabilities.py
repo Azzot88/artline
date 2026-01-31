@@ -232,6 +232,14 @@ class ReplicateCapabilitiesService:
                 param.group_id = "basic"
                 param.required = True
                 
+            # User Request: Seed should be a simple text field for copy-paste
+            if key == "seed":
+                p_type = "text"
+                param.type = "text"
+                param.group_id = "advanced"
+                # Clear options if any were auto-detected
+                param.options = None
+
             params.append(param)
             
         return params
