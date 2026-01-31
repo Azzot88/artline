@@ -140,11 +140,11 @@ export function Workbench() {
       return
     }
 
-    if (spec) {
+    // Phase 3 Logic: Use Spec ONLY if it has parameters
+    if (spec && spec.parameters && spec.parameters.length > 0) {
       console.log("[Workbench Debug] Processing Spec:", spec)
-      // Phase 3 Logic: Use Spec
-      const params = spec.parameters.filter(p => !p.hidden)
       // Convert to compatible format
+      const params = spec.parameters.filter(p => !p.hidden)
       const mappedParams = params.map(p => ({
         id: p.id,
         name: p.id,
