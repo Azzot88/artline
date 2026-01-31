@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { PencilIcon, TrashIcon, FileTextIcon, ImageIcon, VideoIcon, MicIcon, MusicIcon, BrushIcon, ScalingIcon } from "lucide-react"
+import { ArrowDown, ArrowUp, PencilIcon, TrashIcon, FileTextIcon, ImageIcon, VideoIcon, MicIcon, MusicIcon, BrushIcon, ScalingIcon } from "lucide-react"
 
 export function AdminModels() {
     const [models, setModels] = useState<AIModel[]>([])
     const [showAdd, setShowAdd] = useState(false)
+    const [sort, setSort] = useState<{ col: keyof AIModel | 'type', asc: boolean }>({ col: 'display_name', asc: true })
     const navigate = useNavigate()
 
     useEffect(() => { load() }, [])
@@ -25,6 +26,37 @@ export function AdminModels() {
         await apiService.deleteModel(id)
         load()
     }
+
+    const sortModels = (a: AIModel, b: AIModel) => {
+        const dir = sort.asc ? 1 : -1
+        switch (sort.col) {
+            case 'credits_per_generation':
+                return ((a.credits_per_generation || 0) - (b.credits_per_generation || 0)) * dir
+            case 'is_active':
+                return (Number(a.is_active) - Number(b.is_active)) * dir
+            case 'provider':
+                return a.provider.localeCompare(b.provider) * dir
+            case 'type':
+                // heuristic: sort by first capability or type string
+                const tA = (a.capabilities?.[0] || a.type || "").toString()
+                const tB = (b.capabilities?.[0] || b.type || "").toString()
+                return tA.localeCompare(tB) * dir
+            case 'display_name':
+            default:
+                return (a.display_name || "").localeCompare(b.display_name || "") * dir
+        }
+    }
+
+    const toggleSort = (col: keyof AIModel | 'type') => {
+        setSort(s => ({ col, asc: s.col === col ? !s.asc : true }))
+    }
+
+    const SortHeader = ({ label, col }: { label: string, col: keyof AIModel | 'type' }) => (
+        <div className="flex items-center gap-1 cursor-pointer hover:text-foreground transition-colors" onClick={() => toggleSort(col)}>
+            {label}
+            {sort.col === col && (sort.asc ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+        </div>
+    )
 
     return (
         <div className="space-y-4">
@@ -43,16 +75,16 @@ export function AdminModels() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead className="w-[60px]">Image</TableHead>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Provider</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead>Cost</TableHead>
-                                <TableHead>Status</TableHead>
+                                <TableHead><SortHeader label="Name" col="display_name" /></TableHead>
+                                <TableHead><SortHeader label="Provider" col="provider" /></TableHead>
+                                <TableHead><SortHeader label="Type" col="type" /></TableHead>
+                                <TableHead><SortHeader label="Cost" col="credits_per_generation" /></TableHead>
+                                <TableHead><SortHeader label="Status" col="is_active" /></TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {models.map(m => (
+                            {models.sort(sortModels).map(m => (
                                 <TableRow
                                     key={m.id}
                                     className="cursor-pointer hover:bg-muted/50"
@@ -114,31 +146,42 @@ function CapabilitiesIcons({ model }: { model: AIModel }) {
     const caps = (model.capabilities || []).map(c => c.toLowerCase())
     const type = model.type?.toLowerCase() || ""
 
+    // Enhanced logic matching ReplicateCapabilitiesService
     const isActive = (keys: string[]) => {
+        // If specific capabilities are detected, strict match them
         if (caps.length > 0) {
+            // Check if ANY capability effectively enables this icon
+            // e.g. text-to-image should enable "Text Input" and "Image Output"
             return keys.some(k => caps.some(c => c.includes(k)))
         }
+        // Fallback to basic type string
         return keys.some(k => type.includes(k))
     }
 
+    // Explicit mappings based on detected capabilities
+    const hasText = caps.some(c => c.includes("text")) || type.includes("text")
+    const hasImage = caps.some(c => c.includes("image")) || type.includes("image")
+    const hasVideo = caps.some(c => c.includes("video")) || type.includes("video")
+    const hasAudio = caps.some(c => c.includes("audio") || c.includes("speech") || c.includes("music"))
+    const hasInpaint = caps.some(c => c.includes("inpaint"))
+    const hasUpscale = caps.some(c => c.includes("upscale"))
+
     const icons = [
-        { label: "Text", keys: ["text-generation", "llm"], icon: FileTextIcon, color: "text-blue-500" },
-        { label: "Image", keys: ["image", "text-to-image"], icon: ImageIcon, color: "text-rose-500" },
-        { label: "Video", keys: ["video"], icon: VideoIcon, color: "text-purple-500" },
-        { label: "Speech", keys: ["speech", "tts", "audio"], icon: MicIcon, color: "text-yellow-500" },
-        { label: "Music", keys: ["music"], icon: MusicIcon, color: "text-green-500" },
-        { label: "Inpaint", keys: ["inpaint"], icon: BrushIcon, color: "text-indigo-500" },
-        { label: "Upscale", keys: ["upscale"], icon: ScalingIcon, color: "text-cyan-500" },
+        { label: "Text", active: hasText, icon: FileTextIcon, color: "text-blue-500" },
+        { label: "Image", active: hasImage, icon: ImageIcon, color: "text-rose-500" },
+        { label: "Video", active: hasVideo, icon: VideoIcon, color: "text-purple-500" },
+        { label: "Audio", active: hasAudio, icon: MicIcon, color: "text-yellow-500" },
+        { label: "Inpaint", active: hasInpaint, icon: BrushIcon, color: "text-indigo-500" },
+        { label: "Upscale", active: hasUpscale, icon: ScalingIcon, color: "text-cyan-500" },
     ]
 
     return (
-        <div className="flex flex-wrap gap-1 max-w-[80px]">
+        <div className="flex flex-wrap gap-1 max-w-[120px]">
             {icons.map((item, i) => {
-                const active = isActive(item.keys)
                 const Icon = item.icon
                 return (
-                    <div key={i} title={item.label} className={`${active ? item.color : "text-muted-foreground/20"}`}>
-                        <Icon className="w-3 h-3" />
+                    <div key={i} title={item.label} className={`${item.active ? item.color : "text-muted-foreground/10"}`}>
+                        <Icon className="w-4 h-4" />
                     </div>
                 )
             })}
