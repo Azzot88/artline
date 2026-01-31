@@ -34,9 +34,10 @@ interface ConfigurationGridProps {
     parameters: UIParameter[]
     configs: Record<string, ModelParameterConfig>
     onConfigChange: (paramId: string, newConfig: Partial<ModelParameterConfig>) => void
+    onSyncParameter: (paramId: string) => void
 }
 
-function ConfigurationGrid({ parameters, configs, onConfigChange }: ConfigurationGridProps) {
+function ConfigurationGrid({ parameters, configs, onConfigChange, onSyncParameter }: ConfigurationGridProps) {
     const [search, setSearch] = React.useState("")
 
     const basicParams = parameters.filter(p => !p.group_id || p.group_id === "basic")
@@ -106,6 +107,7 @@ function ConfigurationGrid({ parameters, configs, onConfigChange }: Configuratio
                                     param={param}
                                     config={configs[param.id] || { parameter_id: param.id, enabled: true, display_order: 0 }}
                                     onConfigChange={onConfigChange}
+                                    onSync={() => onSyncParameter(param.id)}
                                 />
                             ))}
                         </div>
@@ -131,7 +133,8 @@ export function ModelEditor({ modelId }: ModelEditorProps) {
         updateConfig,
         save,
         reset,
-        fetchSchema
+        fetchSchema,
+        syncParameter
     } = useModelEditor(modelId)
 
     const diffPreview = React.useMemo(() => {
@@ -206,6 +209,7 @@ export function ModelEditor({ modelId }: ModelEditorProps) {
                                     parameters={adaptToUIParams(state.parameters)}
                                     configs={state.configs || {}}
                                     onConfigChange={updateConfig}
+                                    onSyncParameter={syncParameter}
                                 />
                             ) : (
                                 <div className="text-center p-8 border border-dashed rounded text-muted-foreground flex flex-col items-center gap-4">
