@@ -6,6 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.domain.providers.models import ProviderConfig
 from app.domain.providers.service import decrypt_key
+from app.domain.providers.registry import register_provider
+from app.domain.providers.normalization.base import RequestNormalizer, ResponseNormalizer
+from app.domain.providers.replicate.request_normalizer import ReplicateRequestNormalizer
+from app.domain.providers.replicate.response_normalizer import ReplicateResponseNormalizer
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -17,13 +21,15 @@ class ReplicateService:
     """
     BASE_URL = "https://api.replicate.com/v1"
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, request_normalizer: Optional[RequestNormalizer] = None, response_normalizer: Optional[ResponseNormalizer] = None):
         self.api_key = api_key
         self.headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
             "User-Agent": "ArtLine/1.0"
         }
+        self.request_normalizer = request_normalizer or ReplicateRequestNormalizer()
+        self.response_normalizer = response_normalizer or ReplicateResponseNormalizer()
 
     def fetch_model_capabilities(self, model_ref: str) -> Dict[str, Any]:
         """
@@ -165,10 +171,8 @@ class ReplicateService:
         """
         Uses the separate Normalizer engine to enforce strict schema compliance.
         """
-        from app.domain.providers.replicate.normalization import ReplicateNormalizer
-        normalizer = ReplicateNormalizer()
         logging.info(f"Normalizing input with schema keys: {list(schema.keys())}")
-        return normalizer.normalize(input_data, schema)
+        return self.request_normalizer.normalize(input_data, schema)
 
     async def get_prediction(self, provider_job_id: str):
         """Fetch status of a prediction."""
@@ -180,15 +184,7 @@ class ReplicateService:
                 logger.error(f"Failed to get prediction {provider_job_id}: {resp.status_code}")
                 return None
                 
-            data = resp.json()
-            return {
-                "id": data.get("id"),
-                "status": data.get("status"),
-                "output": data.get("output"),
-                "error": data.get("error"),
-                "logs": data.get("logs"),
-                "metrics": data.get("metrics", {})
-            }
+            return resp.json()
 
     def parse_input_string(self, raw_text: str) -> tuple[str, Dict[str, Any], str]:
         """
@@ -237,3 +233,11 @@ async def get_replicate_client(db: AsyncSession) -> ReplicateService:
         
     plain_key = decrypt_key(config.encrypted_api_key)
     return ReplicateService(api_key=plain_key)
+
+# Global Registration
+register_provider(
+    provider_id="replicate",
+    service_class=ReplicateService,
+    request_normalizer=ReplicateRequestNormalizer,
+    response_normalizer=ReplicateResponseNormalizer
+)

@@ -2,11 +2,11 @@
 from typing import List, Dict, Any, Optional
 from app.domain.catalog.schemas import UIParameter, ModelUISpec, ParameterGroup, UIParameterConfig
 from app.domain.providers.models import AIModel
-from app.domain.providers.replicate_capabilities import ReplicateCapabilitiesService
+from app.domain.catalog.schema_converter import SchemaToUIConverter
 
 class CatalogService:
     def __init__(self):
-        self.replicate_service = ReplicateCapabilitiesService()
+        self.schema_converter = SchemaToUIConverter()
 
     def resolve_ui_spec(self, model: AIModel, user_tier: str = "starter") -> ModelUISpec:
         """
@@ -27,7 +27,7 @@ class CatalogService:
                 if not input_props:
                     input_props = raw_schema.get("properties", {})
                 
-                params = self.replicate_service.to_canonical(input_props, root_schema=raw_schema)
+                params = self.schema_converter.convert_to_ui_spec(input_props, root_schema=raw_schema)
             except Exception as e:
                 print(f"Schema Parse Error: {e}")
                 # Fallback empty or logging
