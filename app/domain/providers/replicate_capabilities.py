@@ -187,6 +187,13 @@ class ReplicateCapabilitiesService:
             p_type = "text"
             options = None
             
+            # Detect File Inputs (Match _map_type_strict logic)
+            is_file = False
+            if raw_type == "string":
+                 fmt = details.get("format") or resolved_details.get("format")
+                 if fmt == "uri": is_file = True
+                 if key in ["image", "input_image", "mask", "video", "audio", "init_image", "image_path"]: is_file = True
+
             if effective_enum:
                 p_type = "select"
                 unique_vals = sorted(list(set([v for v in effective_enum if v is not None])), key=lambda x: str(x))
@@ -197,6 +204,8 @@ class ReplicateCapabilitiesService:
             elif "anyOf" in details or "oneOf" in details or "allOf" in details:
                  # Simplified logic for AnyOf/OneOf enums
                  p_type = "text"
+            elif is_file:
+                 p_type = "image"
             elif raw_type == "integer":
                 p_type = "number"
             elif raw_type == "number":

@@ -125,6 +125,13 @@ export function Workbench() {
   const [modelConfigs, setModelConfigs] = useState<any[]>([])
   const [parameterValues, setParameterValues] = useState<ParameterValues>({})
 
+  // DEBUG: Monitor Data Flow
+  useEffect(() => {
+    console.log("[Workbench Debug] Selected Model:", selectedModel?.id, selectedModel?.name)
+    console.log("[Workbench Debug] Spec State:", { loading: specLoading, hasSpec: !!spec, specParams: spec?.parameters?.length })
+    console.log("[Workbench Debug] Current Parameters:", modelParameters)
+  }, [selectedModel, spec, specLoading, modelParameters])
+
   // Effect to sync Spec -> Internal State
   useEffect(() => {
     if (!selectedModel) {
@@ -134,6 +141,7 @@ export function Workbench() {
     }
 
     if (spec) {
+      console.log("[Workbench Debug] Processing Spec:", spec)
       // Phase 3 Logic: Use Spec
       const params = spec.parameters.filter(p => !p.hidden)
       // Convert to compatible format
@@ -160,6 +168,7 @@ export function Workbench() {
         return score(a.name) - score(b.name)
       })
 
+      console.log("[Workbench Debug] Mapped Params:", mappedParams)
       setModelParameters(mappedParams)
       // Configs
       setModelConfigs(mappedParams.map(p => ({
