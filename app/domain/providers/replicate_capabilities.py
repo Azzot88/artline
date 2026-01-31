@@ -363,6 +363,10 @@ class ReplicateCapabilitiesService:
                 modes.remove("image-to-image")
                 modes.add("image-to-video")
 
+        # 4. Inpainting Logic
+        if "mask" in props:
+            modes.add("inpainting")
+
         return list(modes)
 
     def _detect_resolutions(self, props: Dict[str, Any]) -> List[str]:

@@ -491,6 +491,10 @@ async def fetch_model_schema_endpoint(
                 if detected_modes:
                     modes_update = list(set((m.modes or []) + detected_modes))
                     m.modes = modes_update
+                    
+                    # Sync to capabilities (as used by frontend)
+                    caps_update = list(set((m.capabilities or []) + detected_modes))
+                    m.capabilities = caps_update
                 
                 # Also update version_id if available
                 latest = result.get("raw_response", {}).get("latest_version", {})
