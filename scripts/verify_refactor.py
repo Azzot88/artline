@@ -112,6 +112,7 @@ def test_schema_converter():
     logger.info("  [Pass] UI Spec Conversion")
 
 if __name__ == "__main__":
+    import traceback
     try:
         test_replicate_request_normalization()
         test_replicate_response_normalization()
@@ -119,4 +120,5 @@ if __name__ == "__main__":
         logger.info("ALL VERIFICATIONS PASSED")
     except Exception as e:
         logger.error(f"VERIFICATION FAILED: {e}")
+        logger.error(traceback.format_exc())
         sys.exit(1)
