@@ -345,14 +345,61 @@ export function Workbench() {
             </div>
 
             {/* Input Area */}
-            {inputType === "text" ? (
-              <div className="relative w-full">
+            <div className="relative w-full flex min-h-[400px]">
+
+              {/* Left File Sidebar - Only visible if model has file inputs */}
+              {modelParameters.some(p => p.type === 'image' || p.name?.includes('image') || p.name === 'mask') && (
+                <div className="w-[120px] shrink-0 border-r border-white/10 bg-white/5 flex flex-col items-center gap-4 py-6 pt-20 overflow-y-auto custom-scrollbar">
+                  {modelParameters
+                    .filter(p => p.type === 'image' || p.name?.includes('image') || p.name === 'mask')
+                    .map(param => (
+                      <div key={param.id} className="flex flex-col items-center gap-2 px-2">
+                        <div className="relative group">
+                          <button
+                            onClick={() => document.getElementById(`file-${param.id}`)?.click()}
+                            className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all border border-white/10 overflow-hidden ${parameterValues[param.id] ? 'bg-primary/20 border-primary/50' : 'bg-white/5 hover:bg-white/10'
+                              }`}
+                            title={param.label}
+                          >
+                            {parameterValues[param.id] ? (
+                              // Show preview if it's a file object or string URL
+                              typeof parameterValues[param.id] === 'object' ? (
+                                <img src={URL.createObjectURL(parameterValues[param.id])} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="text-xs font-bold text-primary">FILE</div>
+                              )
+                            ) : (
+                              <PlusIcon className="w-6 h-6 text-muted-foreground group-hover:text-foreground" />
+                            )}
+                          </button>
+                          {/* Floating Label */}
+                          <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground whitespace-nowrap bg-black/50 px-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                            {param.label}
+                          </span>
+                        </div>
+                        <input
+                          id={`file-${param.id}`}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) handleParameterChange(param.id, file)
+                          }}
+                        />
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              {/* Main Prompt Area */}
+              <div className="flex-1 relative">
                 <Textarea
                   id="main-prompt-input"
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder={creationType === "image" ? t('workbench.describeImage') : t('workbench.describeVideo')}
-                  className="w-full min-h-[400px] resize-none bg-transparent border-0 focus-visible:ring-0 text-xl md:text-2xl p-8 pt-20 pb-36 font-medium placeholder:text-muted-foreground/40"
+                  className="w-full h-full resize-none bg-transparent border-0 focus-visible:ring-0 text-xl md:text-2xl p-8 pt-20 pb-36 font-medium placeholder:text-muted-foreground/40"
                 />
                 <div className="absolute top-20 right-8">
                   <Button
@@ -366,21 +413,7 @@ export function Workbench() {
                   </Button>
                 </div>
               </div>
-            ) : (
-              <div className="w-full min-h-[400px] p-8 pt-20 pb-36 flex flex-col items-center justify-center relative">
-                <button
-                  onClick={() => document.getElementById('file-input')?.click()}
-                  className="group flex flex-col items-center gap-4 p-12 rounded-3xl bg-white/5 hover:bg-white/10 transition-all border border-white/5"
-                >
-                  <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <PlusIcon className="w-8 h-8 text-primary" />
-                  </div>
-                  <span className="text-lg font-semibold text-muted-foreground">{t('workbench.describeImage')}</span>
-                </button>
-                <input id="file-input" type="file" accept="image/*" className="hidden" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-                {file && <p className="mt-4 text-sm font-medium text-primary bg-primary/10 px-3 py-1 rounded-full">{file.name}</p>}
-              </div>
-            )}
+            </div>
 
             {/* Bottom Controls Bar */}
             <div className="absolute bottom-0 left-0 right-0 bg-background/60 backdrop-blur-2xl border-t border-white/10 p-5">
@@ -395,18 +428,21 @@ export function Workbench() {
                   />
                 </div>
 
+                {/* Parameter List - Exclude File Inputs */}
                 <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-                  {modelParameters.map(param => (
-                    <ModelParameterControl
-                      key={param.id}
-                      parameter={param}
-                      config={modelConfigs.find(c => c.parameter_id === param.id)}
-                      value={parameterValues[param.id]}
-                      onChange={(val) => handleParameterChange(param.id, val)}
-                      disabled={loading}
-                      compact
-                    />
-                  ))}
+                  {modelParameters
+                    .filter(p => !(p.type === 'image' || p.name?.includes('image') || p.name === 'mask'))
+                    .map(param => (
+                      <ModelParameterControl
+                        key={param.id}
+                        parameter={param}
+                        config={modelConfigs.find(c => c.parameter_id === param.id)}
+                        value={parameterValues[param.id]}
+                        onChange={(val) => handleParameterChange(param.id, val)}
+                        disabled={loading}
+                        compact
+                      />
+                    ))}
                 </div>
 
                 <div className="md:ml-auto">
