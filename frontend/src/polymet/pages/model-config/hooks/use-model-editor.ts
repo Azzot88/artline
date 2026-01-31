@@ -192,7 +192,9 @@ export function useModelEditor(modelId: string) {
             creditsPerGeneration: m.credits_per_generation || 5,
             parameters: params,
             configs: initialConfigs,
-            isDirty: false
+            isDirty: false,
+            modelRef: m.model_ref,
+            capabilities: (m as any).capabilities // Use any if type not updated yet, or update type
         })
     }, [])
 
@@ -237,6 +239,24 @@ export function useModelEditor(modelId: string) {
         })
     }
 
+    const toggleCapability = (cap: string) => {
+        setState(prev => {
+            if (!prev) return null
+            const caps = prev.capabilities?.modes || prev.capabilities || [] // Handle legacy or object structure
+            const current = Array.isArray(caps) ? caps : []
+
+            const newCaps = current.includes(cap)
+                ? current.filter((c: string) => c !== cap)
+                : [...current, cap]
+
+            return {
+                ...prev,
+                isDirty: true,
+                capabilities: newCaps
+            }
+        })
+    }
+
     const save = async () => {
         if (!state || !model) return
         setIsSaving(true)
@@ -273,7 +293,10 @@ export function useModelEditor(modelId: string) {
                 // Pricing rules might still be needed if backend relies on them for ledger?? 
                 // But new system puts price in `values`. 
                 // Let's keep existing rules for now to avoid breaking legacy billing.
-                pricing_rules: model.pricing_rules
+                pricing_rules: model.pricing_rules,
+
+                // Save Capabilities (Modes)
+                modes: state.capabilities // Backend expects 'modes' or 'capabilities'? AIModel has 'modes' AND 'capabilities'. Usually 'modes' is what determines function.
             })
 
             toast.success("Configuration saved")
@@ -334,6 +357,7 @@ export function useModelEditor(modelId: string) {
         updateMetadata,
         updateParameter,
         updateConfig,
+        toggleCapability,
         save,
         fetchSchema,
         syncParameter,

@@ -17,6 +17,7 @@ export interface ModelEditorState {
 
     // New Advanced Configs
     configs: Record<string, ModelParameterConfig>
-
     isDirty: boolean
+    modelRef?: string
+    capabilities?: { modes?: string[], resolutions?: string[] }
 }

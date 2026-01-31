@@ -395,8 +395,8 @@ export function Workbench() {
                   />
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {modelParameters.slice(0, 3).map(param => (
+                <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                  {modelParameters.map(param => (
                     <ModelParameterControl
                       key={param.id}
                       parameter={param}

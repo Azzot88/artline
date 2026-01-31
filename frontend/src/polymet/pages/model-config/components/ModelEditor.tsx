@@ -3,7 +3,7 @@ import React from 'react'
 import { useNavigate } from "react-router-dom"
 import { useModelEditor } from '../hooks/use-model-editor'
 import { Button } from "@/components/ui/button"
-import { Loader2, Save, Undo, Eye, Image as ImageIcon, ArrowLeft, SearchIcon, SlidersHorizontalIcon } from "lucide-react"
+import { Loader2, Save, Undo, Eye, Image as ImageIcon, ArrowLeft, SearchIcon, SlidersHorizontalIcon, ExternalLinkIcon } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UIParameter } from "@/polymet/data/api-types"
 import { ModelParameterConfig } from "@/polymet/data/types"
 import { ParameterCard } from '../parameter-card'
+import { CapabilitiesCard } from '../capabilities-card'
 
 // --- Inline Helpers to fix Build ReferenceErrors ---
 
@@ -134,7 +135,8 @@ export function ModelEditor({ modelId }: ModelEditorProps) {
         save,
         reset,
         fetchSchema,
-        syncParameter
+        syncParameter,
+        toggleCapability
     } = useModelEditor(modelId)
 
     const diffPreview = React.useMemo(() => {
@@ -177,6 +179,13 @@ export function ModelEditor({ modelId }: ModelEditorProps) {
                     </Button>
                     <h2 className="text-2xl font-bold tracking-tight">Configuration: {state.displayName}</h2>
                     {state.isDirty && <span className="text-xs text-amber-500 font-mono font-bold bg-amber-500/10 px-2 py-1 rounded">(Unsaved Changes)</span>}
+                    {state.modelRef && (
+                        <Button variant="ghost" size="sm" className="ml-2 h-6 text-muted-foreground gap-1" asChild>
+                            <a href={`https://replicate.com/${state.modelRef}`} target="_blank" rel="noopener noreferrer">
+                                Open in Replicate <ExternalLinkIcon className="w-3 h-3" />
+                            </a>
+                        </Button>
+                    )}
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={fetchSchema} disabled={isSaving}>
@@ -226,6 +235,12 @@ export function ModelEditor({ modelId }: ModelEditorProps) {
 
                 {/* RIGHT: Sidebar (Settings + Preview) */}
                 <div className="space-y-6 overflow-auto pr-2 pb-20 h-[calc(100vh-200px)]">
+
+                    {/* Capabilities Card */}
+                    <CapabilitiesCard
+                        capabilities={Array.isArray(state.capabilities) ? state.capabilities : (state.capabilities?.modes || [])}
+                        toggleCapability={toggleCapability}
+                    />
 
                     {/* Basic Settings Card */}
                     <Card>
