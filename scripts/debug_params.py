@@ -3,12 +3,12 @@ import os
 sys.path.append(os.getcwd())
 
 import asyncio
-from app.core.db import async_session
+from app.core.db import AsyncSessionLocal
 from app.domain.providers.models import AIModel
 from sqlalchemy import select
 
 async def main():
-    async with async_session() as session:
+    async with AsyncSessionLocal() as session:
         result = await session.execute(select(AIModel).where(AIModel.is_active == True))
         models = result.scalars().all()
         
