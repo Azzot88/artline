@@ -70,7 +70,9 @@ export function ParameterCard({ param, config, onConfigChange }: ParameterCardPr
                     </div>
                     <div>
                         <div className="text-sm font-semibold">{config.custom_label || param.label}</div>
-                        <div className="text-[10px] font-mono text-muted-foreground">{param.id}</div>
+                        <div className="text-[10px] text-muted-foreground leading-tight max-w-[300px] line-clamp-2" title={param.description}>
+                            {param.description || param.id}
+                        </div>
                     </div>
                 </div>
 

@@ -66,8 +66,15 @@ export function ParameterValuesList({ values, type, min, max, onChange }: Parame
             <div className="flex items-center justify-between">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                     Configured Values
-                    <div className="bg-primary/10 text-primary px-1.5 rounded-sm text-[10px] font-mono">
-                        {values.filter(v => v.enabled).length}/{values.length}
+                    <div className="flex items-center gap-2">
+                        <div className="bg-primary/10 text-primary px-1.5 rounded-sm text-[10px] font-mono">
+                            {values.filter(v => v.enabled).length}/{values.length}
+                        </div>
+                        {(min !== undefined || max !== undefined) && (
+                            <span className="text-[10px] font-normal normal-case text-muted-foreground/70">
+                                Range: {min ?? "?"} - {max ?? "?"}
+                            </span>
+                        )}
                     </div>
                 </h4>
 
