@@ -73,8 +73,4 @@ class ReplicateRequestNormalizer(RequestNormalizer, RequestNormalizerAuth):
              return self.normalize_array(value, field_def, self._normalize_field)
              
         else:
-            # Special case: Scheduler should be lowercase?
-            val = self.normalize_string(value, field_def)
-            if field_def.get("name") == "scheduler":
-                return val.lower()
-            return val
+            return self.normalize_string(value, field_def)
