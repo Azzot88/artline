@@ -24,7 +24,15 @@ class ReplicateRequestNormalizer(RequestNormalizer, RequestNormalizerAuth):
             schema_map = properties
 
         # Pre-process 'Cinema Resolution' meta-params
-        if "orientation" in input_data:
+        # Priority: Native Enum Params > Cinema Logic
+        # If the user has selected a native 'aspect_ratio' or 'resolution' enum, 
+        # do NOT override it with calculated width/height from Cinema Logic.
+        has_native_override = (
+            ("aspect_ratio" in input_data and "aspect_ratio" in schema_map) or
+            ("resolution" in input_data and "resolution" in schema_map)
+        )
+
+        if "orientation" in input_data and not has_native_override:
              orientation = input_data.get("orientation", "portrait").lower()
              fmt = input_data.get("format", "standard").lower()
              

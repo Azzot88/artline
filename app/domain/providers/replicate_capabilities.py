@@ -159,9 +159,18 @@ class ReplicateCapabilitiesService:
         for key in keys:
             details = props[key]
             
-            # Hide raw dimensions/resolution in favor of Cinema Logic
-            if key in ["width", "height", "aspect_ratio", "resolution"]:
+            # Hide raw dimensions. 
+            # Smart Logic: Hide 'resolution'/'aspect_ratio' ONLY if they are raw inputs. 
+            # If they are explicit Enums (like Ideogram's list), expose them!
+            if key in ["width", "height"]:
                 continue
+            
+            if key in ["aspect_ratio", "resolution"]:
+                # If it's NOT an enum, hide it (assume generic capability)
+                if not prop.get("enum"):
+                    continue
+                # If it IS an enum, let it pass through (native model capability)
+
 
             # Skip hidden/blacklisted params
             if key in ["scheduler", "refine"]: 
