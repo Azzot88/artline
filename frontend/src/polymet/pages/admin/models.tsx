@@ -147,133 +147,142 @@ function CapabilitiesIcons({ model }: { model: AIModel }) {
     const type = model.type?.toLowerCase() || ""
 
     // Enhanced logic matching ReplicateCapabilitiesService
-    const isActive = (keys: string[]) => {
-        // If specific capabilities are detected, strict match them
-        if (caps.length > 0) {
-            // Check if ANY capability effectively enables this icon
-            // e.g. text-to-image should enable "Text Input" and "Image Output"
-            return keys.some(k => caps.some(c => c.includes(k)))
-        }
-        // Fallback to basic type string
-        return keys.some(k => type.includes(k))
+    function CapabilitiesIcons({ model }: { model: AIModel }) {
+        const caps = (model.capabilities || []).map(c => c.toLowerCase())
+        const type = model.type?.toLowerCase() || ""
+
+        // Explicit mappings based on detected capabilities
+        // Priority: Upscale > Video > Audio > Image > Text
+
+        // 1. Specialized Capabilities
+        const hasUpscale = caps.includes("upscale")
+        const hasInpaint = caps.includes("inpainting")
+        const hasVideo = caps.some(c => c.endsWith("to-video") || c === "video-generation") || type === "video"
+        const hasAudio = caps.some(c => c.endsWith("to-audio") || c === "speech" || c === "music" || c === "tts") || type === "audio"
+
+        // 2. Core Types
+        const hasText = caps.some(c => c === "text-generation" || c === "llm") || type === "text"
+
+        // 3. Image Logic: 
+        // Show "Image" icon only if it's a generic image generator.
+        // IF the model is an Upscaler, we DO NOT show the generic Image icon (per user request).
+        // IF the model is Inpainting, we MIGHT show both or just Inpaint. Let's start with just Inpaint to be clean, or keep both? 
+        // User said "Crystal Upscaler... should show ONLY upscaling".
+        // Let's exclude Upscale from hasImage.
+
+        const isGenericImage = caps.some(c => c.endsWith("to-image") || c === "image-generation") || type === "image"
+
+        // If it is an upscaler, it is NOT a generic image generator in this UI context
+        const hasImage = isGenericImage && !hasUpscale
+
+        const icons = [
+            { label: "Text", active: hasText, icon: FileTextIcon, color: "text-blue-500" },
+            { label: "Image", active: hasImage, icon: ImageIcon, color: "text-rose-500" },
+            { label: "Video", active: hasVideo, icon: VideoIcon, color: "text-purple-500" },
+            { label: "Audio", active: hasAudio, icon: MicIcon, color: "text-yellow-500" },
+            { label: "Inpaint", active: hasInpaint, icon: BrushIcon, color: "text-indigo-500" },
+            { label: "Upscale", active: hasUpscale, icon: ScalingIcon, color: "text-cyan-500" },
+        ]
+
+        return (
+            <div className="flex flex-wrap gap-2 max-w-[140px]">
+                {icons.map((item, i) => {
+                    const Icon = item.icon
+                    return (
+                        <div key={i} title={item.label} className={`${item.active ? item.color : "text-muted-foreground/10"}`}>
+                            <Icon className="w-4 h-4" />
+                        </div>
+                    )
+                })}
+            </div>
+        )
     }
 
-    // Explicit mappings based on detected capabilities
-    const hasText = caps.some(c => c.includes("text")) || type.includes("text")
-    const hasImage = caps.some(c => c.includes("image")) || type.includes("image")
-    const hasVideo = caps.some(c => c.includes("video")) || type.includes("video")
-    const hasAudio = caps.some(c => c.includes("audio") || c.includes("speech") || c.includes("music"))
-    const hasInpaint = caps.some(c => c.includes("inpaint"))
-    const hasUpscale = caps.some(c => c.includes("upscale"))
+    function AddModelForm({ onComplete }: { onComplete: () => void }) {
+        const [data, setData] = useState({
+            name: "",
+            display_name: "",
+            provider: "replicate",
+            model_ref: "",
+            type: "image" as "image" | "video",
+            credits: 5
+        })
 
-    const icons = [
-        { label: "Text", active: hasText, icon: FileTextIcon, color: "text-blue-500" },
-        { label: "Image", active: hasImage, icon: ImageIcon, color: "text-rose-500" },
-        { label: "Video", active: hasVideo, icon: VideoIcon, color: "text-purple-500" },
-        { label: "Audio", active: hasAudio, icon: MicIcon, color: "text-yellow-500" },
-        { label: "Inpaint", active: hasInpaint, icon: BrushIcon, color: "text-indigo-500" },
-        { label: "Upscale", active: hasUpscale, icon: ScalingIcon, color: "text-cyan-500" },
-    ]
-
-    return (
-        <div className="flex flex-wrap gap-1 max-w-[120px]">
-            {icons.map((item, i) => {
-                const Icon = item.icon
-                return (
-                    <div key={i} title={item.label} className={`${item.active ? item.color : "text-muted-foreground/10"}`}>
-                        <Icon className="w-4 h-4" />
-                    </div>
-                )
-            })}
-        </div>
-    )
-}
-
-function AddModelForm({ onComplete }: { onComplete: () => void }) {
-    const [data, setData] = useState({
-        name: "",
-        display_name: "",
-        provider: "replicate",
-        model_ref: "",
-        type: "image" as "image" | "video",
-        credits: 5
-    })
-
-    async function submit() {
-        try {
-            if (!data.model_ref) {
-                alert("Model Ref is required")
-                return
-            }
-
-            await apiService.createModel({
-                name: data.name,
-                display_name: data.display_name,
-                provider: data.provider,
-                model_ref: data.model_ref,
-                type: data.type,
-                credits: Number(data.credits),
-                is_active: true
-            })
-
+        async function submit() {
             try {
-                await apiService.fetchModelSchema(data.model_ref)
-            } catch (err) {
-                console.error("Failed to auto-fetch schema:", err)
+                if (!data.model_ref) {
+                    alert("Model Ref is required")
+                    return
+                }
+
+                await apiService.createModel({
+                    name: data.name,
+                    display_name: data.display_name,
+                    provider: data.provider,
+                    model_ref: data.model_ref,
+                    type: data.type,
+                    credits: Number(data.credits),
+                    is_active: true
+                })
+
+                try {
+                    await apiService.fetchModelSchema(data.model_ref)
+                } catch (err) {
+                    console.error("Failed to auto-fetch schema:", err)
+                }
+
+                onComplete()
+            } catch (e: any) {
+                console.error(e)
+                alert("Failed to create model: " + (e.message || e))
             }
-
-            onComplete()
-        } catch (e: any) {
-            console.error(e)
-            alert("Failed to create model: " + (e.message || e))
         }
+
+        return (
+            <Card className="bg-muted/50 mb-6">
+                <CardContent className="p-4 grid gap-4">
+                    <div className="flex justify-between items-center"><h3 className="font-semibold">Register New Model</h3></div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Internal Name</label>
+                            <Input placeholder="flux-schnell" value={data.name} onChange={e => setData({ ...data, name: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Display Name</label>
+                            <Input placeholder="Flux Schnell" value={data.display_name} onChange={e => setData({ ...data, display_name: e.target.value })} />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Provider</label>
+                            <select
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                value={data.provider}
+                                onChange={e => setData({ ...data, provider: e.target.value })}
+                            >
+                                <option value="replicate">Replicate</option>
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Link / Model Identifier</label>
+                            <Input
+                                placeholder="e.g. black-forest-labs/flux-schnell"
+                                value={data.model_ref}
+                                onChange={e => setData({ ...data, model_ref: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Cost (Credits)</label>
+                            <Input type="number" value={data.credits} onChange={e => setData({ ...data, credits: Number(e.target.value) })} />
+                        </div>
+                    </div>
+
+                    <Button onClick={submit}>Create Model</Button>
+                </CardContent>
+            </Card>
+        )
     }
-
-    return (
-        <Card className="bg-muted/50 mb-6">
-            <CardContent className="p-4 grid gap-4">
-                <div className="flex justify-between items-center"><h3 className="font-semibold">Register New Model</h3></div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Internal Name</label>
-                        <Input placeholder="flux-schnell" value={data.name} onChange={e => setData({ ...data, name: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Display Name</label>
-                        <Input placeholder="Flux Schnell" value={data.display_name} onChange={e => setData({ ...data, display_name: e.target.value })} />
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Provider</label>
-                        <select
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                            value={data.provider}
-                            onChange={e => setData({ ...data, provider: e.target.value })}
-                        >
-                            <option value="replicate">Replicate</option>
-                        </select>
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Link / Model Identifier</label>
-                        <Input
-                            placeholder="e.g. black-forest-labs/flux-schnell"
-                            value={data.model_ref}
-                            onChange={e => setData({ ...data, model_ref: e.target.value })}
-                        />
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Cost (Credits)</label>
-                        <Input type="number" value={data.credits} onChange={e => setData({ ...data, credits: Number(e.target.value) })} />
-                    </div>
-                </div>
-
-                <Button onClick={submit}>Create Model</Button>
-            </CardContent>
-        </Card>
-    )
-}
