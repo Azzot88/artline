@@ -50,7 +50,12 @@ export function NormalizationBuilder({ rawSchema, config, onChange }: Normalizat
             || rawSchema?.properties
             || rawSchema?.inputs
             || {}
-        return Object.keys(props).sort()
+
+        // Blacklist common internal fields that pollute the UI
+        const ignoredKeys = new Set(['parameter_configs', 'default_values', 'parameters'])
+        return Object.keys(props)
+            .filter(k => !ignoredKeys.has(k))
+            .sort()
     }, [rawSchema])
 
     // 2. Parse Configured Params (Workshop)
