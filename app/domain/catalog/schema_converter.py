@@ -78,6 +78,10 @@ class SchemaToUIConverter:
                 
             if key == "aspect_ratio":
                 p_type = "select"
+                if not options:
+                     # Match frontend heuristic (use-model-editor.ts)
+                     defaults = ["1:1", "16:9", "9:16", "4:3", "3:4"]
+                     options = [ParameterOption(label=v, value=v) for v in defaults]
                 
             title = details.get("title") or details.get("label")
             if not title:
