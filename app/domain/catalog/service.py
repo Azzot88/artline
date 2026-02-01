@@ -1,6 +1,6 @@
 
 from typing import List, Dict, Any, Optional
-from app.domain.catalog.schemas import UIParameter, ModelUISpec, ParameterGroup, UIParameterConfig
+from app.domain.catalog.schemas import UIParameter, ModelUISpec, ParameterGroup, UIParameterConfig, PricingRule
 from app.domain.providers.models import AIModel
 from app.domain.catalog.schema_converter import SchemaToUIConverter
 
@@ -73,6 +73,7 @@ class CatalogService:
         
         # 2. Apply UI Config Overrides & Tier Filtering
         final_params = []
+        all_pricing_rules = []
         
         for p in params:
             config = ui_config.get(p.id, {})
@@ -113,6 +114,56 @@ class CatalogService:
             # D. Validation Overrides
             if "min" in config: p.min = config["min"]
             if "max" in config: p.max = config["max"]
+
+            # E. Granular Values & Pricing (Phase 2)
+            values_config = config.get("values")
+            if values_config and isinstance(values_config, list):
+                allowed_options = []
+                pricing_generated = []
+                
+                for v_conf in values_config:
+                    # v_conf is Dict matching ParameterValueConfig
+                    
+                    # 1. Tier Check for specific value
+                    v_tiers = v_conf.get("access_tiers")
+                    if v_tiers and len(v_tiers) > 0:
+                        if user_tier not in v_tiers and "all" not in v_tiers and user_tier != "admin":
+                            continue # Skip this value option
+                    
+                    # 2. Add to Options
+                    # Convert to ParameterOption
+                    opt_label = v_conf.get("label") or str(v_conf.get("value"))
+                    allowed_options.append({
+                        "label": opt_label,
+                        "value": v_conf.get("value")
+                    })
+                    
+                    # 3. Pricing Rule
+                    price = v_conf.get("price", 0)
+                    if price > 0:
+                        # Create implicit pricing rule
+                        # Note: This is simplified. Real system might aggregate these differently.
+                        # But for UI estimation, we can expose it.
+                        rule = PricingRule(
+                            id=f"pr_{p.id}_{v_conf.get('value')}",
+                            param_id=p.id,
+                            operator="eq",
+                            value=v_conf.get("value"),
+                            surcharge=price,
+                            label=f"{opt_label} Surcharge"
+                        )
+                        pricing_generated.append(rule)
+
+                if allowed_options:
+                    p.options = allowed_options
+                    p.type = "select"
+                    
+                    default_val_conf = next((v for v in values_config if v.get("is_default")), None)
+                    if default_val_conf:
+                         p.default = default_val_conf.get("value")
+                
+                if pricing_generated:
+                    all_pricing_rules.extend(pricing_generated)
             
             final_params.append(p)
             
@@ -125,5 +176,6 @@ class CatalogService:
         return ModelUISpec(
             model_id=model_id,
             groups=groups,
-            parameters=final_params
+            parameters=final_params,
+            pricing_rules=all_pricing_rules
         )
