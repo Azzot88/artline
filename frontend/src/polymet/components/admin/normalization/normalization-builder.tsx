@@ -31,7 +31,7 @@ import {
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { ValueListEditor } from "./value-list-editor"
+import { ParameterValuesList } from "@/polymet/pages/model-config/components/parameter-values-list"
 
 interface NormalizationBuilderProps {
     rawSchema: any
@@ -99,6 +99,18 @@ export function NormalizationBuilder({ rawSchema, config, onChange }: Normalizat
     }
 
     const activeRule = selectedParamId ? config?.[selectedParamId] : null
+
+    // Helper to get schema for a param
+    const getParamSchema = (paramId: string) => {
+        if (!rawSchema) return null
+        const props = rawSchema?.components?.schemas?.Input?.properties
+            || rawSchema?.properties
+            || rawSchema?.inputs
+            || {}
+        return props[paramId]
+    }
+    const activeSchema = selectedParamId ? getParamSchema(selectedParamId) : null
+    const paramType = activeSchema?.type || "string"
 
     return (
         <div className="grid grid-cols-12 h-full gap-4">
