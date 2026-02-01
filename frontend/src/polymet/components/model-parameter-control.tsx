@@ -34,6 +34,11 @@ export function ModelParameterControl({
   disabled = false,
   compact = false
 }: ModelParameterControlProps) {
+  if (!parameter || !parameter.name) {
+    console.warn("Invalid parameter passed to control", parameter)
+    return null
+  }
+
   const label = getParameterLabel(parameter, config)
   const allowedValues = getAllowedValues(parameter, config)
   const effectiveDefault = getEffectiveDefault(parameter, config)
