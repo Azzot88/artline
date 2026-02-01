@@ -211,10 +211,10 @@ export function NormalizationBuilder({ rawSchema, config, onChange }: Normalizat
             </div>
 
             {/* RIGHT MAIN: Editor (Active Rule) */}
-            <div className="col-span-8 h-full flex flex-col bg-background">
+            <div className="col-span-8 h-full flex flex-col bg-background min-h-0 overflow-hidden">
                 {activeRule ? (
-                    <div className="flex flex-col h-full">
-                        <div className="p-4 border-b bg-muted/10">
+                    <div className="flex flex-col h-full min-h-0">
+                        <div className="p-4 border-b bg-muted/10 shrink-0">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <h3 className="font-semibold truncate">{selectedParamId}</h3>
