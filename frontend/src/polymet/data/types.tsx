@@ -203,7 +203,7 @@ export interface ModelParameter {
   required: boolean
   ui_group: UIGroup
   created_at: string
-  options?: { label: string, value: any }[]
+  options?: { label: string, value: any, surcharge?: number }[]
 }
 
 // Model Version Cost Signals

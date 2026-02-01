@@ -128,7 +128,7 @@ export function ModelParameterControl({
   // 4. Enumerations (Select)
   if ((parameter.enum || allowedValues || parameter.options) && parameter.type !== 'array') {
     // Check if we have labeled options
-    const labeledOptions = parameter.options || (allowedValues || parameter.enum || []).map(v => ({ label: String(v), value: v }))
+    const labeledOptions = parameter.options || (allowedValues || parameter.enum || []).map(v => ({ label: String(v), value: v, surcharge: 0 }))
 
     // Ensure current value is in the options list
     const hasValue = labeledOptions.some(opt => String(opt.value) === strValue)
@@ -167,7 +167,14 @@ export function ModelParameterControl({
           <SelectContent className="glass-effect border-white/10 min-w-[95px] p-1">
             {labeledOptions.map((opt) => (
               <SelectItem key={String(opt.value)} value={String(opt.value)} className="focus:bg-primary/10 focus:text-primary cursor-pointer px-2 rounded-md">
-                <span className="text-xs font-bold">{opt.label}</span>
+                <div className="flex items-center justify-between w-full gap-2">
+                  <span className="text-xs font-bold">{opt.label}</span>
+                  {(opt.surcharge && opt.surcharge > 0) ? (
+                    <span className="text-[10px] font-mono bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 px-1.5 py-0.5 rounded ml-2">
+                      +{opt.surcharge}
+                    </span>
+                  ) : null}
+                </div>
               </SelectItem>
             ))}
           </SelectContent>
