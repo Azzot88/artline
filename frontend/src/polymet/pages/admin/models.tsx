@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { ArrowDown, ArrowUp, PencilIcon, TrashIcon, FileTextIcon, ImageIcon, VideoIcon, MicIcon, MusicIcon, BrushIcon, ScalingIcon } from "lucide-react"
+import { ArrowDown, ArrowUp, PencilIcon, TrashIcon, FileTextIcon, ImageIcon, VideoIcon, MicIcon, MusicIcon, BrushIcon, ScalingIcon, Settings2 } from "lucide-react"
 
 export function AdminModels() {
     const [models, setModels] = useState<AIModel[]>([])
@@ -125,6 +125,11 @@ export function AdminModels() {
                                             <Link to={`/model-config/${m.id}`}>
                                                 <Button variant="ghost" size="sm">
                                                     <PencilIcon className="w-4 h-4 mr-2" /> Configure
+                                                </Button>
+                                            </Link>
+                                            <Link to={`/admin/models/${m.id}/normalization`}>
+                                                <Button variant="ghost" size="sm">
+                                                    <Settings2 className="w-4 h-4 mr-2" /> Norm.
                                                 </Button>
                                             </Link>
                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteM(m.id)}>

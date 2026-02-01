@@ -100,3 +100,9 @@ class ModelUISpec(BaseModel):
     pricing_rules: List[PricingRule] = [] # Exposed rules for frontend estimation if needed
     
     model_config = ConfigDict(protected_namespaces=())
+
+class PreviewNormalizationRequest(BaseModel):
+    raw_schema: Dict[str, Any]
+    normalization_config: Dict[str, Any]
+    provider_id: str = "replicate" # To choose the right normalizer
+

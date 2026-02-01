@@ -418,6 +418,33 @@ async def upload_model_image(
         print(f"Upload Error: {e}")
         raise HTTPException(status_code=500, detail="Upload failed")
 
+
+# ============================================================================
+# NORMALIZATION PREVIEW (New)
+# ============================================================================
+
+from app.domain.catalog.schemas import PreviewNormalizationRequest, ModelUISpec
+from app.domain.catalog.service import CatalogService
+
+@router.post("/models/preview-normalization", response_model=ModelUISpec)
+async def preview_normalization(
+    req: PreviewNormalizationRequest,
+    user: User = Depends(get_admin_user)
+):
+    """
+    Dry-run normalization logic to see how schema + config looks in UI.
+    """
+    catalog = CatalogService()
+    
+    # We use 'admin' tier so everything is visible
+    spec = catalog.resolve_from_schema(
+        model_id="preview",
+        raw_schema=req.raw_schema,
+        ui_config=req.normalization_config,
+        user_tier="admin"
+    )
+    return spec
+
 # ============================================================================
 # REMOTE SCHEMA FETCHING (New)
 # ============================================================================
