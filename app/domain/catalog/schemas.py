@@ -7,6 +7,7 @@ class ParameterOption(BaseModel):
     value: Any
     description: Optional[str] = None
     icon: Optional[str] = None # Lucide icon name or URL
+    surcharge: float = 0.0
 
 class UIParameter(BaseModel):
     id: str  # Matches the API param name (e.g. "width", "scheduler")

@@ -135,7 +135,8 @@ class CatalogService:
                     opt_label = v_conf.get("label") or str(v_conf.get("value"))
                     allowed_options.append(ParameterOption(
                         label=opt_label,
-                        value=v_conf.get("value")
+                        value=v_conf.get("value"),
+                        surcharge=v_conf.get("price", 0)
                     ))
                     
                     # 3. Pricing Rule
