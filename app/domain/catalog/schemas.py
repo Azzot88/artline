@@ -11,7 +11,7 @@ class ParameterOption(BaseModel):
 class UIParameter(BaseModel):
     id: str  # Matches the API param name (e.g. "width", "scheduler")
     label: str
-    type: Literal["text", "number", "select", "boolean", "slider", "textarea"]
+    type: Literal["text", "number", "select", "boolean", "slider", "textarea", "image", "file"]
     
     default: Any = None
     
