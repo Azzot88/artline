@@ -3,6 +3,7 @@ import { RoleCard } from "@/polymet/components/team/role-card"
 import { NewRoleCard } from "@/polymet/components/team/new-role-card"
 import { RoleEditor } from "@/polymet/components/team/role-editor"
 import { AnimatePresence, motion } from "framer-motion"
+import { useLanguage } from "@/polymet/prototypes/ai-workbench-app"
 
 // Mock Data
 const MOCK_ROLES = [
@@ -32,6 +33,7 @@ const MOCK_ROLES = [
 export function TeamPage() {
     const [selectedRole, setSelectedRole] = useState<string | null>(null)
     const [isCreating, setIsCreating] = useState(false)
+    const { t } = useLanguage()
 
     const handleRoleClick = (id: string) => {
         if (selectedRole === id) {
@@ -57,9 +59,9 @@ export function TeamPage() {
     return (
         <div className="container mx-auto py-8 space-y-8 max-w-7xl animate-in fade-in duration-500">
             <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">Team</h1>
+                <h1 className="text-3xl font-bold tracking-tight">{t('team.title')}</h1>
                 <p className="text-muted-foreground">
-                    Manage your AI specialists and define their generation styles.
+                    {t('team.subtitle')}
                 </p>
             </div>
 

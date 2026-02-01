@@ -1,12 +1,14 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Plus } from "lucide-react"
+import { useLanguage } from "@/polymet/prototypes/ai-workbench-app"
 
 interface NewRoleCardProps {
     onClick: () => void
 }
 
 export function NewRoleCard({ onClick }: NewRoleCardProps) {
+    const { t } = useLanguage()
     return (
         <Card
             className={cn(
@@ -18,10 +20,10 @@ export function NewRoleCard({ onClick }: NewRoleCardProps) {
                 <Plus className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
             </div>
             <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
-                Create New Role
+                {t('team.createRole')}
             </h3>
             <p className="text-sm text-muted-foreground mt-1 max-w-[140px]">
-                Define a new specialist with unique style
+                {t('team.createRoleDesc')}
             </p>
         </Card>
     )

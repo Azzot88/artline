@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { User, Settings2, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useLanguage } from "@/polymet/prototypes/ai-workbench-app"
 
 interface RoleCardProps {
     role: {
@@ -17,6 +18,7 @@ interface RoleCardProps {
 }
 
 export function RoleCard({ role, onClick, isSelected }: RoleCardProps) {
+    const { t } = useLanguage()
     return (
         <Card
             className={cn(
@@ -53,7 +55,7 @@ export function RoleCard({ role, onClick, isSelected }: RoleCardProps) {
                     </div>
                     {role.isActive && (
                         <Badge variant="secondary" className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-200">
-                            Active
+                            {t('common.active')}
                         </Badge>
                     )}
                 </div>
