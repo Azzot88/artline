@@ -5,35 +5,34 @@ import { RoleEditor } from "@/polymet/components/team/role-editor"
 import { AnimatePresence, motion } from "framer-motion"
 import { useLanguage } from "@/polymet/components/language-provider"
 
-// Mock Data
-const MOCK_ROLES = [
-    {
-        id: "1",
-        name: "Cinematic Director",
-        description: "Specializes in wide shots, dramatic lighting, and film grain textures.",
-        style: "Film Noir",
-        isActive: true
-    },
-    {
-        id: "2",
-        name: "Anime Artist",
-        description: "Creates vibrant 2D anime style characters with cel shading.",
-        style: "Studio Ghibli",
-        isActive: false
-    },
-    {
-        id: "3",
-        name: "Product Photographer",
-        description: "Clean studio lighting focus on objects with macro capabilities.",
-        style: "Commercial",
-        isActive: true
-    }
-]
-
 export function TeamPage() {
     const [selectedRole, setSelectedRole] = useState<string | null>(null)
     const [isCreating, setIsCreating] = useState(false)
     const { t } = useLanguage()
+
+    const MOCK_ROLES = [
+        {
+            id: "1",
+            name: t('team.roles.cinematic.name'),
+            description: t('team.roles.cinematic.desc'),
+            style: t('team.roles.cinematic.style'),
+            isActive: true
+        },
+        {
+            id: "2",
+            name: t('team.roles.anime.name'),
+            description: t('team.roles.anime.desc'),
+            style: t('team.roles.anime.style'),
+            isActive: false
+        },
+        {
+            id: "3",
+            name: t('team.roles.product.name'),
+            description: t('team.roles.product.desc'),
+            style: t('team.roles.product.style'),
+            isActive: true
+        }
+    ]
 
     const handleRoleClick = (id: string) => {
         if (selectedRole === id) {
