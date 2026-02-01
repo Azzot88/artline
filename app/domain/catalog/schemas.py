@@ -1,6 +1,6 @@
 
 from pydantic import BaseModel, ConfigDict, Field
-from typing import List, Optional, Any, Union, Literal
+from typing import List, Optional, Any, Union, Literal, Dict
 
 class ParameterOption(BaseModel):
     label: str
