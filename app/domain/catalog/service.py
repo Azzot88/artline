@@ -32,6 +32,32 @@ class CatalogService:
                 print(f"Schema Parse Error: {e}")
                 # Fallback empty or logging
         
+        # 1.5 Inject Parameters from UI Config (if missing in schema)
+        ui_config = model.ui_config or {}
+        existing_ids = {p.id for p in params}
+        
+        for param_id, config in ui_config.items():
+            if param_id not in existing_ids:
+                # Infer type
+                default_val = config.get("default")
+                inferred_type = "text"
+                if isinstance(default_val, (int, float)) and not isinstance(default_val, bool):
+                     inferred_type = "number"
+                elif isinstance(default_val, bool) or str(default_val).lower() in ["true", "false"]:
+                     inferred_type = "boolean"
+                elif config.get("values"):
+                     inferred_type = "select"
+
+                new_param = UIParameter(
+                    id=param_id,
+                    label=config.get("label_override") or param_id.replace("_", " ").title(),
+                    type=inferred_type,
+                    default=default_val,
+                    required=False
+                )
+                params.append(new_param)
+                existing_ids.add(param_id)
+        
         # 2. Apply UI Config Overrides & Tier Filtering
         final_params = []
         
