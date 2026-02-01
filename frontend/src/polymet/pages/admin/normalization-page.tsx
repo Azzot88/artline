@@ -1,7 +1,8 @@
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+// Removing react-query import
+// import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useModel } from "@/polymet/hooks/use-model"
 import { useAuth } from "@/polymet/components/auth-provider"
 import { Button } from "@/components/ui/button"
@@ -26,80 +27,119 @@ export function NormalizationPage() {
     const { modelId } = useParams()
     const navigate = useNavigate()
     const { token } = useAuth()
-    const queryClient = useQueryClient()
+
+    // Local State
+    const [model, setModel] = useState<any>(null)
+    const [isLoadingModel, setIsLoadingModel] = useState(true)
+    const [config, setConfig] = useState<any>({})
+    const [previewSpec, setPreviewSpec] = useState<any>(null)
+    const [isPreviewLoading, setIsPreviewLoading] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
 
     // 1. Fetch Model Data
-    const { data: model, isLoading } = useQuery({
-        queryKey: ['admin-model', modelId],
-        queryFn: async () => {
-            const res = await fetch(`/api/admin/models/${modelId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            if (!res.ok) throw new Error("Failed to load model")
-            return res.json()
-        }
-    })
-
-    // 2. Local State for Config
-    const [config, setConfig] = useState<any>({})
-
-    // Sync initial state
     useEffect(() => {
-        if (model?.ui_config) {
-            setConfig(model.ui_config || {})
-        }
-    }, [model])
+        if (!modelId || !token) return
 
-    // 3. Preview Logic (Debounced)
+        let cancelled = false
+
+        async function fetchModel() {
+            try {
+                setIsLoadingModel(true)
+                const res = await fetch(`/api/admin/models/${modelId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+                if (!res.ok) throw new Error("Failed to load model")
+                const data = await res.json()
+
+                if (!cancelled) {
+                    setModel(data)
+                    // Sync config
+                    if (data.ui_config) {
+                        setConfig(data.ui_config || {})
+                    }
+                }
+            } catch (err) {
+                console.error(err)
+                toast.error("Failed to load model")
+            } finally {
+                if (!cancelled) setIsLoadingModel(false)
+            }
+        }
+
+        fetchModel()
+        return () => { cancelled = true }
+    }, [modelId, token])
+
+    // 2. Preview Logic (Debounced)
     const debouncedConfig = useDebounce(config, 500)
 
-    const { data: previewSpec, isFetching: isPreviewLoading } = useQuery({
-        queryKey: ['normalization-preview', modelId, debouncedConfig],
-        queryFn: async () => {
-            if (!model?.raw_schema_json) return null
+    useEffect(() => {
+        if (!model?.raw_schema_json || !token) return
 
-            const res = await fetch('/api/admin/models/preview-normalization', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    raw_schema: model.raw_schema_json,
-                    normalization_config: debouncedConfig,
-                    provider_id: model.provider
+        let cancelled = false
+
+        async function fetchPreview() {
+            try {
+                setIsPreviewLoading(true)
+                const res = await fetch('/api/admin/models/preview-normalization', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        raw_schema: model.raw_schema_json,
+                        normalization_config: debouncedConfig,
+                        provider_id: model.provider
+                    })
                 })
-            })
-            if (!res.ok) throw new Error("Preview failed")
-            return res.json()
-        },
-        enabled: !!model?.raw_schema_json
-    })
+                if (!res.ok) throw new Error("Preview failed")
+                const data = await res.json()
 
-    // 4. Save Mutation
-    const saveMutation = useMutation({
-        mutationFn: async (newConfig: any) => {
-            const res = await fetch(`/ api / admin / models / ${modelId}`, {
+                if (!cancelled) {
+                    setPreviewSpec(data)
+                }
+            } catch (err) {
+                console.error(err)
+                // Silent fail for preview is usually better than spamming toasts
+            } finally {
+                if (!cancelled) setIsPreviewLoading(false)
+            }
+        }
+
+        fetchPreview()
+        return () => { cancelled = true }
+    }, [model, debouncedConfig, token])
+
+    // 3. Save Handler
+    const handleSave = async () => {
+        if (!modelId || !token) return
+
+        try {
+            setIsSaving(true)
+            const res = await fetch(`/api/admin/models/${modelId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    ui_config: newConfig
+                    ui_config: config
                 })
             })
             if (!res.ok) throw new Error("Save failed")
-            return res.json()
-        },
-        onSuccess: () => {
-            toast.success("Normalization rules saved")
-            queryClient.invalidateQueries({ queryKey: ['admin-model', modelId] })
-        },
-        onError: () => toast.error("Failed to save rules")
-    })
 
-    if (isLoading) return <div className="p-8">Loading...</div>
+            toast.success("Normalization rules saved")
+            // Optionally refetch model or update local state if needed
+        } catch (err) {
+            console.error(err)
+            toast.error("Failed to save rules")
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    if (isLoadingModel) return <div className="p-8">Loading...</div>
 
     return (
         <div className="h-screen flex flex-col bg-background">
@@ -119,12 +159,12 @@ export function NormalizationPage() {
 
                 <div className="flex items-center gap-2">
                     <Button
-                        onClick={() => saveMutation.mutate(config)}
-                        disabled={saveMutation.isPending}
+                        onClick={handleSave}
+                        disabled={isSaving}
                         className="gap-2"
                     >
                         <Save className="w-4 h-4" />
-                        {saveMutation.isPending ? "Saving..." : "Save Rules"}
+                        {isSaving ? "Saving..." : "Save Rules"}
                     </Button>
                 </div>
             </div>
@@ -171,7 +211,6 @@ export function NormalizationPage() {
                                                     {groupParams.map((param: any) => (
                                                         <div key={param.id}>
                                                             {/* We assume ModelParameterControl handles label rendering */}
-                                                            {/* Or we render label manually here for clarity */}
                                                             <ModelParameterControl
                                                                 param={param}
                                                                 value={param.default}
