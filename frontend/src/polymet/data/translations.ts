@@ -109,7 +109,12 @@ export const translations = {
             unknownModel: "Неизвестная модель",
             aspectRatio: "Соотношение сторон",
             deleteFromLibrary: "Удалить из библиотеки",
-            deleting: "Удаление..."
+            deleting: "Удаление...",
+            privacy: {
+                visibleDesc: "Публичный доступ",
+                hiddenDesc: "Приватный доступ"
+            },
+            privacyUpdated: "Настройки приватности обновлены"
         },
         dashboard: {
             title: "Дашборд",

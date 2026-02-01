@@ -299,7 +299,7 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                         <span className="w-1 h-4 bg-primary rounded-full" />
                                         {t('generationDetails.prompt')}
                                     </h4>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-muted" onClick={handleCopyPrompt} title={t('generationDetails.title.copy')}>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-muted" onClick={handleCopyPrompt} title={t('generationDetails.copyPrompt')}>
                                         <CopyIcon className="w-3.5 h-3.5" />
                                     </Button>
                                 </div>
