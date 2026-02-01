@@ -336,4 +336,3 @@ export function NormalizationBuilder({ rawSchema, config, onChange }: Normalizat
         </div>
     )
 }
-}
