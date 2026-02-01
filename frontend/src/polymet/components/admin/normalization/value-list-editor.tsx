@@ -25,7 +25,9 @@ interface ValueListEditorProps {
     onChange: (values: ParameterValueConfig[]) => void
 }
 
-export function ValueListEditor({ values, onChange }: ValueListEditorProps) {
+export function ValueListEditor({ values: rawValues, onChange }: ValueListEditorProps) {
+    const values = Array.isArray(rawValues) ? rawValues : []
+
     const addValue = () => {
         onChange([
             ...values,
