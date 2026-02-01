@@ -35,7 +35,8 @@ export const translations = {
             themeDark: "Тёмная",
             themeSystem: "Системная",
             static: "Статика",
-            dynamic: "Динамика"
+            dynamic: "Динамика",
+            team: "Команда"
         },
         library: {
             title: "Библиотека",

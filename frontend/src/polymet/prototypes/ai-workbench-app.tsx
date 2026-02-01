@@ -20,6 +20,7 @@ import { AdminReview } from "@/polymet/pages/admin-review"
 import { UserProfile } from "@/polymet/pages/user-profile"
 import { LandingPage } from "@/polymet/pages/landing-page"
 import DocumentsPage from "@/polymet/pages/documents-page"
+import { TeamPage } from "@/polymet/pages/team/team-page"
 
 // Admin Suite
 import { AdminLayout } from "@/polymet/pages/admin/layout"
@@ -51,6 +52,7 @@ export default function AIWorkbenchApp() {
             <Route path="/library" element={<AppLayout><Library /></AppLayout>} />
             <Route path="/gallery" element={<AppLayout><Gallery /></AppLayout>} />
             <Route path="/instance/:instanceId" element={<AppLayout><InstanceDetail /></AppLayout>} />
+            <Route path="/team" element={<AppLayout><TeamPage /></AppLayout>} />
 
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>

@@ -13,7 +13,8 @@ import {
   CreditCardIcon,
   Brain,
   CheckCircle,
-  Video
+  Video,
+  Users
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -71,6 +72,12 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
       href: "/workbench?tab=video",
       icon: Video,
       title: "common.dynamic"
+    },
+    {
+      key: "team",
+      href: "/team",
+      icon: Users,
+      title: "common.team"
     },
     {
       key: "tariffs",
