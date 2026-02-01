@@ -260,8 +260,11 @@ export function NormalizationBuilder({ rawSchema, config, onChange }: Normalizat
 
                                 {/* Values Configuration (Granular Control) */}
                                 <div className="space-y-4">
-                                    <ValueListEditor
-                                        values={activeRule.values || []}
+                                    <ParameterValuesList
+                                        values={Array.isArray(activeRule.values) ? activeRule.values : []}
+                                        type={paramType}
+                                        min={activeRule.min_override ?? activeSchema?.minimum}
+                                        max={activeRule.max_override ?? activeSchema?.maximum}
                                         onChange={(newValues) => handleUpdateRule(selectedParamId!, { values: newValues })}
                                     />
 
