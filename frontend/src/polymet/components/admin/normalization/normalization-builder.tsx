@@ -113,7 +113,6 @@ export function NormalizationBuilder({ rawSchema, config, onChange }: Normalizat
     const paramType = activeSchema?.type || "string"
 
     return (
-    return (
         <div className="grid grid-cols-12 h-full gap-4">
 
             {/* LEFT SIDEBAR: Navigation (Registry + Configured) */}
