@@ -37,6 +37,10 @@ class CatalogService:
         existing_ids = {p.id for p in params}
         
         for param_id, config in ui_config.items():
+            # Safety check: Config must be a dict
+            if not isinstance(config, dict):
+                continue
+                
             if param_id not in existing_ids:
                 # Infer type
                 default_val = config.get("default")
@@ -67,6 +71,9 @@ class CatalogService:
         
         for p in params:
             config = ui_config.get(p.id, {})
+            # Safety check
+            if not isinstance(config, dict):
+                config = {}
             
             # A. Global Visibility Override
             # If explicit hidden in config
