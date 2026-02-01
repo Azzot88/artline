@@ -43,7 +43,7 @@ class PricingRule(BaseModel):
     param_id: str
     operator: Literal["eq", "neq", "gt", "gte", "lt", "lte", "in", "contains"]
     value: Any
-    surcharge: int = 0
+    surcharge: float = 0.0
     surcharge_percent: float = 0.0
     
     label: Optional[str] = None # Description for the bill, e.g. "High Resolution Fee"
