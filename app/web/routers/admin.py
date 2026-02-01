@@ -514,6 +514,8 @@ async def fetch_model_schema_endpoint(
 
 from sqlalchemy import or_, and_
 
+from sqlalchemy.orm import selectinload, joinedload
+
 @router.get("/jobs/broken", response_model=List[JobRead])
 async def get_broken_jobs(
     user: User = Depends(get_admin_user),
@@ -526,6 +528,7 @@ async def get_broken_jobs(
     """
     stmt = (
         select(Job)
+        .options(joinedload(Job.model))
         .where(
             or_(
                 Job.status == 'failed',
@@ -538,6 +541,8 @@ async def get_broken_jobs(
         .order_by(Job.created_at.desc())
         .limit(limit)
     )
+    res = await db.execute(stmt)
+    return res.scalars().all()
     res = await db.execute(stmt)
     return res.scalars().all()
 
