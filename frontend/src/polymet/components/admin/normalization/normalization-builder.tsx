@@ -324,18 +324,16 @@ export function NormalizationBuilder({ rawSchema, config, onChange }: Normalizat
                                     </Select>
                                 </div>
                             </div>
-
-                    </div>
                         </ScrollArea>
-        </div>
-    ) : (
-        <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm">
-            <Settings2 className="w-8 h-8 mb-2 opacity-20" />
-            Select a parameter to edit rules
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm">
+                        <Settings2 className="w-8 h-8 mb-2 opacity-20" />
+                        Select a parameter to edit rules
+                    </div>
+                )}
+            </div>
         </div>
     )
 }
-            </div >
-        </div >
-    )
 }
