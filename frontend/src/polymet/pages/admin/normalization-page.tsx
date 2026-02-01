@@ -189,7 +189,7 @@ export function NormalizationPage() {
                                                         <div key={param.id}>
                                                             {/* We assume ModelParameterControl handles label rendering */}
                                                             <ModelParameterControl
-                                                                param={param}
+                                                                parameter={param}
                                                                 value={param.default}
                                                                 onChange={() => { }} // Read-only preview
                                                             />
