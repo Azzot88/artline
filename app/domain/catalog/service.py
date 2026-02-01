@@ -1,6 +1,6 @@
 
 from typing import List, Dict, Any, Optional
-from app.domain.catalog.schemas import UIParameter, ModelUISpec, ParameterGroup, UIParameterConfig, PricingRule
+from app.domain.catalog.schemas import UIParameter, ModelUISpec, ParameterGroup, UIParameterConfig, PricingRule, ParameterOption
 from app.domain.providers.models import AIModel
 from app.domain.catalog.schema_converter import SchemaToUIConverter
 
@@ -133,10 +133,10 @@ class CatalogService:
                     # 2. Add to Options
                     # Convert to ParameterOption
                     opt_label = v_conf.get("label") or str(v_conf.get("value"))
-                    allowed_options.append({
-                        "label": opt_label,
-                        "value": v_conf.get("value")
-                    })
+                    allowed_options.append(ParameterOption(
+                        label=opt_label,
+                        value=v_conf.get("value")
+                    ))
                     
                     # 3. Pricing Rule
                     price = v_conf.get("price", 0)

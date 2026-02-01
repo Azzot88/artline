@@ -113,94 +113,106 @@ export function NormalizationBuilder({ rawSchema, config, onChange }: Normalizat
     const paramType = activeSchema?.type || "string"
 
     return (
+    return (
         <div className="grid grid-cols-12 h-full gap-4">
 
-            {/* LEFT: Registry */}
-            <div className="col-span-3 border-r h-full flex flex-col bg-muted/10">
-                <div className="p-4 border-b bg-muted/20">
-                    <h3 className="font-semibold flex items-center gap-2">
-                        <Settings2 className="w-4 h-4" />
-                        Raw Inputs
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        From Provider API ({registryKeys.length})
-                    </p>
-                </div>
-                <ScrollArea className="flex-1 p-2">
-                    <div className="space-y-1">
-                        {registryKeys.map(key => {
-                            const isConfigured = !!config?.[key]
-                            return (
+            {/* LEFT SIDEBAR: Navigation (Registry + Configured) */}
+            <div className="col-span-4 border-r h-full flex flex-col bg-muted/10">
+
+                {/* Section 1: Active/Normalized Params */}
+                <div className="flex-1 flex flex-col min-h-0">
+                    <div className="p-4 border-b bg-background/50">
+                        <h3 className="font-semibold">Normalized Params</h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Active UI Controls
+                        </p>
+                    </div>
+                    <ScrollArea className="flex-1 p-2">
+                        <div className="space-y-2">
+                            {configuredParams.length === 0 && (
+                                <div className="text-center py-6 text-muted-foreground text-sm border border-dashed rounded-md m-2">
+                                    No parameters configured yet
+                                </div>
+                            )}
+                            {configuredParams.map(param => (
                                 <div
-                                    key={key}
-                                    onClick={() => handleAddParam(key)}
+                                    key={param.id}
+                                    onClick={() => setSelectedParamId(param.id)}
                                     className={cn(
-                                        "flex items-center justify-between p-2 rounded-md text-sm cursor-pointer hover:bg-muted transition-colors",
-                                        isConfigured ? "opacity-50" : "font-medium"
+                                        "flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:border-primary/50 transition-all",
+                                        selectedParamId === param.id ? "border-primary bg-primary/5 shadow-sm" : "bg-card"
                                     )}
                                 >
-                                    <span className="truncate" title={key}>{key}</span>
-                                    {isConfigured ? (
-                                        <span className="text-xs text-green-600">Mapped</span>
+                                    {/* Status Icon */}
+                                    {param.visible !== false ? (
+                                        <Eye className="w-4 h-4 text-muted-foreground" />
                                     ) : (
-                                        <Plus className="w-3 h-3 text-muted-foreground" />
+                                        <EyeOff className="w-4 h-4 text-muted-foreground/50" />
                                     )}
-                                </div>
-                            )
-                        })}
-                    </div>
-                </ScrollArea>
-            </div>
 
-            {/* MIDDLE: Workshop (List of Rules) */}
-            <div className="col-span-4 border-r h-full flex flex-col">
-                <div className="p-4 border-b">
-                    <h3 className="font-semibold">Normalized Params</h3>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        Active UI Controls
-                    </p>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-medium text-sm truncate">
+                                            {param.label_override || param.id}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground truncate font-mono">
+                                            {param.id}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-1">
+                                        {param.values && param.values.length > 0 && (
+                                            <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
+                                                {param.values.length} vals
+                                            </span>
+                                        )}
+                                        <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </ScrollArea>
                 </div>
-                <ScrollArea className="flex-1 p-2">
-                    <div className="space-y-2">
-                        {configuredParams.length === 0 && (
-                            <div className="text-center py-10 text-muted-foreground text-sm">
-                                Select raw inputs to map them
-                            </div>
-                        )}
-                        {configuredParams.map(param => (
-                            <div
-                                key={param.id}
-                                onClick={() => setSelectedParamId(param.id)}
-                                className={cn(
-                                    "flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:border-primary/50 transition-all",
-                                    selectedParamId === param.id ? "border-primary bg-primary/5 shadow-sm" : "bg-card"
-                                )}
-                            >
-                                {/* Status Icon */}
-                                {param.visible !== false ? (
-                                    <Eye className="w-4 h-4 text-muted-foreground" />
-                                ) : (
-                                    <EyeOff className="w-4 h-4 text-muted-foreground/50" />
-                                )}
 
-                                <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-sm truncate">
-                                        {param.label_override || param.id}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground truncate font-mono">
-                                        {param.id}
-                                    </div>
-                                </div>
+                <Separator />
 
-                                <ArrowRight className="w-3 h-3 text-muted-foreground" />
-                            </div>
-                        ))}
+                {/* Section 2: Raw Inputs (Add New) */}
+                <div className="h-[250px] flex flex-col bg-muted/20">
+                    <div className="p-3 border-b flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Settings2 className="w-3.5 h-3.5" />
+                            <span className="text-sm font-semibold">Map Raw Input</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">{registryKeys.length} available</span>
                     </div>
-                </ScrollArea>
+                    <ScrollArea className="flex-1 p-2">
+                        <div className="space-y-1">
+                            {registryKeys.map(key => {
+                                const isConfigured = !!config?.[key]
+                                return (
+                                    <div
+                                        key={key}
+                                        onClick={() => handleAddParam(key)}
+                                        className={cn(
+                                            "flex items-center justify-between p-2 rounded-md text-xs cursor-pointer hover:bg-muted transition-colors border border-transparent hover:border-border",
+                                            isConfigured ? "opacity-50" : "font-medium"
+                                        )}
+                                    >
+                                        <span className="truncate flex-1" title={key}>{key}</span>
+                                        {isConfigured ? (
+                                            <span className="text-[10px] text-green-600">Mapped</span>
+                                        ) : (
+                                            <Plus className="w-3 h-3 text-muted-foreground" />
+                                        )}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </ScrollArea>
+                </div>
             </div>
 
-            {/* RIGHT: Editor (Active Rule) */}
-            <div className="col-span-5 h-full flex flex-col bg-background">
+            {/* RIGHT MAIN: Editor (Active Rule) */}
+            <div className="col-span-8 h-full flex flex-col bg-background">
                 {activeRule ? (
                     <div className="flex flex-col h-full">
                         <div className="p-4 border-b bg-muted/10">
