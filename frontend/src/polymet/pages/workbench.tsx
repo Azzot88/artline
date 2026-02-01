@@ -9,8 +9,10 @@ import { FormatResolutionIndicator } from "@/polymet/components/format-resolutio
 import { Card, CardContent } from "@/components/ui/card"
 import { CommunityGallery } from "@/polymet/components/community-gallery"
 import { Textarea } from "@/components/ui/textarea"
-import { PlusIcon, SparklesIcon, AlertCircle } from "lucide-react"
+import { PlusIcon, SparklesIcon, AlertCircle, Settings2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { useLanguage } from "@/polymet/components/language-provider"
 import { useAuth } from "@/polymet/components/auth-provider"
 import { useModels } from "@/hooks/use-models"
@@ -437,10 +439,12 @@ export function Workbench() {
                   />
                 </div>
 
-                {/* Parameter List - Exclude File Inputs */}
-                <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                {/* Parameter List: Split into Primary (Inline) and Advanced (Popover) */}
+                <div className="flex flex-wrap items-center gap-2 max-h-[120px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+
+                  {/* 1. Primary Params (Format, Aspect Ratio) */}
                   {modelParameters
-                    .filter(p => !(p.type === 'image' || p.name?.includes('image') || p.name === 'mask'))
+                    .filter(p => !p.hidden && (p.name === 'format' || p.name === 'aspect_ratio' || p.group === 'format'))
                     .map(param => (
                       <ModelParameterControl
                         key={param.id}
@@ -452,6 +456,50 @@ export function Workbench() {
                         compact
                       />
                     ))}
+
+                  {/* 2. Advanced Params (Popover) */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:text-primary">
+                        <Settings2 className="w-4 h-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 p-0 glass-effect border-white/10" side="top" align="start">
+                      <div className="p-3 border-b border-white/5 bg-white/5 font-semibold text-sm">
+                        Advanced Settings
+                      </div>
+                      <ScrollArea className="h-[300px] p-4">
+                        <div className="space-y-4">
+                          {modelParameters
+                            .filter(p => !p.hidden &&
+                              !(p.type === 'image' || p.name?.includes('image') || p.name === 'mask') &&
+                              !(p.name === 'format' || p.name === 'aspect_ratio' || p.group === 'format')
+                            )
+                            .map(param => (
+                              <ModelParameterControl
+                                key={param.id}
+                                parameter={param}
+                                config={modelConfigs.find(c => c.parameter_id === param.id)}
+                                value={parameterValues[param.id]}
+                                onChange={(val) => handleParameterChange(param.id, val)}
+                                disabled={loading}
+                                compact={false} // Full view for advanced settings
+                              />
+                            ))}
+
+                          {/* Fallback if no advanced params */}
+                          {modelParameters.filter(p => !p.hidden &&
+                            !(p.type === 'image' || p.name?.includes('image') || p.name === 'mask') &&
+                            !(p.name === 'format' || p.name === 'aspect_ratio' || p.group === 'format')
+                          ).length === 0 && (
+                              <div className="text-center text-muted-foreground text-xs py-4">
+                                No advanced settings available
+                              </div>
+                            )}
+                        </div>
+                      </ScrollArea>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <div className="md:ml-auto">
