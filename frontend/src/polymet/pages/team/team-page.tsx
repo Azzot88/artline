@@ -3,7 +3,7 @@ import { RoleCard } from "@/polymet/components/team/role-card"
 import { NewRoleCard } from "@/polymet/components/team/new-role-card"
 import { RoleEditor } from "@/polymet/components/team/role-editor"
 import { AnimatePresence, motion } from "framer-motion"
-import { useLanguage } from "@/polymet/prototypes/ai-workbench-app"
+import { useLanguage } from "@/polymet/components/language-provider"
 
 // Mock Data
 const MOCK_ROLES = [

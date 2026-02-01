@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { X, Save, Wand2 } from "lucide-react"
-import { useLanguage } from "@/polymet/prototypes/ai-workbench-app"
+import { useLanguage } from "@/polymet/components/language-provider"
 
 interface RoleEditorProps {
     role?: any // Replace with proper type later

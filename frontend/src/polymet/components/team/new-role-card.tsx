@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Plus } from "lucide-react"
-import { useLanguage } from "@/polymet/prototypes/ai-workbench-app"
+import { useLanguage } from "@/polymet/components/language-provider"
 
 interface NewRoleCardProps {
     onClick: () => void

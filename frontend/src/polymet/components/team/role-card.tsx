@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { User, Settings2, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useLanguage } from "@/polymet/prototypes/ai-workbench-app"
+import { useLanguage } from "@/polymet/components/language-provider"
 
 interface RoleCardProps {
     role: {
