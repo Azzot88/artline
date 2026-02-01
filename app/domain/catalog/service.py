@@ -32,8 +32,36 @@ class CatalogService:
         # Parse inputs from normalized schema if available, else raw
         if raw_schema:
             try:
-                input_props = raw_schema.get("components", {}).get("schemas", {}).get("Input", {}).get("properties", {})
+                # 1. Standard OpenAPI/Replicate
+                input_props = raw_schema.get("components", {}).get("schemas", {}).get("Input", {}).get("properties")
+                
                 if not input_props:
+                    # 2. Check for wrapped structure (Pydantic/LangChain style)
+                    # If root properties contain 'parameters' or 'input', drill down.
+                    root_props = raw_schema.get("properties", {})
+                    if "parameters" in root_props:
+                         # It's likely a wrapper. Need to resolve if ref or direct.
+                         # Simplified: assuming direct for now or let convert handle specific sub-dict?
+                         # Actually, SchemaConverter expects a dict of properties. 
+                         # If 'parameters' is an object with 'properties', we want THAT.
+                         params_def = root_props["parameters"]
+                         if "properties" in params_def:
+                             input_props = params_def["properties"]
+                         elif "$ref" in params_def:
+                             # Resolve Ref (Limited)
+                             # Doing a quick local resolve if possible
+                             ref_name = params_def["$ref"].split("/")[-1]
+                             ref_def = raw_schema.get("definitions", {}).get(ref_name, {}) or \
+                                       raw_schema.get("$defs", {}).get(ref_name, {})
+                             input_props = ref_def.get("properties", {})
+
+                    elif "input" in root_props:
+                         input_def = root_props["input"]
+                         if "properties" in input_def:
+                             input_props = input_def["properties"]
+
+                if not input_props:
+                    # 3. Fallback to root (but be careful - if we found nothing above, maybe root IS the props)
                     input_props = raw_schema.get("properties", {})
                 
                 params = self.schema_converter.convert_to_ui_spec(input_props, root_schema=raw_schema)

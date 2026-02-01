@@ -21,7 +21,11 @@ class SchemaToUIConverter:
         # Sort keys by priority then alpha
         keys = sorted(props.keys(), key=lambda k: (priority.index(k) if k in priority else 999, k))
 
+        # Blacklist removed - using smarter traversal in Service instead
+
+        
         for key in keys:
+            
             details = props[key]
             
             # Skip hidden/blacklisted params logic?
@@ -75,9 +79,13 @@ class SchemaToUIConverter:
             if key == "aspect_ratio":
                 p_type = "select"
                 
+            title = details.get("title") or details.get("label")
+            if not title:
+                title = key.replace("_", " ").title()
+                
             param = UIParameter(
                 id=key,
-                label=details.get("title") or key.replace("_", " ").title(),
+                label=str(title).strip(),
                 type=p_type,
                 default=details.get("default"),
                 description=details.get("description"),
