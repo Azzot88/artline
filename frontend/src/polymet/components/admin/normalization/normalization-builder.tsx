@@ -22,7 +22,6 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import {
     Plus,
-    Trash2,
     GripVertical,
     ArrowRight,
     Eye,
@@ -227,30 +226,25 @@ export function NormalizationBuilder({ rawSchema, config, onChange }: Normalizat
                                         {activeRule.type || "Auto"}
                                     </span>
                                 </div>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleDeleteRule(selectedParamId!)}
-                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </Button>
+
+                                <div className="flex items-center gap-2 bg-background/50 p-1.5 rounded-full border">
+                                    <span className={cn("text-xs font-medium px-2", activeRule.visible !== false ? "text-primary" : "text-muted-foreground")}>
+                                        {activeRule.visible !== false ? "Enabled" : "Disabled"}
+                                    </span>
+                                    <Switch
+                                        checked={activeRule.visible !== false}
+                                        onCheckedChange={(c) => handleUpdateRule(selectedParamId!, { visible: c })}
+                                    />
+                                </div>
                             </div>
                         </div>
 
                         <ScrollArea className="flex-1 p-4">
                             <div className="space-y-6">
 
-                                {/* Visibility & Label */}
+                                {/* Label & Description */}
                                 <div className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <Label htmlFor="visible">Visible</Label>
-                                        <Switch
-                                            id="visible"
-                                            checked={activeRule.visible !== false}
-                                            onCheckedChange={(c) => handleUpdateRule(selectedParamId!, { visible: c })}
-                                        />
-                                    </div>
+                                    {/* Visible toggle moved to header */}
 
                                     <div className="grid gap-2">
                                         <Label htmlFor="label">Label</Label>
