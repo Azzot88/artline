@@ -32,37 +32,37 @@ export function NormalizationPage() {
     const { data: model, isLoading } = useQuery({
         queryKey: ['admin-model', modelId],
         queryFn: async () => {
-            const res = await fetch(\`/api/admin/models/\${modelId}\`, {
-            headers: { Authorization: \`Bearer \${token}\` }
-        })
-        if (!res.ok) throw new Error("Failed to load model")
-        return res.json()
-    }
-  })
+            const res = await fetch(`/api/admin/models/${modelId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            if (!res.ok) throw new Error("Failed to load model")
+            return res.json()
+        }
+    })
 
-  // 2. Local State for Config
-  const [config, setConfig] = useState<any>({})
-  
-  // Sync initial state
-  useEffect(() => {
-    if (model?.ui_config) {
-        setConfig(model.ui_config || {})
-    }
-  }, [model])
+    // 2. Local State for Config
+    const [config, setConfig] = useState<any>({})
 
-  // 3. Preview Logic (Debounced)
-  const debouncedConfig = useDebounce(config, 500)
-  
-  const { data: previewSpec, isFetching: isPreviewLoading } = useQuery({
-      queryKey: ['normalization-preview', modelId, debouncedConfig],
-      queryFn: async () => {
-          if (!model?.raw_schema_json) return null
-          
-          const res = await fetch('/api/admin/models/preview-normalization', {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: \`Bearer \${token}\`
+    // Sync initial state
+    useEffect(() => {
+        if (model?.ui_config) {
+            setConfig(model.ui_config || {})
+        }
+    }, [model])
+
+    // 3. Preview Logic (Debounced)
+    const debouncedConfig = useDebounce(config, 500)
+
+    const { data: previewSpec, isFetching: isPreviewLoading } = useQuery({
+        queryKey: ['normalization-preview', modelId, debouncedConfig],
+        queryFn: async () => {
+            if (!model?.raw_schema_json) return null
+
+            const res = await fetch('/api/admin/models/preview-normalization', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: \`Bearer \${token}\`
               },
               body: JSON.stringify({
                   raw_schema: model.raw_schema_json,
@@ -79,11 +79,11 @@ export function NormalizationPage() {
   // 4. Save Mutation
   const saveMutation = useMutation({
       mutationFn: async (newConfig: any) => {
-           const res = await fetch(\`/api/admin/models/\${modelId}\`, {
+           const res = await fetch(`/ api / admin / models / ${ modelId }`, {
               method: 'PUT',
               headers: {
                   'Content-Type': 'application/json',
-                  Authorization: \`Bearer \${token}\`
+                  Authorization: `Bearer ${ token }`
               },
               body: JSON.stringify({
                   ui_config: newConfig
