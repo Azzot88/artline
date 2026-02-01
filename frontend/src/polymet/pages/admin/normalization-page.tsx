@@ -1,10 +1,7 @@
 
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-// Removing react-query import
-// import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useModel } from "@/polymet/hooks/use-model"
-import { useAuth } from "@/polymet/components/auth-provider"
+import { apiService } from "@/polymet/data/api-service"
 import { Button } from "@/components/ui/button"
 import {
     ResizableHandle,
@@ -26,7 +23,6 @@ import { toast } from "sonner"
 export function NormalizationPage() {
     const { modelId } = useParams()
     const navigate = useNavigate()
-    const { token } = useAuth()
 
     // Local State
     const [model, setModel] = useState<any>(null)
@@ -38,18 +34,15 @@ export function NormalizationPage() {
 
     // 1. Fetch Model Data
     useEffect(() => {
-        if (!modelId || !token) return
+        if (!modelId) return
 
         let cancelled = false
 
         async function fetchModel() {
             try {
                 setIsLoadingModel(true)
-                const res = await fetch(`/api/admin/models/${modelId}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
-                if (!res.ok) throw new Error("Failed to load model")
-                const data = await res.json()
+                // Use apiService which handles HttpOnly cookies
+                const data = await apiService.getAdminModel(modelId!)
 
                 if (!cancelled) {
                     setModel(data)
@@ -68,40 +61,31 @@ export function NormalizationPage() {
 
         fetchModel()
         return () => { cancelled = true }
-    }, [modelId, token])
+    }, [modelId])
 
     // 2. Preview Logic (Debounced)
     const debouncedConfig = useDebounce(config, 500)
 
     useEffect(() => {
-        if (!model?.raw_schema_json || !token) return
+        if (!model?.raw_schema_json) return
 
         let cancelled = false
 
         async function fetchPreview() {
             try {
                 setIsPreviewLoading(true)
-                const res = await fetch('/api/admin/models/preview-normalization', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        raw_schema: model.raw_schema_json,
-                        normalization_config: debouncedConfig,
-                        provider_id: model.provider
-                    })
+                const data = await apiService.previewNormalization({
+                    raw_schema: model.raw_schema_json,
+                    normalization_config: debouncedConfig,
+                    provider_id: model.provider
                 })
-                if (!res.ok) throw new Error("Preview failed")
-                const data = await res.json()
 
                 if (!cancelled) {
                     setPreviewSpec(data)
                 }
             } catch (err) {
                 console.error(err)
-                // Silent fail for preview is usually better than spamming toasts
+                // Silent fail
             } finally {
                 if (!cancelled) setIsPreviewLoading(false)
             }
@@ -109,28 +93,21 @@ export function NormalizationPage() {
 
         fetchPreview()
         return () => { cancelled = true }
-    }, [model, debouncedConfig, token])
+    }, [model, debouncedConfig])
 
     // 3. Save Handler
     const handleSave = async () => {
-        if (!modelId || !token) return
+        if (!modelId) return
 
         try {
             setIsSaving(true)
-            const res = await fetch(`/api/admin/models/${modelId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    ui_config: config
-                })
+            // We use updateModel but only send ui_config
+            // We cast config to any because updateModel expects typed request but ui_config is dict
+            await apiService.updateModel(modelId, {
+                ui_config: config
             })
-            if (!res.ok) throw new Error("Save failed")
 
             toast.success("Normalization rules saved")
-            // Optionally refetch model or update local state if needed
         } catch (err) {
             console.error(err)
             toast.error("Failed to save rules")

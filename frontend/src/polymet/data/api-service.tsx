@@ -218,6 +218,10 @@ export const apiService = {
     return api.post<any>("/admin/analyze-model", { model_ref: modelRef })
   },
 
+  async previewNormalization(data: { raw_schema: any, normalization_config: any, provider_id: string }) {
+    return api.post<any>("/admin/models/preview-normalization", data)
+  },
+
   async uploadModelImage(file: File) {
     const formData = new FormData()
     formData.append("file", file)
