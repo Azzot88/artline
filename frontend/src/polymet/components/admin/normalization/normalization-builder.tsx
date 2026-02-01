@@ -31,7 +31,7 @@ import {
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-// import { Reorder } from "framer-motion" // Use standard map for now to reduce complexity in Phase 1
+import { ValueListEditor } from "./value-list-editor"
 
 interface NormalizationBuilderProps {
     rawSchema: any
@@ -246,78 +246,96 @@ export function NormalizationBuilder({ rawSchema, config, onChange }: Normalizat
 
                                 <Separator />
 
-                                {/* Constraints */}
+                                {/* Values Configuration (Granular Control) */}
                                 <div className="space-y-4">
-                                    <h4 className="text-sm font-semibold text-muted-foreground">Constraints</h4>
+                                    <ValueListEditor
+                                        values={activeRule.values || []}
+                                        onChange={(newValues) => handleUpdateRule(selectedParamId!, { values: newValues })}
+                                    />
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="grid gap-2">
-                                            <Label>Min</Label>
-                                            <Input
-                                                type="number"
-                                                value={activeRule.min_override ?? ""}
-                                                onChange={(e) => handleUpdateRule(selectedParamId!, { min_override: e.target.value ? Number(e.target.value) : undefined })}
-                                            />
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Label>Max</Label>
-                                            <Input
-                                                type="number"
-                                                value={activeRule.max_override ?? ""}
-                                                onChange={(e) => handleUpdateRule(selectedParamId!, { max_override: e.target.value ? Number(e.target.value) : undefined })}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid gap-2">
-                                        <Label>Access Tiers</Label>
-                                        <Select
-                                            value={activeRule.access_tiers ? activeRule.access_tiers.join(",") : "all"}
-                                            onValueChange={(val) => {
-                                                const tiers = val === "all" ? [] : val.split(',')
-                                                handleUpdateRule(selectedParamId!, { access_tiers: tiers })
-                                            }}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="All Users" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">All Users</SelectItem>
-                                                <SelectItem value="starter,pro,studio">Starter+</SelectItem>
-                                                <SelectItem value="pro,studio">Pro+</SelectItem>
-                                                <SelectItem value="studio">Studio Only</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    <div className="grid gap-2">
-                                        <Label>Group</Label>
-                                        <Select
-                                            value={activeRule.group || "settings"}
-                                            onValueChange={(val) => handleUpdateRule(selectedParamId!, { group: val })}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="basic">Basic</SelectItem>
-                                                <SelectItem value="advanced">Advanced</SelectItem>
-                                                <SelectItem value="settings">Settings</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                    <div className="text-[10px] text-muted-foreground bg-muted/30 p-2 rounded">
+                                        Defining "Allowed Values" converts this input to a <strong>Select</strong> dropdown.
+                                        Constraints (Min/Max) below apply only if NO values are defined.
                                     </div>
                                 </div>
 
+                                <Separator />
+
+                                {/* Constraints (shown if no values or just as backup) */}
+                                {(!activeRule.values || activeRule.values.length === 0) && (
+                                    <div className="space-y-4">
+                                        <h4 className="text-sm font-semibold text-muted-foreground">Numeric Constraints</h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid gap-2">
+                                                <Label>Min</Label>
+                                                <Input
+                                                    type="number"
+                                                    value={activeRule.min_override ?? ""}
+                                                    onChange={(e) => handleUpdateRule(selectedParamId!, { min_override: e.target.value ? Number(e.target.value) : undefined })}
+                                                />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label>Max</Label>
+                                                <Input
+                                                    type="number"
+                                                    value={activeRule.max_override ?? ""}
+                                                    onChange={(e) => handleUpdateRule(selectedParamId!, { max_override: e.target.value ? Number(e.target.value) : undefined })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="grid gap-2">
+                                    <Label>Access Tiers</Label>
+                                    <Select
+                                        value={activeRule.access_tiers ? activeRule.access_tiers.join(",") : "all"}
+                                        onValueChange={(val) => {
+                                            const tiers = val === "all" ? [] : val.split(',')
+                                            handleUpdateRule(selectedParamId!, { access_tiers: tiers })
+                                        }}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="All Users" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All Users</SelectItem>
+                                            <SelectItem value="starter,pro,studio">Starter+</SelectItem>
+                                            <SelectItem value="pro,studio">Pro+</SelectItem>
+                                            <SelectItem value="studio">Studio Only</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label>Group</Label>
+                                    <Select
+                                        value={activeRule.group || "settings"}
+                                        onValueChange={(val) => handleUpdateRule(selectedParamId!, { group: val })}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="basic">Basic</SelectItem>
+                                            <SelectItem value="advanced">Advanced</SelectItem>
+                                            <SelectItem value="settings">Settings</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
+
+                    </div>
                         </ScrollArea>
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm">
-                        <Settings2 className="w-8 h-8 mb-2 opacity-20" />
-                        Select a parameter to edit rules
-                    </div>
-                )}
-            </div>
         </div>
+    ) : (
+        <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm">
+            <Settings2 className="w-8 h-8 mb-2 opacity-20" />
+            Select a parameter to edit rules
+        </div>
+    )
+}
+            </div >
+        </div >
     )
 }
