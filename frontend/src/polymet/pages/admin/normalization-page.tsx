@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 
 import { NormalizationBuilder } from "@/polymet/components/admin/normalization/normalization-builder"
+import { TemplateManager } from "@/polymet/components/admin/normalization/template-manager" // Imported
 import { ModelParameterControl } from "@/polymet/components/model-parameter-control"
 import { useDebounce } from "@/polymet/hooks/use-debounce"
 import { toast } from "sonner"
@@ -135,6 +136,12 @@ export function NormalizationPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {/* Template Manager */}
+                    <TemplateManager
+                        currentConfig={config}
+                        onLoadConfig={setConfig}
+                    />
+                    <div className="w-px h-6 bg-border mx-2" />
                     <Button
                         onClick={handleSave}
                         disabled={isSaving}

@@ -742,3 +742,106 @@ async def get_analytics_visitors(
     db: AsyncSession = Depends(get_db)
 ):
     return await AnalyticsService.get_daily_visitors(db, days)
+
+# ============================================================================
+# TEMPLATES (New Phase 4)
+# ============================================================================
+
+from app.domain.catalog.templates import NormalizationTemplate, TemplateCreate, TemplateRead
+
+# TEMPLATES_FILE persistence
+import json
+import os
+from datetime import datetime
+
+TEMPLATES_FILE = "/app/templates.json"
+
+def load_templates() -> List[NormalizationTemplate]:
+    if not os.path.exists(TEMPLATES_FILE):
+        return []
+    try:
+        with open(TEMPLATES_FILE, "r") as f:
+            data = json.load(f)
+            return [NormalizationTemplate(**item) for item in data]
+    except Exception as e:
+        print(f"Error loading templates: {e}")
+        return []
+
+def save_templates(templates: List[NormalizationTemplate]):
+    try:
+        with open(TEMPLATES_FILE, "w") as f:
+            # Pydantic v2 dump
+            json.dump([t.model_dump() if hasattr(t, 'model_dump') else t.dict() for t in templates], f, default=str)
+    except Exception as e:
+        print(f"Error saving templates: {e}")
+
+@router.get("/templates", response_model=List[TemplateRead])
+async def list_templates(
+    user: User = Depends(get_admin_user)
+):
+    templates = load_templates()
+    return [
+        TemplateRead(
+            id=t.id, 
+            name=t.name, 
+            description=t.description,
+            config_summary=len(t.config),
+            created_at=t.created_at
+        )
+        for t in templates
+    ]
+
+@router.post("/templates", response_model=TemplateRead)
+async def create_template(
+    req: TemplateCreate,
+    user: User = Depends(get_admin_user)
+):
+    templates = load_templates()
+    
+    # Check duplicate names
+    if any(t.name == req.name for t in templates):
+        raise HTTPException(status_code=400, detail="Template name already exists")
+        
+    new_t = NormalizationTemplate(
+        id=str(uuid.uuid4()),
+        name=req.name,
+        description=req.description,
+        config=req.config,
+        created_at=datetime.utcnow()
+    )
+    
+    templates.append(new_t)
+    save_templates(templates)
+    
+    return TemplateRead(
+        id=new_t.id,
+        name=new_t.name,
+        description=new_t.description,
+        config_summary=len(new_t.config),
+        created_at=new_t.created_at
+    )
+
+@router.delete("/templates/{template_id}")
+async def delete_template(
+    template_id: str,
+    user: User = Depends(get_admin_user)
+):
+    templates = load_templates()
+    new_list = [t for t in templates if t.id != template_id]
+    
+    if len(new_list) == len(templates):
+         raise HTTPException(status_code=404, detail="Template not found")
+         
+    save_templates(new_list)
+    return {"ok": True}
+
+@router.get("/templates/{template_id}", response_model=NormalizationTemplate)
+async def get_template(
+    template_id: str,
+    user: User = Depends(get_admin_user)
+):
+    templates = load_templates()
+    t = next((t for t in templates if t.id == template_id), None)
+    if not t:
+        raise HTTPException(status_code=404, detail="Template not found")
+    return t
