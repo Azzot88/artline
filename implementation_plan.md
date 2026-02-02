@@ -51,7 +51,15 @@ Refactor the normalization logic to remove duplication, centralization type hand
 3.  **Update `replicate/request_normalizer.py`**: [x] Refactored to use new components.
 4.  **Verify Usage**: [x] Verified `replicate_service.py` is compatible.
 5.  **Delete Legacy**: [x] Removed `normalization.py` and old `request_normalizer.py`.
-6.  **Run Tests**: [ ] User to run `scripts/verify_refactor_lite.py`.
+### 6. Phase 2: Access Control (Current)
+- **Status**: Ready for Verification
+- Created `verify_access_control.py`
+
+## Implementation Steps (Phase 2)
+
+1.  **Create AccessControlService**: [x] Implemented in `app/domain/catalog/access_control.py`.
+2.  **Refactor CatalogService**: [x] Updated to use new service.
+3.  **Verify**: [ ] User to run `scripts/verify_access_control.py`.
 
 ## Verification Plan
 
@@ -61,3 +69,4 @@ Refactor the normalization logic to remove duplication, centralization type hand
 
 ### Manual Verification
 - Run: `docker compose exec web python scripts/verify_refactor_lite.py`
+- Run: `docker compose exec web python scripts/verify_access_control.py`

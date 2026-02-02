@@ -3,10 +3,12 @@ from typing import List, Dict, Any, Optional
 from app.domain.catalog.schemas import UIParameter, ModelUISpec, ParameterGroup, UIParameterConfig, PricingRule, ParameterOption
 from app.domain.providers.models import AIModel
 from app.domain.catalog.schema_converter import SchemaToUIConverter
+from app.domain.catalog.access_control import AccessControlService
 
 class CatalogService:
     def __init__(self):
         self.schema_converter = SchemaToUIConverter()
+        self.access_control = AccessControlService()
 
     def resolve_ui_spec(self, model: AIModel, user_tier: str = "starter") -> ModelUISpec:
         return self.resolve_from_schema(
@@ -109,22 +111,9 @@ class CatalogService:
             if not isinstance(config, dict):
                 config = {}
             
-            # A. Global Visibility Override
-            # If explicit hidden in config
-            if config.get("hidden") is True:
+            # A. & B. Access Control (Visibility + Tier)
+            if not self.access_control.can_access_parameter(config, user_tier):
                 continue
-            
-            # B. Tiered Access Check
-            # access_tiers: ["pro", "studio"] or None/Empty (All)
-            allowed_tiers = config.get("access_tiers")
-            
-            if allowed_tiers and len(allowed_tiers) > 0:
-                 levels = {"starter": 1, "pro": 2, "studio": 3, "admin": 99}
-                 # Simple check: user_tier must be in allowed list or 'all'
-                 if user_tier not in allowed_tiers and "all" not in allowed_tiers:
-                     # Exception: Admin sees everything?
-                     if user_tier != "admin":
-                        continue
             
             # C. Input Customization
             if "label" in config: 
@@ -143,20 +132,16 @@ class CatalogService:
             if "min" in config: p.min = config["min"]
             if "max" in config: p.max = config["max"]
 
-            # E. Granular Values & Pricing (Phase 2)
+            # E. Granular Values & Pricing
             values_config = config.get("values")
             if values_config and isinstance(values_config, list):
                 allowed_options = []
                 pricing_generated = []
                 
                 for v_conf in values_config:
-                    # v_conf is Dict matching ParameterValueConfig
-                    
-                    # 1. Tier Check for specific value
-                    v_tiers = v_conf.get("access_tiers")
-                    if v_tiers and len(v_tiers) > 0:
-                        if user_tier not in v_tiers and "all" not in v_tiers and user_tier != "admin":
-                            continue # Skip this value option
+                    # 1. Access Check for specific value
+                    if not self.access_control.can_access_value(v_conf, user_tier):
+                        continue
                     
                     # 2. Add to Options
                     # Convert to ParameterOption
