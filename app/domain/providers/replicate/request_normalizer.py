@@ -4,6 +4,8 @@ from app.domain.providers.normalization.base import RequestNormalizer
 from app.domain.providers.normalization.type_normalizers import BaseTypeNormalizer
 from app.domain.providers.normalization.resolution_strategy import CinemaResolutionStrategy
 
+from app.domain.catalog.schema_utils import extract_input_properties
+
 class ReplicateRequestNormalizer(RequestNormalizer, BaseTypeNormalizer):
     """
     Replicate specific request normalization.
@@ -20,14 +22,22 @@ class ReplicateRequestNormalizer(RequestNormalizer, BaseTypeNormalizer):
         cleaned = {}
         
         # Determine strict schema properties
-        properties = schema.get("inputs", []) if "inputs" in schema else schema
-        
-        schema_map = {}
-        if isinstance(properties, list):
+        # 1. Check for normalized caps 'inputs' list (Legacy/Cache)
+        if "inputs" in schema and isinstance(schema["inputs"], list):
+            properties = schema["inputs"]
+            schema_map = {}
             for item in properties:
                 schema_map[item["name"]] = item
-        else:
+                
+        # 2. Check for OpenAPI raw structure
+        elif "components" in schema or "properties" in schema:
+            properties = extract_input_properties(schema)
+            # properties is Dict[name, details]
             schema_map = properties
+            
+        else:
+            # Assume it's already a map of {name: details}
+            schema_map = schema
 
         # Apply Resolution Strategy (Cinema Logic)
         # Mutates input_data copy effectively but we are working on the dict passed in?

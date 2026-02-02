@@ -72,7 +72,20 @@ Refactor the normalization logic to remove duplication, centralization type hand
 1.  **DB Schema**: [x] Added hash column.
 2.  **Pipeline**: [x] Created `SchemaProcessingPipeline`.
 3.  **Refactor**: [x] Updated `CatalogService`.
-4.  **Verify**: [ ] User to run `scripts/verify_pipeline.py`.
+### 8. Phase 4: Consolidation & Cleanup (Current)
+- **Status**: Ready for Verification
+- Created `app/domain/catalog/schema_utils.py`.
+- Updated `SchemaProcessingPipeline` (logging, shared logic).
+- Updated `ReplicateRequestNormalizer` (support for raw schema).
+- Cleaned up `ReplicateCapabilitiesService` (removed redundancies).
+
+## Implementation Steps (Phase 4)
+
+1.  **Shared Utils**: [x] Created `schema_utils.py`.
+2.  **Pipeline**: [x] Updated to use utils & logging.
+3.  **Normalizer**: [x] Updated to parse raw schemas.
+4.  **Cleanup**: [x] Removed `to_canonical` from `schema_helpers.py`.
+5.  **Verify**: [ ] User to run `scripts/verify_refactor_lite.py` (and others).
 
 ## Verification Plan
 
