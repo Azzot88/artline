@@ -36,7 +36,7 @@ class SchemaProcessingPipeline:
         content_hash = self._calculate_hash(raw_schema, ui_config)
 
         # 2. Extract Input Properties from OpenAPI
-        input_props = self._extract_input_properties(raw_schema)
+        input_props = extract_input_properties(raw_schema)
         
         # 3. Convert to Initial UI Parameters
         base_params = self.converter.convert_to_ui_spec(input_props, root_schema=raw_schema)
