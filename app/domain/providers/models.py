@@ -58,6 +58,7 @@ class AIModel(Base):
     replicate_name: Mapped[str | None] = mapped_column(String, nullable=True)
     raw_schema_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     normalized_caps_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    schema_version_hash: Mapped[str | None] = mapped_column(String, nullable=True)
 
     # Dynamic Pricing Rules (List[PricingRule])
     pricing_rules: Mapped[list[dict] | None] = mapped_column(JSON, nullable=True)

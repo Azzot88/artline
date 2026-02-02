@@ -60,6 +60,19 @@ Refactor the normalization logic to remove duplication, centralization type hand
 1.  **Create AccessControlService**: [x] Implemented in `app/domain/catalog/access_control.py`.
 2.  **Refactor CatalogService**: [x] Updated to use new service.
 3.  **Verify**: [ ] User to run `scripts/verify_access_control.py`.
+### 7. Phase 3: Pipeline & Optimization (Current)
+- **Status**: Ready for Verification
+- Added `schema_version_hash` column.
+- Created `app/domain/catalog/pipeline.py`.
+- Refactored `CatalogService` to be a facade for the pipeline.
+- Created `verify_pipeline.py`.
+
+## Implementation Steps (Phase 3)
+
+1.  **DB Schema**: [x] Added hash column.
+2.  **Pipeline**: [x] Created `SchemaProcessingPipeline`.
+3.  **Refactor**: [x] Updated `CatalogService`.
+4.  **Verify**: [ ] User to run `scripts/verify_pipeline.py`.
 
 ## Verification Plan
 
@@ -70,3 +83,4 @@ Refactor the normalization logic to remove duplication, centralization type hand
 ### Manual Verification
 - Run: `docker compose exec web python scripts/verify_refactor_lite.py`
 - Run: `docker compose exec web python scripts/verify_access_control.py`
+- Run: `docker compose exec web python scripts/verify_pipeline.py`
