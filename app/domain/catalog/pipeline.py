@@ -5,6 +5,7 @@ from typing import Dict, Any, List, Tuple, Optional
 from app.domain.catalog.schemas import ModelUISpec, UIParameter, ParameterGroup, UIParameterConfig, PricingRule, ParameterOption
 from app.domain.catalog.schema_converter import SchemaToUIConverter
 from app.domain.catalog.access_control import AccessControlService
+from app.domain.catalog.schema_utils import extract_input_properties
 
 class SchemaProcessingPipeline:
     """
