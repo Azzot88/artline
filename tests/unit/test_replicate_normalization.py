@@ -1,9 +1,9 @@
 import pytest
-from app.domain.providers.replicate.normalization import ReplicateNormalizer
+from app.domain.providers.replicate.request_normalizer import ReplicateRequestNormalizer
 
 @pytest.fixture
 def normalizer():
-    return ReplicateNormalizer()
+    return ReplicateRequestNormalizer()
 
 def test_normalize_string(normalizer):
     schema = {"inputs": [{"name": "prompt", "type": "string", "maxLength": 10}]}

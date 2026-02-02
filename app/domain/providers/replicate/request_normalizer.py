@@ -1,11 +1,17 @@
+
 from typing import Any, Dict, List
 from app.domain.providers.normalization.base import RequestNormalizer
-from app.domain.providers.normalization.request_normalizer import RequestNormalizerAuth
+from app.domain.providers.normalization.type_normalizers import BaseTypeNormalizer
+from app.domain.providers.normalization.resolution_strategy import CinemaResolutionStrategy
 
-class ReplicateRequestNormalizer(RequestNormalizer, RequestNormalizerAuth):
+class ReplicateRequestNormalizer(RequestNormalizer, BaseTypeNormalizer):
     """
     Replicate specific request normalization.
+    Uses BaseTypeNormalizer for primitive types and CinemaResolutionStrategy for dimensions.
     """
+    
+    def __init__(self):
+        self.resolution_strategy = CinemaResolutionStrategy()
     
     def normalize(self, input_data: Dict[str, Any], schema: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -23,57 +29,11 @@ class ReplicateRequestNormalizer(RequestNormalizer, RequestNormalizerAuth):
         else:
             schema_map = properties
 
-        # Pre-process 'Cinema Resolution' meta-params
-        # Priority: Native Enum Params > Cinema Logic
-        # If the user has selected a native 'aspect_ratio' or 'resolution' enum, 
-        # do NOT override it with calculated width/height from Cinema Logic.
-        has_native_override = (
-            ("aspect_ratio" in input_data and "aspect_ratio" in schema_map) or
-            ("resolution" in input_data and "resolution" in schema_map)
-        )
-
-        if "orientation" in input_data and not has_native_override:
-             orientation = input_data.get("orientation", "portrait").lower()
-             fmt = input_data.get("format", "standard").lower()
-             
-             w, h = 1024, 1024 # Default Square Standard
-             
-             # 1. Resolve Matrix
-             if orientation == "square":
-                 if fmt == "hd": w, h = 2048, 2048
-                 elif fmt == "4k": w, h = 4096, 4096 # Or 3840? Let's stick to 2048 for HD as safe max for Flux
-                 else: w, h = 1024, 1024
-                 
-             elif orientation == "portrait":
-                 if fmt == "hd": w, h = 1080, 1920
-                 elif fmt == "4k": w, h = 2160, 3840
-                 else: w, h = 896, 1152 # Optimal SDXL Portrait
-                 
-             elif orientation == "landscape":
-                 if fmt == "hd": w, h = 1920, 1080
-                 elif fmt == "4k": w, h = 3840, 2160
-                 else: w, h = 1152, 896 # Optimal SDXL Landscape
-
-             # 2. Inject into input if schema supports it
-             if "width" in schema_map: input_data["width"] = w
-             if "height" in schema_map: input_data["height"] = h
-             
-             # 3. Synthesize 'resolution' string if model wants that instead
-             if "resolution" in schema_map:
-                  # Some models want "WxH", others "1024x1024"
-                  input_data["resolution"] = f"{w}x{h}"
-
-        # Legacy Splitter (Keep for safety if someone sends raw resolution)
-        elif "resolution" in input_data and "resolution" not in schema_map:
-             if "width" in schema_map and "height" in schema_map:
-                  res_str = str(input_data["resolution"])
-                  if "x" in res_str:
-                       try:
-                            w, h = res_str.split("x")
-                            input_data["width"] = int(w)
-                            input_data["height"] = int(h)
-                       except:
-                            pass
+        # Apply Resolution Strategy (Cinema Logic)
+        # Mutates input_data copy effectively but we are working on the dict passed in?
+        # Ideally we should work on a copy to avoid side effects if reused, 
+        # but for this pipeline it's likely transient.
+        input_data = self.resolution_strategy.apply(input_data, schema_map)
 
         for key, value in input_data.items():
             if key not in schema_map:
@@ -108,8 +68,11 @@ class ReplicateRequestNormalizer(RequestNormalizer, RequestNormalizerAuth):
 
         if ftype == "integer":
             # Replicate Specific: Handle seed -1
-            if field_def.get("name") == "seed" and int(float(value)) == -1:
-                return -1 # Bypass min checks for -1
+            if field_def.get("name") == "seed":
+                try:
+                    if int(float(value)) == -1:
+                        return -1 # Bypass min checks for -1
+                except: pass
             return self.normalize_integer(value, field_def)
             
         elif ftype == "number" or ftype == "float":
@@ -122,6 +85,7 @@ class ReplicateRequestNormalizer(RequestNormalizer, RequestNormalizerAuth):
              return self.normalize_file_input(value, field_def)
              
         elif ftype == "list" or ftype == "array":
+             # Pass self._normalize_field as callback for recursion
              return self.normalize_array(value, field_def, self._normalize_field)
              
         else:

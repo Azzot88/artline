@@ -1,18 +1,19 @@
+
 import logging
 import json
-from typing import Any, Dict, List, Optional, Union
-from typing import get_type_hints
+from typing import Any, Dict, List, Optional, Union, Tuple
 
 logger = logging.getLogger(__name__)
 
-class RequestNormalizerAuth:
+class BaseTypeNormalizer:
     """
-    Shared utilities for normalizing request inputs.
-    Intended to be used by provider-specific RequestNormalizer implementations via composition or inheritance.
+    Unified base class for normalizing primitive types.
+    Consolidates logic from RequestNormalizerAuth and ReplicateNormalizer.
     """
 
     def normalize_string(self, value: Any, rules: Dict[str, Any]) -> str:
-        if value is None: return ""
+        if value is None: 
+            return ""
         s = str(value).strip()
         
         max_len = rules.get("maxLength")
@@ -23,6 +24,7 @@ class RequestNormalizerAuth:
 
     def normalize_integer(self, value: Any, rules: Dict[str, Any]) -> int:
         try:
+            # Handle string floats "50.0" -> 50
             val = int(float(value))
         except (ValueError, TypeError):
             if rules.get("default") is not None:
@@ -32,6 +34,8 @@ class RequestNormalizerAuth:
         min_val = rules.get("min") or rules.get("minimum")
         max_val = rules.get("max") or rules.get("maximum")
         
+        # Bypass checks if it's a specific sentinal (like seed -1)? 
+        # Ideally this should be in a subclass or via a hook, but for now strict checking:
         if min_val is not None: val = max(int(min_val), val)
         if max_val is not None: val = min(int(max_val), val)
         
@@ -78,7 +82,7 @@ class RequestNormalizerAuth:
             idx = str_allowed.index(str(value))
             return allowed[idx]
             
-        # Loose check (case insensitive)
+        # Case insensitive check
         if isinstance(value, str):
              lower_map = {str(a).lower(): a for a in allowed}
              if value.lower() in lower_map:
@@ -97,7 +101,6 @@ class RequestNormalizerAuth:
         if not isinstance(value, list):
             value = [value]
             
-        # If passed a callback to normalize items (e.g. to recurse), use it
         if item_normalizer_callback:
              item_schema = rules.get("items") or rules.get("item_schema")
              if item_schema:
@@ -114,5 +117,5 @@ class RequestNormalizerAuth:
     def normalize_file_input(self, value: Any, rules: Dict[str, Any]) -> Optional[str]:
         if not value or not isinstance(value, str):
              return None
-        # Basic pass-through validation, strict logic can be added in MediaProcessor
+        # Basic pass-through validation
         return value
