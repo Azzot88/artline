@@ -181,7 +181,7 @@ function SchemaWorkspace({ model, onModelUpdate }: { model: AIModel, onModelUpda
     return (
         <div className="grid grid-cols-12 min-h-[600px] divide-x divide-border">
             {/* Column 1: Source (3 cols) */}
-            <div className="col-span-3 flex flex-col bg-background/50 max-h-[calc(100vh-200px)] sticky top-0">
+            <div className="col-span-3 flex flex-col bg-background/50">
                 <div className="p-3 border-b flex items-center gap-2 font-semibold text-muted-foreground">
                     <Braces className="w-4 h-4" />
                     <span className="flex-1">Source Schema</span>
