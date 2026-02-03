@@ -533,24 +533,26 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
                                 ))}
                             </select>
                         </div>
-                        {paramConfig.visible_if_param && (
-                            <div className="flex items-center gap-1 border rounded px-2 h-7 bg-background">
-                                <span className="text-[10px] text-muted-foreground mr-auto">=</span>
-                                <Input
-                                    className="h-5 flex-1 min-w-0 text-[10px] p-0 border-0 focus-visible:ring-0 text-right"
-                                    value={paramConfig.visible_if_value || ""}
-                                    placeholder="Value"
-                                    onChange={e => handleUpdate(key, { visible_if_value: e.target.value })}
-                                />
-                            </div>
-                        )}
-
+                    </div>
+                                         {paramConfig.visible_if_param && (
+                    <div className="flex items-center gap-1 border rounded px-2 h-7 bg-background">
+                        <span className="text-[10px] text-muted-foreground mr-auto">=</span>
+                        <Input
+                            className="h-5 flex-1 min-w-0 text-[10px] p-0 border-0 focus-visible:ring-0 text-right"
+                            value={paramConfig.visible_if_value || ""}
+                            placeholder="Value"
+                            onChange={e => handleUpdate(key, { visible_if_value: e.target.value })}
+                        />
                     </div>
                 )}
-            </Card>
-            )
-                    })}
+
         </div>
+    )
+}
+                            </Card >
+                        )
+                    })}
+                </div >
             </ScrollArea >
         </div >
     )
