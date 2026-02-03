@@ -33,6 +33,7 @@ import {
     LayoutTemplate,
     XIcon
 } from "lucide-react"
+import { CANONICAL_FIELDS, CANONICAL_SECTIONS, CanonicalFieldDef } from "@/polymet/data/canonical-schema"
 
 export function SchemaVisualizer() {
     const [models, setModels] = useState<AIModel[]>([])
