@@ -74,7 +74,6 @@ export function SchemaVisualizer() {
                                 <TableHead>Model</TableHead>
                                 <TableHead>Provider</TableHead>
                                 <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -144,16 +143,6 @@ function ModelRow({ initialModel }: { initialModel: AIModel }) {
                         {model.ui_config ? "Configured" : "Default"}
                     </Badge>
                 </TableCell>
-                <TableCell className="text-right">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => { e.stopPropagation(); navigate(`/admin/models/${model.id}/normalization`); }}
-                    >
-                        <LayoutTemplate className="w-4 h-4 mr-2" />
-                        Full Builder
-                    </Button>
-                </TableCell>
             </TableRow>
             <TableRow>
                 <TableCell colSpan={5} className="p-0 border-b-0">
@@ -190,9 +179,9 @@ function SchemaWorkspace({ model, onModelUpdate }: { model: AIModel, onModelUpda
     }
 
     return (
-        <div className="grid grid-cols-12 h-[calc(100vh-250px)] divide-x divide-border">
+        <div className="grid grid-cols-12 min-h-[600px] divide-x divide-border">
             {/* Column 1: Source (3 cols) */}
-            <div className="col-span-3 flex flex-col bg-background/50">
+            <div className="col-span-3 flex flex-col bg-background/50 max-h-[calc(100vh-200px)] sticky top-0">
                 <div className="p-3 border-b flex items-center gap-2 font-semibold text-muted-foreground">
                     <Braces className="w-4 h-4" />
                     <span className="flex-1">Source Schema</span>
