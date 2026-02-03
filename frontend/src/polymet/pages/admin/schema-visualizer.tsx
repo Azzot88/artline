@@ -169,7 +169,6 @@ function SchemaWorkspace({ model }: { model: AIModel }) {
     // We update 'config' locally and user saves it.
 
     return (
-    return (
         <div className="grid grid-cols-12 min-h-[600px] divide-x divide-border">
             {/* Column 1: Source (3 cols) */}
             <div className="col-span-3 flex flex-col bg-background/50">
