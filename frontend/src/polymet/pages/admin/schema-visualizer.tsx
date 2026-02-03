@@ -221,10 +221,8 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
     // Helper: Find definition in raw schema
     function findDefinition(key: string, obj: any = rawSchema, depth = 0): any {
         if (depth > 5 || !obj || typeof obj !== 'object') return null
-
         // Direct property match in a 'properties' object
         if (obj.properties && obj.properties[key]) return obj.properties[key]
-
         // Array items match (recurse) - simplistic
         for (const k in obj) {
             const res = findDefinition(key, obj[k], depth + 1)
@@ -241,22 +239,13 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
         function traverse(obj: any, depth = 0) {
             if (depth > 5) return
             if (!obj || typeof obj !== 'object') return
-
-            // Look for "properties" keys which usually hold params
-            if (obj.properties) {
-                Object.keys(obj.properties).forEach(k => found.add(k))
-            }
-
+            // Look for "properties" keys
+            if (obj.properties) Object.keys(obj.properties).forEach(k => found.add(k))
             for (const key in obj) {
-                if (typeof obj[key] === 'object') {
-                    traverse(obj[key], depth + 1)
-                }
+                if (typeof obj[key] === 'object') traverse(obj[key], depth + 1)
             }
         }
-
         traverse(rawSchema)
-
-        // Filter out already known keys
         const newFound = Array.from(found).filter(k => !allKeys.includes(k))
         setScannedParams(newFound)
     }
@@ -266,58 +255,57 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
         if (!newConfig.parameters) newConfig.parameters = {}
         if (!newConfig.parameters[paramId]) newConfig.parameters[paramId] = {}
         newConfig.parameters[paramId] = { ...newConfig.parameters[paramId], ...updates }
+
+        // Auto-configure widget based on canonical key if selected
+        if (updates.canonical_key) {
+            const cField = CANONICAL_FIELDS[updates.canonical_key]
+            if (cField) {
+                if (cField.type === 'image') newConfig.parameters[paramId].component_type = 'auto'
+                if (cField.type === 'enum') newConfig.parameters[paramId].component_type = 'select'
+                if (cField.type === 'integer' || cField.type === 'number') newConfig.parameters[paramId].component_type = 'slider'
+                if (cField.type === 'boolean') newConfig.parameters[paramId].component_type = 'switch'
+                if (cField.type === 'string') {
+                    newConfig.parameters[paramId].component_type = cField.key.includes('negative') ? 'textarea' : 'text'
+                }
+                // Auto-label if not manual
+                if (!newConfig.parameters[paramId].custom_label || newConfig.parameters[paramId].custom_label === paramId) {
+                    newConfig.parameters[paramId].custom_label = cField.label
+                }
+            }
+        }
         setConfig(newConfig)
-        // Auto-save relies on user clicking 'Save', or we can debounce save here. 
-        // User prefers manual save for now based on UI but live preview needs it.
-        // We will stick to manual save button for persistence.
     }
 
     async function saveChanges() {
         try {
             setSaving(true)
             await apiService.updateModel(model.id, { ui_config: config })
-            // Trigger refresh logic if needed
         } finally {
             setSaving(false)
         }
     }
 
     async function addParam(key: string) {
-        // 1. Try to find schema def to pre-fill
         const def = findDefinition(key)
-
         const updates: any = {
             enabled: true,
             component_type: 'auto',
-            custom_label: key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') // Title Case
+            custom_label: key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
         }
-
         if (def) {
             if (def.type === 'integer' || def.type === 'number') updates.component_type = 'slider'
             if (def.type === 'boolean') updates.component_type = 'switch'
             if (def.enum) updates.component_type = 'select'
-            if (def.description) updates.description = def.description // Store description override if needed? No, just rely on extracted or schema.
-            // Actually, we store 'description' in config only if we want to override it. 
-            // But for the UI to show it immediately, we might rely on the merge logic in `allKeys` map loop.
         }
-
         await handleUpdate(key, updates)
         setScannedParams(prev => prev.filter(p => p !== key))
     }
 
     async function deleteParam(key: string) {
         const newConfig = { ...config }
-        if (newConfig.parameters) {
-            delete newConfig.parameters[key]
-        }
+        if (newConfig.parameters) delete newConfig.parameters[key]
         setConfig(newConfig)
-
-        // Add back to smart scan if it disappears from known keys
-        // Since allKeys is derived from config, it will disappear from main list.
-        // We should add it to scannedParams if it's not there.
-        if (!scannedParams.includes(key)) {
-            setScannedParams(prev => [...prev, key].sort())
-        }
+        if (!scannedParams.includes(key)) setScannedParams(prev => [...prev, key].sort())
     }
 
     return (
@@ -369,8 +357,6 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
                     {allKeys.map(key => {
                         const extracted = extractedInputs[key]
                         const paramConfig = config.parameters?.[key] || {}
-                        // If it's in config, it's enabled effectively, unless explicitly false. 
-                        // If it's only in extracted, it might not be in config yet.
                         const isConfigured = !!config.parameters?.[key]
                         const isEnabled = paramConfig.enabled !== false
 
@@ -408,24 +394,44 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
                                 </div>
 
                                 {isEnabled && (
-                                    <div className="mt-3 grid grid-cols-2 gap-2">
-                                        <Select
-                                            value={paramConfig.component_type || "auto"}
-                                            onValueChange={v => handleUpdate(key, { component_type: v })}
-                                        >
-                                            <SelectTrigger className="h-7 text-xs bg-background">
-                                                <SelectValue placeholder="Auto Widget" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="auto">Auto</SelectItem>
-                                                <SelectItem value="text">Text Input</SelectItem>
-                                                <SelectItem value="textarea">Textarea</SelectItem>
-                                                <SelectItem value="slider">Slider</SelectItem>
-                                                <SelectItem value="select">Select</SelectItem>
-                                                <SelectItem value="switch">Switch</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                    <div className="mt-3 space-y-2">
+                                        {/* Row 1: Canonical Mapping */}
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div className="flex items-center gap-1 border rounded px-2 h-7 bg-background focus-within:ring-1 focus-within:ring-ring">
+                                                <span className="text-[10px] text-muted-foreground mr-auto shrink-0 font-medium text-blue-600">Map To</span>
+                                                <select
+                                                    className="h-full flex-1 bg-transparent text-[10px] border-none focus:ring-0 outline-none text-right w-full"
+                                                    value={paramConfig.canonical_key || ""}
+                                                    onChange={e => handleUpdate(key, { canonical_key: e.target.value })}
+                                                >
+                                                    <option value="">-- None --</option>
+                                                    {Object.values(CANONICAL_FIELDS).map(f => (
+                                                        <option key={f.key} value={f.key}>
+                                                            {f.section.toUpperCase()} / {f.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
 
+                                            <Select
+                                                value={paramConfig.component_type || "auto"}
+                                                onValueChange={v => handleUpdate(key, { component_type: v })}
+                                            >
+                                                <SelectTrigger className="h-7 text-xs bg-background">
+                                                    <SelectValue placeholder="Auto Widget" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="auto">Auto</SelectItem>
+                                                    <SelectItem value="text">Text Input</SelectItem>
+                                                    <SelectItem value="textarea">Textarea</SelectItem>
+                                                    <SelectItem value="slider">Slider</SelectItem>
+                                                    <SelectItem value="select">Select</SelectItem>
+                                                    <SelectItem value="switch">Switch</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        {/* Row 2: Label & Extras */}
                                         <div className="flex items-center gap-1 border rounded px-2 h-7 bg-background focus-within:ring-1 focus-within:ring-ring">
                                             <span className="text-[10px] text-muted-foreground mr-auto shrink-0">Label</span>
                                             <Input
@@ -447,12 +453,6 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
 }
 
 function LivePreview({ model }: { model: AIModel }) {
-    // Note: In a real implementation, we would lift 'config' to the parent so LivePreview
-    // updates instantly. For now, since we save to DB on every Workbench change, 
-    // we might need to re-fetch or pass the optimistic config down.
-    // To make it truly "Live", let's assume we implement the lift-state up next refactor.
-    // For now, I will render what is in the model object, which requires a save.
-    // BUT! To impress the user, I will assume the parent passes the FRESH config.
     // Wait, I didn't lift state up in the code above.
     // Let's rely on the user clicking "Save" for now to see updates, 
     // OR self-fetch. 
