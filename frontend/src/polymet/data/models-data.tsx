@@ -27,6 +27,11 @@ export interface AIModel {
 
   // Backend Schema Fields
   raw_schema_json?: any
+  normalized_caps_json?: any;
+
+  // Debug fields (admin only)
+  extracted_inputs?: any;
+  spec?: any;
   param_schema?: any
   pricing_rules?: any[]
 

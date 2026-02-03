@@ -31,6 +31,7 @@ import { AdminProviders } from "@/polymet/pages/admin/providers"
 import { AdminReports } from "@/polymet/pages/admin/reports"
 import { SystemHealthPage as AdminSystem } from "@/polymet/pages/admin/system-health"
 import { NormalizationPage } from "@/polymet/pages/admin/normalization-page"
+import { SchemaVisualizer } from "@/polymet/pages/admin/schema-visualizer"
 
 import { Toaster } from "@/components/ui/sonner"
 
@@ -74,6 +75,7 @@ export default function AIWorkbenchApp() {
                 <Route path="reports" element={<AdminReports />} />
                 <Route path="system" element={<AdminSystem />} />
                 <Route path="gallery" element={<Gallery endpoint="/admin/feed" title="Universal Admin Gallery" subtitle="View all generated content" adminMode={true} />} />
+                <Route path="schema-visualizer" element={<SchemaVisualizer />} />
                 <Route path="models/:modelId/normalization" element={<NormalizationPage />} />
               </Route>
               {/* Keep Review separate for now if needed, or integrate? */}

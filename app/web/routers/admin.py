@@ -306,6 +306,16 @@ async def get_model(
     data = m.__dict__.copy()
     data["spec"] = spec
     
+    # Debug: Extracted Inputs (What the pipeline sees before normalization)
+    from app.domain.catalog.schema_utils import extract_input_properties
+    try:
+        if m.raw_schema_json:
+            data["extracted_inputs"] = extract_input_properties(m.raw_schema_json)
+        else:
+            data["extracted_inputs"] = {}
+    except Exception as e:
+        data["extracted_inputs"] = {"error": str(e)}
+
     return data
 
 @router.put("/models/{model_id}", response_model=AIModelRead)
