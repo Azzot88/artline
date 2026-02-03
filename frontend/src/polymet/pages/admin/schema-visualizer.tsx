@@ -52,7 +52,7 @@ export function SchemaVisualizer() {
     }
 
     return (
-        <div className="space-y-6 h-[calc(100vh-100px)] flex flex-col">
+        <div className="space-y-6 flex flex-col">
             <div>
                 <h2 className="text-3xl font-bold tracking-tight">Schema Designer</h2>
                 <p className="text-muted-foreground">
@@ -60,8 +60,8 @@ export function SchemaVisualizer() {
                 </p>
             </div>
 
-            <Card className="flex-1 overflow-hidden flex flex-col">
-                <div className="overflow-auto max-h-[40vh] border-b">
+            <Card className="flex-1 overflow-hidden flex flex-col border-0 shadow-none">
+                <div className="overflow-auto border rounded-md">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -107,9 +107,12 @@ function ModelRow({ initialModel }: { initialModel: AIModel }) {
 
     return (
         <>
-            <TableRow>
+            <TableRow
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={toggleOpen}
+            >
                 <TableCell>
-                    <Button variant="ghost" size="sm" onClick={toggleOpen}>
+                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); toggleOpen(); }}>
                         {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                     </Button>
                 </TableCell>
@@ -128,12 +131,16 @@ function ModelRow({ initialModel }: { initialModel: AIModel }) {
                     </Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={() => navigate(`/ admin / models / ${model.id}/normalization`)}>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); navigate(`/admin/models/${model.id}/normalization`); }}
+                    >
                         <LayoutTemplate className="w-4 h-4 mr-2" />
                         Full Builder
-                    </Button >
-                </TableCell >
-            </TableRow >
+                    </Button>
+                </TableCell>
+            </TableRow>
             <TableRow>
                 <TableCell colSpan={5} className="p-0 border-b-0">
                     <Collapsible open={isOpen}>
@@ -162,7 +169,8 @@ function SchemaWorkspace({ model }: { model: AIModel }) {
     // We update 'config' locally and user saves it.
 
     return (
-        <div className="grid grid-cols-12 h-[650px] divide-x divide-border">
+    return (
+        <div className="grid grid-cols-12 min-h-[600px] divide-x divide-border">
             {/* Column 1: Source (3 cols) */}
             <div className="col-span-3 flex flex-col bg-background/50">
                 <div className="p-3 border-b flex items-center gap-2 font-semibold text-muted-foreground">
