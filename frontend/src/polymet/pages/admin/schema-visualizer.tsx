@@ -227,6 +227,22 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema, onModelUpdate }
     // Smart Scan State
     const [scannedParams, setScannedParams] = useState<string[]>([])
 
+    // UI State: Collapsed/Expanded parameters (Linked to Model ID for persistence)
+    const [expandedParams, setExpandedParams] = useState<Record<string, boolean>>(() => {
+        if (!model?.id) return {}
+        try {
+            return JSON.parse(localStorage.getItem(`schema_expanded_${model.id}`) || '{}')
+        } catch { return {} }
+    })
+
+    function toggleExpand(key: string) {
+        setExpandedParams(prev => {
+            const next = { ...prev, [key]: !prev[key] }
+            localStorage.setItem(`schema_expanded_${model.id}`, JSON.stringify(next))
+            return next
+        })
+    }
+
     // Merge all known keys and sort: Configured first, then alphabetically
     const allKeys = useMemo(() => {
         const keys = Array.from(new Set([
@@ -356,6 +372,12 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema, onModelUpdate }
         }
         await handleUpdate(key, updates)
         setScannedParams(prev => prev.filter(p => p !== key))
+        // Auto-expand new param
+        setExpandedParams(prev => {
+            const next = { ...prev, [key]: true }
+            localStorage.setItem(`schema_expanded_${model.id}`, JSON.stringify(next))
+            return next
+        })
     }
 
     async function deleteParam(key: string) {
@@ -416,6 +438,7 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema, onModelUpdate }
                         const paramConfig = config.parameters?.[key] || {}
                         const isConfigured = !!config.parameters?.[key]
                         const isEnabled = paramConfig.enabled !== false
+                        const isExpanded = !!expandedParams[key]
 
                         // Derived state
                         const mappedCanonical = paramConfig.canonical_key ? CANONICAL_FIELDS[paramConfig.canonical_key] : null
@@ -423,22 +446,32 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema, onModelUpdate }
                         const showTransform = paramConfig.component_type === 'slider' || (mappedCanonical && ['number', 'integer'].includes(mappedCanonical.type))
 
                         return (
-                            <Card key={key} className={`p-3 transition-colors ${isEnabled ? 'bg-card' : 'bg-muted/40 opacity-70'}`}>
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="font-semibold text-sm">{key}</span>
-                                            {extracted && <Badge variant="secondary" className="text-[10px] h-4 px-1">{extracted.type}</Badge>}
-                                            {isConfigured && <Badge variant="outline" className="text-[10px] h-4 px-1 text-blue-500 border-blue-200">Configured</Badge>}
-                                        </div>
-                                        <div className="text-[10px] text-muted-foreground line-clamp-1" title={extracted?.message || extracted?.description}>
-                                            {extracted?.title || extracted?.description || "No description"}
+                            <Card key={key} className={`transition-all ${isEnabled ? 'bg-card' : 'bg-muted/40 opacity-70'}`}>
+                                <div
+                                    className="p-3 flex items-start justify-between cursor-pointer hover:bg-accent/5"
+                                    onClick={() => toggleExpand(key)}
+                                >
+                                    <div className="flex items-center gap-2 flex-1 overflow-hidden">
+                                        {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-0.5">
+                                                <span className="font-semibold text-sm truncate">{key}</span>
+                                                {extracted && <Badge variant="secondary" className="text-[10px] h-4 px-1">{extracted.type}</Badge>}
+                                                {isConfigured && <Badge variant="outline" className="text-[10px] h-4 px-1 text-blue-500 border-blue-200">Configured</Badge>}
+                                            </div>
+                                            <div className="text-[10px] text-muted-foreground line-clamp-1" title={extracted?.message || extracted?.description}>
+                                                {extracted?.title || extracted?.description || "No description"}
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 pl-2">
                                         <Switch
                                             checked={isEnabled}
-                                            onCheckedChange={c => handleUpdate(key, { enabled: c })}
+                                            onCheckedChange={c => {
+                                                handleUpdate(key, { enabled: c })
+                                                if (c && !isExpanded) toggleExpand(key) // Auto-open on enable
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
                                             className="scale-75"
                                         />
                                         {isConfigured && (
@@ -446,7 +479,10 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema, onModelUpdate }
                                                 variant="ghost"
                                                 size="icon"
                                                 className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                                                onClick={() => deleteParam(key)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    deleteParam(key)
+                                                }}
                                                 title="Remove from Config"
                                             >
                                                 <XIcon className="w-3 h-3" />
@@ -455,8 +491,8 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema, onModelUpdate }
                                     </div>
                                 </div>
 
-                                {isEnabled && (
-                                    <div className="mt-3 space-y-3 animation-fade-in">
+                                {isEnabled && isExpanded && (
+                                    <div className="px-3 pb-3 space-y-3 animation-fade-in border-t pt-3">
                                         {/* 1. Canonical Mapping & Widget Type */}
                                         <div className="grid grid-cols-2 gap-2">
                                             <div className="flex items-center gap-1 border rounded px-2 h-7 bg-background focus-within:ring-1 focus-within:ring-ring">
