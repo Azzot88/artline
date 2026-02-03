@@ -31,7 +31,10 @@ import {
     Search,
     Wand2,
     LayoutTemplate,
-    XIcon
+    XIcon,
+    Copy,
+    Check,
+    Upload
 } from "lucide-react"
 import { CANONICAL_FIELDS, CANONICAL_SECTIONS, CanonicalFieldDef } from "@/polymet/data/canonical-schema"
 
@@ -163,6 +166,7 @@ function ModelRow({ initialModel }: { initialModel: AIModel }) {
 function SchemaWorkspace({ model }: { model: AIModel }) {
     // 1. Source Data
     const raw = model.raw_schema_json
+    const [copied, setCopied] = useState(false)
 
     // 2. Workbench Data (Merged Extracted + Config)
     const extracted = (model as any).extracted_inputs || {}
@@ -170,13 +174,28 @@ function SchemaWorkspace({ model }: { model: AIModel }) {
     // 3. Preview Data (Live Spec is derived from this)
     // We update 'config' locally and user saves it.
 
+    function handleCopy() {
+        navigator.clipboard.writeText(JSON.stringify(raw, null, 2))
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+    }
+
     return (
-        <div className="grid grid-cols-12 min-h-[600px] divide-x divide-border">
+        <div className="grid grid-cols-12 h-[calc(100vh-250px)] divide-x divide-border">
             {/* Column 1: Source (3 cols) */}
             <div className="col-span-3 flex flex-col bg-background/50">
                 <div className="p-3 border-b flex items-center gap-2 font-semibold text-muted-foreground">
                     <Braces className="w-4 h-4" />
-                    Source Schema
+                    <span className="flex-1">Source Schema</span>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                        onClick={handleCopy}
+                        title="Copy JSON"
+                    >
+                        {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                    </Button>
                 </div>
                 <div className="flex-1 overflow-auto bg-slate-950 text-slate-50 p-4 text-[10px] font-mono leading-relaxed">
                     <pre>{JSON.stringify(raw, null, 2)}</pre>
@@ -184,12 +203,12 @@ function SchemaWorkspace({ model }: { model: AIModel }) {
             </div>
 
             {/* Column 2: Configurator (5 cols) */}
-            <div className="col-span-5 flex flex-col bg-background">
+            <div className="col-span-5 flex flex-col bg-background overflow-hidden">
                 <SchemaConfigurator model={model} extractedInputs={extracted} rawSchema={raw} />
             </div>
 
             {/* Column 3: Live Preview (4 cols) */}
-            <div className="col-span-4 flex flex-col bg-muted/10">
+            <div className="col-span-4 flex flex-col bg-muted/10 overflow-hidden">
                 <div className="p-3 border-b flex items-center gap-2 font-semibold text-muted-foreground">
                     <Play className="w-4 h-4" />
                     Live Preview
@@ -210,13 +229,32 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
     // Smart Scan State
     const [scannedParams, setScannedParams] = useState<string[]>([])
 
-    // Merge all known keys
+    // Merge all known keys and sort: Configured first, then alphabetically
     const allKeys = useMemo(() => {
-        return Array.from(new Set([
+        const keys = Array.from(new Set([
             ...Object.keys(extractedInputs || {}),
             ...Object.keys(config.parameters || {})
-        ])).sort()
+        ]))
+
+        return keys.sort((a, b) => {
+            const aConfigured = !!config.parameters?.[a]
+            const bConfigured = !!config.parameters?.[b]
+            if (aConfigured && !bConfigured) return -1
+            if (!aConfigured && bConfigured) return 1
+            return a.localeCompare(b)
+        })
     }, [extractedInputs, config])
+
+    // Track used canonical keys to prevent duplicate assignment
+    const usedCanonicalKeys = useMemo(() => {
+        const used = new Set<string>()
+        if (config.parameters) {
+            Object.values(config.parameters).forEach((p: any) => {
+                if (p.canonical_key) used.add(p.canonical_key)
+            })
+        }
+        return used
+    }, [config])
 
     // Helper: Find definition in raw schema
     function findDefinition(key: string, obj: any = rawSchema, depth = 0): any {
@@ -260,13 +298,31 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
         if (updates.canonical_key) {
             const cField = CANONICAL_FIELDS[updates.canonical_key]
             if (cField) {
-                if (cField.type === 'image') newConfig.parameters[paramId].component_type = 'auto'
-                if (cField.type === 'enum') newConfig.parameters[paramId].component_type = 'select'
-                if (cField.type === 'integer' || cField.type === 'number') newConfig.parameters[paramId].component_type = 'slider'
-                if (cField.type === 'boolean') newConfig.parameters[paramId].component_type = 'switch'
+                if (cField.type === 'image') {
+                    newConfig.parameters[paramId].component_type = 'file'
+                    newConfig.parameters[paramId].type = 'string' // Usually URL
+                }
+                if (cField.type === 'enum') {
+                    newConfig.parameters[paramId].component_type = 'select'
+                    newConfig.parameters[paramId].type = 'enum'
+                }
+                if (cField.type === 'integer') {
+                    newConfig.parameters[paramId].component_type = 'slider'
+                    newConfig.parameters[paramId].type = 'integer'
+                }
+                if (cField.type === 'number') {
+                    newConfig.parameters[paramId].component_type = 'slider'
+                    newConfig.parameters[paramId].type = 'number'
+                }
+                if (cField.type === 'boolean') {
+                    newConfig.parameters[paramId].component_type = 'switch'
+                    newConfig.parameters[paramId].type = 'boolean'
+                }
                 if (cField.type === 'string') {
                     newConfig.parameters[paramId].component_type = cField.key.includes('negative') ? 'textarea' : 'text'
+                    newConfig.parameters[paramId].type = 'string'
                 }
+
                 // Auto-label if not manual
                 if (!newConfig.parameters[paramId].custom_label || newConfig.parameters[paramId].custom_label === paramId) {
                     newConfig.parameters[paramId].custom_label = cField.label
@@ -410,11 +466,15 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
                                                     onChange={e => handleUpdate(key, { canonical_key: e.target.value })}
                                                 >
                                                     <option value="">-- None --</option>
-                                                    {Object.values(CANONICAL_FIELDS).map(f => (
-                                                        <option key={f.key} value={f.key}>
-                                                            {f.section.toUpperCase()} / {f.label}
-                                                        </option>
-                                                    ))}
+                                                    {Object.values(CANONICAL_FIELDS).map(f => {
+                                                        // Filter out used keys, BUT keep the one currently selected by THIS parameter
+                                                        if (usedCanonicalKeys.has(f.key) && paramConfig.canonical_key !== f.key) return null
+                                                        return (
+                                                            <option key={f.key} value={f.key}>
+                                                                {f.section.toUpperCase()} / {f.label}
+                                                            </option>
+                                                        )
+                                                    })}
                                                 </select>
                                             </div>
 
@@ -432,8 +492,26 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
                                                     <SelectItem value="slider">Slider</SelectItem>
                                                     <SelectItem value="select">Select</SelectItem>
                                                     <SelectItem value="switch">Switch</SelectItem>
+                                                    <SelectItem value="file">File Upload</SelectItem>
                                                 </SelectContent>
                                             </Select>
+                                        </div>
+
+                                        {/* 1.5 Data Type Selector */}
+                                        <div className="flex items-center gap-1 border rounded px-2 h-7 bg-background focus-within:ring-1 focus-within:ring-ring">
+                                            <span className="text-[10px] text-muted-foreground mr-auto shrink-0">Type</span>
+                                            <select
+                                                className="h-full flex-1 bg-transparent text-[10px] border-none focus:ring-0 outline-none text-right w-full"
+                                                value={paramConfig.type || "string"}
+                                                onChange={e => handleUpdate(key, { type: e.target.value })}
+                                            >
+                                                <option value="string">String</option>
+                                                <option value="integer">Integer</option>
+                                                <option value="number">Number (Float)</option>
+                                                <option value="boolean">Boolean</option>
+                                                <option value="enum">Enum (String)</option>
+                                                <option value="integer_nullable">Integer (Nullable)</option>
+                                            </select>
                                         </div>
 
                                         {/* 2. Label Override */}
@@ -640,8 +718,15 @@ function PreviewField({ param }: { param: any }) {
                 </div>
             )}
             {/* Fallback */}
-            {!["select", "integer", "number", "string", "boolean"].includes(param.type) && (
+            {!["select", "integer", "number", "string", "boolean", "file", "image"].includes(param.type) && (
                 <Input placeholder="Unknown type" disabled />
+            )}
+
+            {(param.type === "file" || param.type === "image") && (
+                <div className="border-2 border-dashed rounded-md p-4 flex flex-col items-center justify-center text-muted-foreground bg-muted/20">
+                    <Upload className="w-6 h-6 mb-2 opacity-50" />
+                    <span className="text-[10px]">File Upload</span>
+                </div>
             )}
         </div>
     )

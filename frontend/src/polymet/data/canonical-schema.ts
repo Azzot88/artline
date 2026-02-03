@@ -34,8 +34,9 @@ export const CANONICAL_FIELDS: Record<string, CanonicalFieldDef> = {
     // 2.2 Composition
     'frame.aspect_ratio': { key: 'frame.aspect_ratio', label: 'Aspect Ratio', type: 'enum', section: 'composition', options: ['1:1', '16:9', '9:16', '4:3', '3:4', '2:3', '3:2', '21:9', 'custom'] },
     'frame.width': { key: 'frame.width', label: 'Width', type: 'integer', section: 'composition', min: 64, max: 4096 },
-    'frame.height': { key: 'frame.height', label: 'Height', type: 'integer', section: 'composition', min: 64, max: 4096 },
-    'frame.crop_mode': { key: 'frame.crop_mode', label: 'Crop Mode', type: 'enum', section: 'composition', options: ['center', 'top', 'bottom', 'face_priority'] },
+    'composition.height': { key: 'composition.height', label: 'Height', type: 'integer', section: 'composition' },
+    'composition.megapixels': { key: 'composition.megapixels', label: 'Resolution / Megapixels', type: 'enum', section: 'composition', options: ['1', '0.25'] },
+    'composition.crop_mode': { key: 'composition.crop_mode', label: 'Crop Mode', type: 'enum', section: 'composition', options: ['center', 'top', 'bottom', 'face_priority'] },
 
     // 2.3 Quality
     'quality.preset': { key: 'quality.preset', label: 'Quality Preset', type: 'enum', section: 'quality', options: ['draft', 'balanced', 'high', 'ultra'] },
