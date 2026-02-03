@@ -350,105 +350,209 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
                 <Button size="sm" variant="outline" onClick={() => addParam(newParam)} disabled={!newParam}>Add</Button>
             </div>
 
-            <ScrollArea className="flex-1 bg-muted/5">
-                <div className="p-4 space-y-3">
-                    {allKeys.length === 0 && <div className="text-center text-sm text-muted-foreground py-8">No parameters configured.</div>}
+// ... SchemaConfigurator ...
 
-                    {allKeys.map(key => {
-                        const extracted = extractedInputs[key]
-                        const paramConfig = config.parameters?.[key] || {}
-                        const isConfigured = !!config.parameters?.[key]
-                        const isEnabled = paramConfig.enabled !== false
+            // Derived state for the card
+            const mappedCanonical = paramConfig.canonical_key ? CANONICAL_FIELDS[paramConfig.canonical_key] : null
+            const showEnumMap = mappedCanonical?.type === 'enum' && mappedCanonical.options
+            const showTransform = paramConfig.component_type === 'slider' || (mappedCanonical && ['number', 'integer'].includes(mappedCanonical.type))
 
-                        return (
-                            <Card key={key} className={`p-3 transition-colors ${isEnabled ? 'bg-card' : 'bg-muted/40 opacity-70'}`}>
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="font-semibold text-sm">{key}</span>
-                                            {extracted && <Badge variant="secondary" className="text-[10px] h-4 px-1">{extracted.type}</Badge>}
-                                            {isConfigured && <Badge variant="outline" className="text-[10px] h-4 px-1 text-blue-500 border-blue-200">Configured</Badge>}
-                                        </div>
-                                        <div className="text-[10px] text-muted-foreground line-clamp-1" title={extracted?.message}>
-                                            {extracted?.title || extracted?.description || "No description"}
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Switch
-                                            checked={isEnabled}
-                                            onCheckedChange={c => handleUpdate(key, { enabled: c })}
-                                            className="scale-75"
+            return (
+            <Card key={key} className={`p-3 transition-colors ${isEnabled ? 'bg-card' : 'bg-muted/40 opacity-70'}`}>
+                <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-sm">{key}</span>
+                            {extracted && <Badge variant="secondary" className="text-[10px] h-4 px-1">{extracted.type}</Badge>}
+                            {isConfigured && <Badge variant="outline" className="text-[10px] h-4 px-1 text-blue-500 border-blue-200">Configured</Badge>}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground line-clamp-1" title={extracted?.message || extracted?.description}>
+                            {extracted?.title || extracted?.description || "No description"}
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Switch
+                            checked={isEnabled}
+                            onCheckedChange={c => handleUpdate(key, { enabled: c })}
+                            className="scale-75"
+                        />
+                        {isConfigured && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                onClick={() => deleteParam(key)}
+                                title="Remove from Config"
+                            >
+                                <XIcon className="w-3 h-3" />
+                            </Button>
+                        )}
+                    </div>
+                </div>
+
+                {isEnabled && (
+                    <div className="mt-3 space-y-3 animation-fade-in">
+                        {/* 1. Canonical Mapping & Widget Type */}
+                        <div className="grid grid-cols-2 gap-2">
+                            <div className="flex items-center gap-1 border rounded px-2 h-7 bg-background focus-within:ring-1 focus-within:ring-ring">
+                                <span className="text-[10px] text-muted-foreground mr-auto shrink-0 font-medium text-blue-600">Map To</span>
+                                <select
+                                    className="h-full flex-1 bg-transparent text-[10px] border-none focus:ring-0 outline-none text-right w-full"
+                                    value={paramConfig.canonical_key || ""}
+                                    onChange={e => handleUpdate(key, { canonical_key: e.target.value })}
+                                >
+                                    <option value="">-- None --</option>
+                                    {Object.values(CANONICAL_FIELDS).map(f => (
+                                        <option key={f.key} value={f.key}>
+                                            {f.section.toUpperCase()} / {f.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <Select
+                                value={paramConfig.component_type || "auto"}
+                                onValueChange={v => handleUpdate(key, { component_type: v })}
+                            >
+                                <SelectTrigger className="h-7 text-xs bg-background">
+                                    <SelectValue placeholder="Widget" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="auto">Auto</SelectItem>
+                                    <SelectItem value="text">Text Input</SelectItem>
+                                    <SelectItem value="textarea">Textarea</SelectItem>
+                                    <SelectItem value="slider">Slider</SelectItem>
+                                    <SelectItem value="select">Select</SelectItem>
+                                    <SelectItem value="switch">Switch</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* 2. Label Override */}
+                        <div className="flex items-center gap-1 border rounded px-2 h-7 bg-background focus-within:ring-1 focus-within:ring-ring">
+                            <span className="text-[10px] text-muted-foreground mr-auto shrink-0">Label</span>
+                            <Input
+                                className="h-5 flex-1 min-w-0 text-[10px] p-0 border-0 focus-visible:ring-0 text-right"
+                                value={paramConfig.custom_label || ""}
+                                placeholder="Default"
+                                onChange={e => handleUpdate(key, { custom_label: e.target.value })}
+                            />
+                        </div>
+
+                        {/* 3. Enum Mapping Table (if applicable) */}
+                        {showEnumMap && (
+                            <div className="border rounded bg-muted/20 p-2 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-semibold text-muted-foreground uppercase">Enum Mapping</span>
+                                    <span className="text-[9px] text-muted-foreground">(Canonical Option → Raw Payload)</span>
+                                </div>
+                                <div className="space-y-1">
+                                    {mappedCanonical!.options!.map(opt => {
+                                        const currentMap = paramConfig.enum_map || {}
+                                        return (
+                                            <div key={opt} className="grid grid-cols-2 gap-2 items-center">
+                                                <Badge variant="outline" className="text-[10px] justify-center h-5 bg-background font-normal">{opt}</Badge>
+                                                <Input
+                                                    className="h-5 text-[10px] px-1"
+                                                    placeholder={opt}
+                                                    value={currentMap[opt] || ""}
+                                                    onChange={e => {
+                                                        const newMap = { ...currentMap, [opt]: e.target.value }
+                                                        handleUpdate(key, { enum_map: newMap })
+                                                    }}
+                                                />
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 4. Transform Logic (for numbers) */}
+                        {showTransform && (
+                            <div className="border rounded bg-muted/20 p-2 space-y-2">
+                                <div className="text-[10px] font-semibold text-muted-foreground uppercase flex justify-between">
+                                    <span>Transform</span>
+                                    <span className="text-[9px] font-normal lowercase">out = (in * mul) + off</span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="flex items-center border bg-background rounded px-1 h-6">
+                                        <span className="text-[9px] text-muted-foreground mr-1">×</span>
+                                        <Input
+                                            className="h-full border-none p-0 text-[10px] text-right focus-visible:ring-0"
+                                            placeholder="1"
+                                            value={paramConfig.transform_multiply || ""}
+                                            onChange={e => handleUpdate(key, { transform_multiply: e.target.value })}
                                         />
-                                        {isConfigured && (
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                                                onClick={() => deleteParam(key)}
-                                                title="Remove from Config (Return to Scan)"
-                                            >
-                                                <XIcon className="w-3 h-3" />
-                                            </Button>
-                                        )}
+                                    </div>
+                                    <div className="flex items-center border bg-background rounded px-1 h-6">
+                                        <span className="text-[9px] text-muted-foreground mr-1">+</span>
+                                        <Input
+                                            className="h-full border-none p-0 text-[10px] text-right focus-visible:ring-0"
+                                            placeholder="0"
+                                            value={paramConfig.transform_offset || ""}
+                                            onChange={e => handleUpdate(key, { transform_offset: e.target.value })}
+                                        />
                                     </div>
                                 </div>
-
-                                {isEnabled && (
-                                    <div className="mt-3 space-y-2">
-                                        {/* Row 1: Canonical Mapping */}
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div className="flex items-center gap-1 border rounded px-2 h-7 bg-background focus-within:ring-1 focus-within:ring-ring">
-                                                <span className="text-[10px] text-muted-foreground mr-auto shrink-0 font-medium text-blue-600">Map To</span>
-                                                <select
-                                                    className="h-full flex-1 bg-transparent text-[10px] border-none focus:ring-0 outline-none text-right w-full"
-                                                    value={paramConfig.canonical_key || ""}
-                                                    onChange={e => handleUpdate(key, { canonical_key: e.target.value })}
-                                                >
-                                                    <option value="">-- None --</option>
-                                                    {Object.values(CANONICAL_FIELDS).map(f => (
-                                                        <option key={f.key} value={f.key}>
-                                                            {f.section.toUpperCase()} / {f.label}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </div>
-
-                                            <Select
-                                                value={paramConfig.component_type || "auto"}
-                                                onValueChange={v => handleUpdate(key, { component_type: v })}
-                                            >
-                                                <SelectTrigger className="h-7 text-xs bg-background">
-                                                    <SelectValue placeholder="Auto Widget" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="auto">Auto</SelectItem>
-                                                    <SelectItem value="text">Text Input</SelectItem>
-                                                    <SelectItem value="textarea">Textarea</SelectItem>
-                                                    <SelectItem value="slider">Slider</SelectItem>
-                                                    <SelectItem value="select">Select</SelectItem>
-                                                    <SelectItem value="switch">Switch</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        {/* Row 2: Label & Extras */}
-                                        <div className="flex items-center gap-1 border rounded px-2 h-7 bg-background focus-within:ring-1 focus-within:ring-ring">
-                                            <span className="text-[10px] text-muted-foreground mr-auto shrink-0">Label</span>
-                                            <Input
-                                                className="h-5 flex-1 min-w-0 text-[10px] p-0 border-0 focus-visible:ring-0 text-right"
-                                                value={paramConfig.custom_label || ""}
-                                                placeholder="Default"
-                                                onChange={e => handleUpdate(key, { custom_label: e.target.value })}
-                                            />
-                                        </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center border bg-background rounded px-1 h-6 flex-1">
+                                        <span className="text-[9px] text-muted-foreground mr-1">Min</span>
+                                        <Input
+                                            className="h-full border-none p-0 text-[10px] text-right focus-visible:ring-0"
+                                            placeholder={mappedCanonical?.min?.toString() || "0"}
+                                            value={paramConfig.ui_min || ""}
+                                            onChange={e => handleUpdate(key, { ui_min: e.target.value })}
+                                        />
                                     </div>
-                                )}
-                            </Card>
-                        )
+                                    <div className="flex items-center border bg-background rounded px-1 h-6 flex-1">
+                                        <span className="text-[9px] text-muted-foreground mr-1">Max</span>
+                                        <Input
+                                            className="h-full border-none p-0 text-[10px] text-right focus-visible:ring-0"
+                                            placeholder={mappedCanonical?.max?.toString() || "100"}
+                                            value={paramConfig.ui_max || ""}
+                                            onChange={e => handleUpdate(key, { ui_max: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 5. Visibility Rules */}
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-muted-foreground">Visible if...</span>
+                            {/* Simplified visibility rule builder for now */}
+                            <select
+                                className="h-5 w-32 bg-transparent text-[10px] border rounded px-1"
+                                value={paramConfig.visible_if_param || ""}
+                                onChange={e => handleUpdate(key, { visible_if_param: e.target.value })}
+                            >
+                                <option value="">(Always Visible)</option>
+                                {allKeys.filter(k => k !== key).map(k => (
+                                    <option key={k} value={k}>{k}</option>
+                                ))}
+                            </select>
+                        </div>
+                        {paramConfig.visible_if_param && (
+                            <div className="flex items-center gap-1 border rounded px-2 h-7 bg-background">
+                                <span className="text-[10px] text-muted-foreground mr-auto">=</span>
+                                <Input
+                                    className="h-5 flex-1 min-w-0 text-[10px] p-0 border-0 focus-visible:ring-0 text-right"
+                                    value={paramConfig.visible_if_value || ""}
+                                    placeholder="Value"
+                                    onChange={e => handleUpdate(key, { visible_if_value: e.target.value })}
+                                />
+                            </div>
+                        )}
+
+                    </div>
+                )}
+            </Card>
+            )
                     })}
-                </div>
-            </ScrollArea>
         </div>
+            </ScrollArea >
+        </div >
     )
 }
 
