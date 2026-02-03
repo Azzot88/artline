@@ -98,14 +98,23 @@ function ModelRow({ initialModel }: { initialModel: AIModel }) {
     async function toggleOpen() {
         if (!isOpen && !details) {
             setLoading(true)
-            try {
-                const fullData = await apiService.getAdminModel(initialModel.id)
-                setDetails(fullData)
-            } finally {
-                setLoading(false)
-            }
+            await fetchDetails()
         }
         setIsOpen(!isOpen)
+    }
+
+    async function fetchDetails() {
+        try {
+            setLoading(true)
+            const fullData = await apiService.getAdminModel(initialModel.id)
+            setDetails(fullData)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    function handleModelUpdate(updated: AIModel) {
+        setDetails(updated)
     }
 
     const model = details || initialModel
@@ -153,7 +162,7 @@ function ModelRow({ initialModel }: { initialModel: AIModel }) {
                             {loading ? (
                                 <div className="py-8 text-center text-muted-foreground">Loading workspace...</div>
                             ) : details ? (
-                                <SchemaWorkspace model={details} />
+                                <SchemaWorkspace model={details} onModelUpdate={handleModelUpdate} />
                             ) : null}
                         </CollapsibleContent>
                     </Collapsible>
@@ -163,7 +172,7 @@ function ModelRow({ initialModel }: { initialModel: AIModel }) {
     )
 }
 
-function SchemaWorkspace({ model }: { model: AIModel }) {
+function SchemaWorkspace({ model, onModelUpdate }: { model: AIModel, onModelUpdate: (m: AIModel) => void }) {
     // 1. Source Data
     const raw = model.raw_schema_json
     const [copied, setCopied] = useState(false)
@@ -204,7 +213,7 @@ function SchemaWorkspace({ model }: { model: AIModel }) {
 
             {/* Column 2: Configurator (5 cols) */}
             <div className="col-span-5 flex flex-col bg-background overflow-hidden">
-                <SchemaConfigurator model={model} extractedInputs={extracted} rawSchema={raw} />
+                <SchemaConfigurator model={model} extractedInputs={extracted} rawSchema={raw} onModelUpdate={onModelUpdate} />
             </div>
 
             {/* Column 3: Live Preview (4 cols) */}
@@ -221,7 +230,7 @@ function SchemaWorkspace({ model }: { model: AIModel }) {
     )
 }
 
-function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
+function SchemaConfigurator({ model, extractedInputs, rawSchema, onModelUpdate }: any) {
     const [config, setConfig] = useState<any>(model.ui_config || {})
     const [saving, setSaving] = useState(false)
     const [newParam, setNewParam] = useState("")
@@ -335,7 +344,10 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
     async function saveChanges() {
         try {
             setSaving(true)
-            await apiService.updateModel(model.id, { ui_config: config })
+            const updated = await apiService.updateModel(model.id, { ui_config: config })
+            if (updated && onModelUpdate) {
+                onModelUpdate(updated)
+            }
         } finally {
             setSaving(false)
         }
