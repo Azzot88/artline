@@ -160,39 +160,40 @@ function ModelRow({ initialModel }: { initialModel: AIModel }) {
     )
 }
 
-// We assume 'extracted_inputs' is usually available on the detailed model object now.
-// If typescript complains, we cast or check keys.
-const extracted = (model as any).extracted_inputs || {}
-const raw = model.raw_schema_json
-const spec = (model as any).spec
+function PipelineInspector({ model }: { model: AIModel }) {
+    // We assume 'extracted_inputs' is usually available on the detailed model object now.
+    // If typescript complains, we cast or check keys.
+    const extracted = (model as any).extracted_inputs || {}
+    const raw = model.raw_schema_json
+    const spec = (model as any).spec
 
-return (
-    <div className="grid grid-cols-3 gap-4 h-[600px]">
-        {/* Stage 1: Raw */}
-        <StageColumn
-            title="1. Raw Provider Schema"
-            icon={Database}
-            data={raw}
-            className="border-green-200 bg-green-50/50 dark:bg-green-950/10"
-        />
+    return (
+        <div className="grid grid-cols-3 gap-4 h-[600px]">
+            {/* Stage 1: Raw */}
+            <StageColumn
+                title="1. Raw Provider Schema"
+                icon={Database}
+                data={raw}
+                className="border-green-200 bg-green-50/50 dark:bg-green-950/10"
+            />
 
-        {/* Stage 2: Extracted & Controls */}
-        <ExtractedInputsControls
-            model={model}
-            extractedInputs={extracted}
-            className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/10"
-        />
+            {/* Stage 2: Extracted & Controls */}
+            <ExtractedInputsControls
+                model={model}
+                extractedInputs={extracted}
+                className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/10"
+            />
 
-        {/* Stage 3: Final Spec */}
-        <StageColumn
-            title="3. Final UI Spec"
-            icon={LayoutTemplate}
-            data={spec}
-            className="border-purple-200 bg-purple-50/50 dark:bg-purple-950/10"
-            description="Result after applying UI Config & Access Control"
-        />
-    </div>
-)
+            {/* Stage 3: Final Spec */}
+            <StageColumn
+                title="3. Final UI Spec"
+                icon={LayoutTemplate}
+                data={spec}
+                className="border-purple-200 bg-purple-50/50 dark:bg-purple-950/10"
+                description="Result after applying UI Config & Access Control"
+            />
+        </div>
+    )
 }
 
 function ExtractedInputsControls({ model, extractedInputs, className }: any) {
