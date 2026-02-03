@@ -14,7 +14,9 @@ import {
   Brain,
   CheckCircle,
   Video,
-  Users
+  Video,
+  Users,
+  Database
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -238,6 +240,7 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
                   { href: "/admin/gallery", label: "Gallery", icon: ImageIcon }, // Universal Gallery
                   { href: "/admin/models", label: t('admin.models'), icon: SparklesIcon }, // Box/Sparkles for Models
                   { href: "/admin/providers", label: t('admin.providers'), icon: SlidersIcon }, // Shield/Sliders for Providers
+                  { href: "/admin/schema-visualizer", label: "Schema Viz", icon: Database },
                   { href: "/admin/reports", label: t('admin.reports'), icon: TrendingUpIcon },
                   { href: "/admin/system", label: t('admin.system'), icon: SettingsIcon },
                 ].map((item) => (

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { apiService } from "@/polymet/data/api-service"
@@ -199,6 +198,8 @@ function PipelineInspector({ model }: { model: AIModel }) {
 function ExtractedInputsControls({ model, extractedInputs, className }: any) {
     const [config, setConfig] = useState<any>(model.ui_config || {})
     const [saving, setSaving] = useState(false)
+    const [newParam, setNewParam] = useState("")
+    const [isAdding, setIsAdding] = useState(false)
 
     // Merge extracted keys with config keys to show everything
     const allKeys = Array.from(new Set([
@@ -219,6 +220,13 @@ function ExtractedInputsControls({ model, extractedInputs, className }: any) {
         setConfig(newConfig)
     }
 
+    async function handleAddParam() {
+        if (!newParam.trim()) return
+        await handleUpdate(newParam.trim().toLowerCase(), { enabled: true, component_type: 'auto' })
+        setNewParam("")
+        setIsAdding(false)
+    }
+
     async function saveChanges() {
         try {
             setSaving(true)
@@ -237,12 +245,35 @@ function ExtractedInputsControls({ model, extractedInputs, className }: any) {
                     <FileJson className="w-4 h-4" />
                     2. Extracted Inputs
                 </div>
-                <Button size="sm" onClick={saveChanges} disabled={saving}>
-                    {saving ? "Saving..." : "Save Config"}
-                </Button>
+                <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setIsAdding(!isAdding)}>
+                        + Add
+                    </Button>
+                    <Button size="sm" onClick={saveChanges} disabled={saving}>
+                        {saving ? "Saving..." : "Save"}
+                    </Button>
+                </div>
             </div>
+            {isAdding && (
+                <div className="p-3 bg-card border-b flex gap-2">
+                    <input
+                        className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        placeholder="Parameter name (e.g. prompt)"
+                        value={newParam}
+                        onChange={e => setNewParam(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleAddParam()}
+                    />
+                    <Button size="sm" onClick={handleAddParam} disabled={!newParam.trim()}>Add</Button>
+                </div>
+            )}
             <div className="flex-1 overflow-auto p-2 bg-background/50 space-y-2">
-                {allKeys.length === 0 && <div className="text-sm text-muted-foreground p-4">No inputs detected.</div>}
+                {allKeys.length === 0 && <div className="text-sm text-muted-foreground p-4">
+                    No inputs detected or configured.
+                    <br /><br />
+                    1. Check if Raw Schema exists.
+                    <br />
+                    2. Or manually add a parameter above.
+                </div>}
 
                 {allKeys.map(key => {
                     const extracted = extractedInputs[key]
