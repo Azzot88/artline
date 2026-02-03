@@ -521,7 +521,6 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
                         {/* 5. Visibility Rules */}
                         <div className="flex items-center justify-between">
                             <span className="text-[10px] text-muted-foreground">Visible if...</span>
-                            {/* Simplified visibility rule builder for now */}
                             <select
                                 className="h-5 w-32 bg-transparent text-[10px] border rounded px-1"
                                 value={paramConfig.visible_if_param || ""}
@@ -533,7 +532,7 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
                                 ))}
                             </select>
                         </div>
-                        {/* Closing visibility rules input */}
+
                         {paramConfig.visible_if_param && (
                             <div className="flex items-center gap-1 border rounded px-2 h-7 bg-background">
                                 <span className="text-[10px] text-muted-foreground mr-auto">=</span>
@@ -545,16 +544,15 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
                                 />
                             </div>
                         )}
-
                     </div>
                 )}
             </Card>
             )
-                    })}
+    })}
         </div>
-            </ScrollArea >
-        </div >
-    )
+</ScrollArea >
+</div >
+)
 }
 
 function LivePreview({ model }: { model: AIModel }) {
