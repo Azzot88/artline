@@ -1,4 +1,4 @@
-```
+
 import { useEffect, useState, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { apiService } from "@/polymet/data/api-service"
@@ -61,7 +61,7 @@ export function SchemaVisualizer() {
             </div>
 
             <Card className="flex-1 overflow-hidden flex flex-col">
-                 <div className="overflow-auto max-h-[40vh] border-b">
+                <div className="overflow-auto max-h-[40vh] border-b">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -123,30 +123,30 @@ function ModelRow({ initialModel }: { initialModel: AIModel }) {
                 </TableCell>
                 <TableCell>{model.provider}</TableCell>
                 <TableCell>
-                     <Badge variant="outline" className={model.ui_config ? "text-blue-600 border-blue-200" : "text-slate-500"}>
+                    <Badge variant="outline" className={model.ui_config ? "text-blue-600 border-blue-200" : "text-slate-500"}>
                         {model.ui_config ? "Configured" : "Default"}
                     </Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={() => navigate(`/ admin / models / ${ model.id }/normalization`)}>
-    <LayoutTemplate className="w-4 h-4 mr-2" />
+                    <Button variant="outline" size="sm" onClick={() => navigate(`/ admin / models / ${model.id}/normalization`)}>
+                        <LayoutTemplate className="w-4 h-4 mr-2" />
                         Full Builder
                     </Button >
                 </TableCell >
             </TableRow >
-    <TableRow>
-        <TableCell colSpan={5} className="p-0 border-b-0">
-            <Collapsible open={isOpen}>
-                <CollapsibleContent className="bg-muted/30 border-b animate-in slide-in-from-top-2 p-0">
-                    {loading ? (
-                        <div className="py-8 text-center text-muted-foreground">Loading workspace...</div>
-                    ) : details ? (
-                        <SchemaWorkspace model={details} />
-                    ) : null}
-                </CollapsibleContent>
-            </Collapsible>
-        </TableCell>
-    </TableRow>
+            <TableRow>
+                <TableCell colSpan={5} className="p-0 border-b-0">
+                    <Collapsible open={isOpen}>
+                        <CollapsibleContent className="bg-muted/30 border-b animate-in slide-in-from-top-2 p-0">
+                            {loading ? (
+                                <div className="py-8 text-center text-muted-foreground">Loading workspace...</div>
+                            ) : details ? (
+                                <SchemaWorkspace model={details} />
+                            ) : null}
+                        </CollapsibleContent>
+                    </Collapsible>
+                </TableCell>
+            </TableRow>
         </>
     )
 }
@@ -470,4 +470,4 @@ function PreviewField({ param }: { param: any }) {
         </div>
     )
 }
-```
+}
