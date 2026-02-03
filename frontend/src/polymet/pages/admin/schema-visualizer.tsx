@@ -204,7 +204,6 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
     const [config, setConfig] = useState<any>(model.ui_config || {})
     const [saving, setSaving] = useState(false)
     const [newParam, setNewParam] = useState("")
-    const [view, setView] = useState<"list" | "add">("list")
 
     // Smart Scan State
     const [scannedParams, setScannedParams] = useState<string[]>([])
@@ -217,6 +216,21 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
         ])).sort()
     }, [extractedInputs, config])
 
+    // Helper: Find definition in raw schema
+    function findDefinition(key: string, obj: any = rawSchema, depth = 0): any {
+        if (depth > 5 || !obj || typeof obj !== 'object') return null
+
+        // Direct property match in a 'properties' object
+        if (obj.properties && obj.properties[key]) return obj.properties[key]
+
+        // Array items match (recurse) - simplistic
+        for (const k in obj) {
+            const res = findDefinition(key, obj[k], depth + 1)
+            if (res) return res
+        }
+        return null
+    }
+
     // Heuristic Scan
     function runSmartScan() {
         if (!rawSchema) return
@@ -226,20 +240,14 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
             if (depth > 5) return
             if (!obj || typeof obj !== 'object') return
 
-            // Heuristic: If object has 'type' and 'description' or 'default', it might be a param
-            // Also check if key is something like "width", "height", "prompt"
+            // Look for "properties" keys which usually hold params
+            if (obj.properties) {
+                Object.keys(obj.properties).forEach(k => found.add(k))
+            }
+
             for (const key in obj) {
-                const val = obj[key]
-                if (val && typeof val === 'object') {
-                    if (val.type && (val.description || val.default !== undefined)) {
-                        // Likely a param definition, but what is the ID? 
-                        // Usually the key itself is the ID in a properties map.
-                        // This traversal is tricky. simpler: Look for "properties" keys.
-                    }
-                    if (key === "properties") {
-                        Object.keys(val).forEach(k => found.add(k))
-                    }
-                    traverse(val, depth + 1)
+                if (typeof obj[key] === 'object') {
+                    traverse(obj[key], depth + 1)
                 }
             }
         }
@@ -257,11 +265,9 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
         if (!newConfig.parameters[paramId]) newConfig.parameters[paramId] = {}
         newConfig.parameters[paramId] = { ...newConfig.parameters[paramId], ...updates }
         setConfig(newConfig)
-
-        // Optimistic update for Preview (hack: forcing parent update or using context would be better)
-        // For now, save immediately for Live Preview to work if it fetches from backend? 
-        // No, Live Preview should use local state. We need to lift state up.
-        // Actually, let's just save.
+        // Auto-save relies on user clicking 'Save', or we can debounce save here. 
+        // User prefers manual save for now based on UI but live preview needs it.
+        // We will stick to manual save button for persistence.
     }
 
     async function saveChanges() {
@@ -275,8 +281,41 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
     }
 
     async function addParam(key: string) {
-        await handleUpdate(key, { enabled: true, component_type: 'auto' })
+        // 1. Try to find schema def to pre-fill
+        const def = findDefinition(key)
+
+        const updates: any = {
+            enabled: true,
+            component_type: 'auto',
+            custom_label: key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') // Title Case
+        }
+
+        if (def) {
+            if (def.type === 'integer' || def.type === 'number') updates.component_type = 'slider'
+            if (def.type === 'boolean') updates.component_type = 'switch'
+            if (def.enum) updates.component_type = 'select'
+            if (def.description) updates.description = def.description // Store description override if needed? No, just rely on extracted or schema.
+            // Actually, we store 'description' in config only if we want to override it. 
+            // But for the UI to show it immediately, we might rely on the merge logic in `allKeys` map loop.
+        }
+
+        await handleUpdate(key, updates)
         setScannedParams(prev => prev.filter(p => p !== key))
+    }
+
+    async function deleteParam(key: string) {
+        const newConfig = { ...config }
+        if (newConfig.parameters) {
+            delete newConfig.parameters[key]
+        }
+        setConfig(newConfig)
+
+        // Add back to smart scan if it disappears from known keys
+        // Since allKeys is derived from config, it will disappear from main list.
+        // We should add it to scannedParams if it's not there.
+        if (!scannedParams.includes(key)) {
+            setScannedParams(prev => [...prev, key].sort())
+        }
     }
 
     return (
@@ -302,7 +341,7 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
                     <div className="text-xs font-semibold text-blue-600 mb-2">Smart Scan Found:</div>
                     <div className="flex flex-wrap gap-2">
                         {scannedParams.map(p => (
-                            <Badge key={p} variant="outline" className="cursor-pointer hover:bg-blue-100" onClick={() => addParam(p)}>
+                            <Badge key={p} variant="outline" className="cursor-pointer hover:bg-blue-100 hover:text-blue-700 transition-colors" onClick={() => addParam(p)}>
                                 + {p}
                             </Badge>
                         ))}
@@ -328,6 +367,9 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
                     {allKeys.map(key => {
                         const extracted = extractedInputs[key]
                         const paramConfig = config.parameters?.[key] || {}
+                        // If it's in config, it's enabled effectively, unless explicitly false. 
+                        // If it's only in extracted, it might not be in config yet.
+                        const isConfigured = !!config.parameters?.[key]
                         const isEnabled = paramConfig.enabled !== false
 
                         return (
@@ -337,16 +379,30 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="font-semibold text-sm">{key}</span>
                                             {extracted && <Badge variant="secondary" className="text-[10px] h-4 px-1">{extracted.type}</Badge>}
+                                            {isConfigured && <Badge variant="outline" className="text-[10px] h-4 px-1 text-blue-500 border-blue-200">Configured</Badge>}
                                         </div>
                                         <div className="text-[10px] text-muted-foreground line-clamp-1" title={extracted?.message}>
                                             {extracted?.title || extracted?.description || "No description"}
                                         </div>
                                     </div>
-                                    <Switch
-                                        checked={isEnabled}
-                                        onCheckedChange={c => handleUpdate(key, { enabled: c })}
-                                        className="scale-75 ml-2"
-                                    />
+                                    <div className="flex items-center gap-2">
+                                        <Switch
+                                            checked={isEnabled}
+                                            onCheckedChange={c => handleUpdate(key, { enabled: c })}
+                                            className="scale-75"
+                                        />
+                                        {isConfigured && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                                onClick={() => deleteParam(key)}
+                                                title="Remove from Config (Return to Scan)"
+                                            >
+                                                <XIcon className="w-3 h-3" />
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {isEnabled && (
@@ -368,10 +424,10 @@ function SchemaConfigurator({ model, extractedInputs, rawSchema }: any) {
                                             </SelectContent>
                                         </Select>
 
-                                        <div className="flex items-center gap-1 border rounded px-2 h-7 bg-background">
-                                            <span className="text-[10px] text-muted-foreground mr-auto">Label</span>
+                                        <div className="flex items-center gap-1 border rounded px-2 h-7 bg-background focus-within:ring-1 focus-within:ring-ring">
+                                            <span className="text-[10px] text-muted-foreground mr-auto shrink-0">Label</span>
                                             <Input
-                                                className="h-5 w-16 text-[10px] p-0 border-0 focus-visible:ring-0 text-right"
+                                                className="h-5 flex-1 min-w-0 text-[10px] p-0 border-0 focus-visible:ring-0 text-right"
                                                 value={paramConfig.custom_label || ""}
                                                 placeholder="Default"
                                                 onChange={e => handleUpdate(key, { custom_label: e.target.value })}
