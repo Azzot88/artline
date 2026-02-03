@@ -52,7 +52,7 @@ export function SchemaVisualizer() {
             <div>
                 <h2 className="text-3xl font-bold tracking-tight">Schema Visualizer</h2>
                 <p className="text-muted-foreground">
-                    Deep inspection of the Schema Pipeline steps: Raw -> Extracted -> Spec.
+                    Deep inspection of the Schema Pipeline steps: Raw &rarr; Extracted &rarr; Spec.
                 </p>
             </div>
 
