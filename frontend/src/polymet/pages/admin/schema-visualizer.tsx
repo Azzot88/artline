@@ -30,7 +30,8 @@ import {
     Play,
     Search,
     Wand2,
-    LayoutTemplate
+    LayoutTemplate,
+    XIcon
 } from "lucide-react"
 
 export function SchemaVisualizer() {
