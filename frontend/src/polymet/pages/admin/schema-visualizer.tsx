@@ -179,40 +179,44 @@ function SchemaWorkspace({ model, onModelUpdate }: { model: AIModel, onModelUpda
     }
 
     return (
-        <div className="grid grid-cols-12 min-h-[600px] divide-x divide-border">
-            {/* Column 1: Source (3 cols) */}
-            <div className="col-span-3 flex flex-col bg-background/50">
-                <div className="p-3 border-b flex items-center gap-2 font-semibold text-muted-foreground">
-                    <Braces className="w-4 h-4" />
-                    <span className="flex-1">Source Schema</span>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                        onClick={handleCopy}
-                        title="Copy JSON"
-                    >
-                        {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
-                    </Button>
-                </div>
-                <div className="flex-1 overflow-auto bg-slate-950 text-slate-50 p-4 text-[10px] font-mono leading-relaxed">
-                    <pre>{JSON.stringify(raw, null, 2)}</pre>
+        <div className="grid grid-cols-12 divide-x divide-border items-stretch relative">
+            {/* Column 1: Source (3 cols) - Slave Height */}
+            <div className="col-span-3 relative">
+                <div className="absolute inset-0 flex flex-col bg-background/50">
+                    <div className="p-3 border-b flex items-center gap-2 font-semibold text-muted-foreground shrink-0">
+                        <Braces className="w-4 h-4" />
+                        <span className="flex-1">Source Schema</span>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                            onClick={handleCopy}
+                            title="Copy JSON"
+                        >
+                            {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                        </Button>
+                    </div>
+                    <div className="flex-1 overflow-auto bg-slate-950 text-slate-50 p-4 text-[10px] font-mono leading-relaxed">
+                        <pre>{JSON.stringify(raw, null, 2)}</pre>
+                    </div>
                 </div>
             </div>
 
-            {/* Column 2: Configurator (5 cols) */}
-            <div className="col-span-5 flex flex-col bg-background overflow-hidden">
+            {/* Column 2: Configurator (5 cols) - Master Height */}
+            <div className="col-span-5 flex flex-col bg-background">
                 <SchemaConfigurator model={model} extractedInputs={extracted} rawSchema={raw} onModelUpdate={onModelUpdate} />
             </div>
 
-            {/* Column 3: Live Preview (4 cols) */}
-            <div className="col-span-4 flex flex-col bg-muted/10 overflow-hidden">
-                <div className="p-3 border-b flex items-center gap-2 font-semibold text-muted-foreground">
-                    <Play className="w-4 h-4" />
-                    Live Preview
-                </div>
-                <div className="flex-1 p-6 overflow-auto">
-                    <LivePreview model={model} />
+            {/* Column 3: Live Preview (4 cols) - Slave Height */}
+            <div className="col-span-4 relative">
+                <div className="absolute inset-0 flex flex-col bg-muted/10">
+                    <div className="p-3 border-b flex items-center gap-2 font-semibold text-muted-foreground shrink-0">
+                        <Play className="w-4 h-4" />
+                        Live Preview
+                    </div>
+                    <div className="flex-1 p-6 overflow-auto">
+                        <LivePreview model={model} />
+                    </div>
                 </div>
             </div>
         </div>
