@@ -285,26 +285,42 @@ export function Workbench() {
       let errorDetail: any = null
       let errorMessage = t('workbench.toasts.unknownError');
 
-      // Extract details
-      if (err instanceof Error) {
-        errorMessage = err.message
-      } else if (typeof err === 'object' && err !== null) {
-        // Check for nested detail from FastAPI: { detail: { code: "...", message: "..." } }
-        // Or simple { detail: "..." }
-        const detail = (err as any).detail || (err as any).message;
-
-        if (typeof detail === 'object' && detail !== null) {
-          errorDetail = detail
-          errorMessage = detail.message || JSON.stringify(detail)
-        } else if (detail) {
-          errorMessage = String(detail)
+      // 1. Check for APIError shape (has .data property)
+      if (err.data) {
+        const data = err.data;
+        // Structured detail: { detail: { code: "...", message: "..." } }
+        if (data.detail && typeof data.detail === 'object') {
+          errorDetail = data.detail
+          errorMessage = errorDetail.message || JSON.stringify(errorDetail)
+        }
+        // String detail: { detail: "..." }
+        else if (data.detail) {
+          errorMessage = String(data.detail)
+        }
+        // Message field
+        else if (data.message) {
+          errorMessage = String(data.message)
+        }
+      }
+      // 2. Fallback to standard Error message
+      else if (err instanceof Error) {
+        if (err.message && err.message !== '[object Object]') {
+          errorMessage = err.message
+        }
+      }
+      // 3. Fallback for raw objects
+      else if (typeof err === 'object' && err !== null) {
+        const raw = (err as any);
+        errorMessage = raw.detail || raw.message || JSON.stringify(err);
+        if (typeof errorMessage === 'object') {
+          errorMessage = JSON.stringify(errorMessage);
         }
       }
 
       // Check specific error codes
       if (errorDetail?.code === "insufficient_credits" || errorMessage.includes("insufficient_credits") || errorMessage.includes("Insufficient credits")) {
         const actionLabel = isGuest ? t('common.register') : t('common.buyMore')
-        const targetUrl = isGuest ? "/register" : "/account" // Or /landingpage#pricing
+        const targetUrl = isGuest ? "/register" : "/account"
 
         toast.error(t('common.outOfCredits'), {
           description: isGuest ? t('auth.register.subtitle') : errorMessage,
@@ -312,15 +328,10 @@ export function Workbench() {
             label: actionLabel,
             onClick: () => navigate(targetUrl)
           },
-          duration: 5000
+          duration: 6000
         })
 
-        // Auto-navigate after small delay if needed? Or just let user click.
-        // User asked to "open window". A toast with action is good.
-        // But maybe forcing the modal is better?
         navigate(targetUrl)
-
-        // We don't mark as failed in a way that breaks UI, just stop loading.
       } else {
         toast.error(t('workbench.toasts.genFailed'), { description: errorMessage })
       }
