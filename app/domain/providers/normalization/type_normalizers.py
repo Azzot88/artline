@@ -95,7 +95,6 @@ class BaseTypeNormalizer:
         # If strict validation fails:
         # Return None to signal "invalid value, drop field".
         # This allows Replicate default to take over if field isn't required.
-        # If required and missing, Replicate will 422, which we now handle.
         return None
 
     def normalize_array(self, value: Any, rules: Dict[str, Any], item_normalizer_callback=None) -> List[Any]:
