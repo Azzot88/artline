@@ -78,7 +78,7 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 465
     SMTP_USER: Optional[str] = None  # admin@dealvault.club
     SMTP_PASSWORD: Optional[str] = None
-    SMTP_FROM: str = "admin@dealvault.club"  # Must match SMTP_USER for mailU
+    SMTP_FROM: str = "admin@dealvault.club"  # Can be overridden in .env
     SMTP_USE_TLS: bool = True
     SMTP_USE_SSL: bool = True  # Port 465 uses SSL
 
