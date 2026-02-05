@@ -82,89 +82,90 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
     }
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px] top-[40%] sm:top-[50%] scale-95 sm:scale-100">
-                <DialogHeader>
-                    <DialogTitle>{mode === 'register' ? t('auth.register.title') : t('common.login')}</DialogTitle>
-                    <DialogDescription>
-                        {mode === 'register' ? t('auth.register.subtitle') : t('auth.login.welcomeBack')}
-                    </DialogDescription>
-                </DialogHeader>
+        <>
+            <Dialog open={open} onOpenChange={onOpenChange}>
+                <DialogContent className="sm:max-w-[425px] top-[40%] sm:top-[50%] scale-95 sm:scale-100">
+                    <DialogHeader>
+                        <DialogTitle>{mode === 'register' ? t('auth.register.title') : t('common.login')}</DialogTitle>
+                        <DialogDescription>
+                            {mode === 'register' ? t('auth.register.subtitle') : t('auth.login.welcomeBack')}
+                        </DialogDescription>
+                    </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="email">{t('auth.email')}</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            placeholder="name@example.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="password">{t('auth.password')}</Label>
-                        <Input
-                            id="password"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                    </div>
-
-                    {mode === 'register' && (
-                        <div className="flex items-start space-x-2">
-                            <Checkbox
-                                id="terms"
-                                checked={agreed}
-                                onCheckedChange={(c) => setAgreed(c as boolean)}
+                    <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="email">{t('auth.email')}</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="name@example.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
                             />
-                            <div className="grid gap-1.5 leading-none">
-                                <label
-                                    htmlFor="terms"
-                                    className="text-xs text-muted-foreground leading-snug cursor-pointer select-none"
-                                >
-                                    {t('auth.register.agreement.start')} <span className="text-primary">{t('auth.register.agreement.termsLink')}</span>
-                                </label>
-                            </div>
                         </div>
-                    )}
+                        <div className="grid gap-2">
+                            <Label htmlFor="password">{t('auth.password')}</Label>
+                            <Input
+                                id="password"
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                        </div>
 
-                    {error && <p className="text-sm text-destructive">{error}</p>}
+                        {mode === 'register' && (
+                            <div className="flex items-start space-x-2">
+                                <Checkbox
+                                    id="terms"
+                                    checked={agreed}
+                                    onCheckedChange={(c) => setAgreed(c as boolean)}
+                                />
+                                <div className="grid gap-1.5 leading-none">
+                                    <label
+                                        htmlFor="terms"
+                                        className="text-xs text-muted-foreground leading-snug cursor-pointer select-none"
+                                    >
+                                        {t('auth.register.agreement.start')} <span className="text-primary">{t('auth.register.agreement.termsLink')}</span>
+                                    </label>
+                                </div>
+                            </div>
+                        )}
 
-                    <Button type="submit" disabled={loading || (mode === 'register' && !agreed)}>
-                        {loading ? t('auth.loading') : (mode === 'register' ? t('auth.register.submit') : t('common.login'))}
-                    </Button>
-                </form>
+                        {error && <p className="text-sm text-destructive">{error}</p>}
 
-                <div className="text-center text-sm text-muted-foreground">
-                    {mode === 'register' ? (
-                        <>
-                            {t('auth.register.hasAccount')}
-                            <button onClick={() => setMode('login')} className="ml-1 text-primary hover:underline">
-                                {t('common.login')}
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            {t('auth.login.noAccount')}
-                            <button onClick={() => setMode('register')} className="ml-1 text-primary hover:underline">
-                                {t('auth.register.submit')}
-                            </button>
-                        </>
-                    )}
-                </div>
-            </DialogContent>
-        </Dialog>
-        
-        {/* Email Verification Dialog */}
-    <EmailVerificationDialog
-        open={showVerificationDialog}
-        onOpenChange={setShowVerificationDialog}
-        email={registeredEmail}
-    />
+                        <Button type="submit" disabled={loading || (mode === 'register' && !agreed)}>
+                            {loading ? t('auth.loading') : (mode === 'register' ? t('auth.register.submit') : t('common.login'))}
+                        </Button>
+                    </form>
+
+                    <div className="text-center text-sm text-muted-foreground">
+                        {mode === 'register' ? (
+                            <>
+                                {t('auth.register.hasAccount')}
+                                <button onClick={() => setMode('login')} className="ml-1 text-primary hover:underline">
+                                    {t('common.login')}
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                {t('auth.login.noAccount')}
+                                <button onClick={() => setMode('register')} className="ml-1 text-primary hover:underline">
+                                    {t('auth.register.submit')}
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Email Verification Dialog */}
+            <EmailVerificationDialog
+                open={showVerificationDialog}
+                onOpenChange={setShowVerificationDialog}
+                email={registeredEmail}
+            />
         </>
     )
 }
