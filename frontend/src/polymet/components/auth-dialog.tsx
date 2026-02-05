@@ -44,7 +44,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                 if (!agreed) return;
                 res = await apiService.register({ email, password }, language)
             } else {
-                res = await apiService.login({ username: email, password })
+                res = await apiService.login({ email, password })
             }
 
             if (res.ok) { // Check if ok property exists or implied by type

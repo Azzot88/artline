@@ -7,7 +7,7 @@ Scheduled tasks for:
 
 from celery import shared_task
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import select, delete, create engine
+from sqlalchemy import select, delete, create_engine
 from sqlalchemy.orm import Session
 from app.models import User, Job
 from app.core.config import settings
