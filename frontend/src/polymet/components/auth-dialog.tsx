@@ -75,7 +75,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                 <DialogHeader>
                     <DialogTitle>{mode === 'register' ? t('auth.register.title') : t('common.login')}</DialogTitle>
                     <DialogDescription>
-                        {mode === 'register' ? t('auth.register.subtitle') : "Welcome back"}
+                        {mode === 'register' ? t('auth.register.subtitle') : t('auth.login.welcomeBack')}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -137,7 +137,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                         </>
                     ) : (
                         <>
-                            No account?
+                            {t('auth.login.noAccount')}
                             <button onClick={() => setMode('register')} className="ml-1 text-primary hover:underline">
                                 {t('auth.register.submit')}
                             </button>

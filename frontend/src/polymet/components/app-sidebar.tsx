@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
   SparklesIcon,
@@ -25,6 +26,7 @@ import { useLanguage } from "@/polymet/components/language-provider"
 import { LanguageSwitcher } from "@/polymet/components/language-switcher"
 import { useAuth } from "@/polymet/components/auth-provider"
 import { ModeToggle } from "@/components/mode-toggle"
+import { AuthDialog } from "@/polymet/components/auth-dialog"
 
 
 interface NavItem {
@@ -45,6 +47,7 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
   const navigate = useNavigate()
   const { t } = useLanguage()
   const { user, isLoading: loading, isGuest, logout, balance } = useAuth()
+  const [showAuthDialog, setShowAuthDialog] = useState(false)
 
   // Use real admin flag from user object
   const isAdmin = user?.is_admin || false
@@ -131,7 +134,7 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
     if (isAdmin) {
       navigate("/admin")
     } else if (isGuest) {
-      navigate("/login")
+      setShowAuthDialog(true)
     } else {
       navigate("/account")
     }
@@ -212,11 +215,17 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
           {/* Guest Action: Register */}
           {isGuest && (
             <div className="mt-2 px-1">
-              <Link to="/register" onClick={onClose}>
-                <Button variant="outline" size="sm" className="w-full h-7 text-xs border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10">
-                  {t('common.register')}
-                </Button>
-              </Link>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full h-7 text-xs border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10"
+                onClick={() => {
+                  setShowAuthDialog(true)
+                  if (onClose) onClose()
+                }}
+              >
+                {t('common.register')}
+              </Button>
             </div>
           )}
 
@@ -347,12 +356,18 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
           {/* User/Auth Actions */}
           <div className="mt-auto pt-4">
             {isGuest ? (
-              <Link to="/login" onClick={onClose}>
-                <Button variant="ghost" className="w-full justify-start text-primary hover:text-primary hover:bg-primary/10" size="sm">
-                  <UserIcon className="w-4 h-4 mr-3" />
-                  {t('common.login')}
-                </Button>
-              </Link>
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-primary hover:text-primary hover:bg-primary/10"
+                size="sm"
+                onClick={() => {
+                  setShowAuthDialog(true)
+                  if (onClose) onClose()
+                }}
+              >
+                <UserIcon className="w-4 h-4 mr-3" />
+                {t('common.login')}
+              </Button>
             ) : (
               <Button
                 variant="ghost"
@@ -374,8 +389,9 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
             <span>Generations: {loading ? "..." : (user?.total_generations || 0)}</span>
           </div>
         </div>
-
       </div>
+
+      <AuthDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} />
     </>
   )
 }
