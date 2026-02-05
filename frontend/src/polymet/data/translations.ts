@@ -90,7 +90,10 @@ export const translations = {
             models: "Модели",
             providers: "Провайдеры",
             reports: "Отчеты",
-            system: "Система"
+            system: "Система",
+            gallery: "Галерея",
+            review: "Модерация",
+            schemaViz: "Схема",
         },
         gallery: {
             title: "Галерея",
@@ -146,6 +149,12 @@ export const translations = {
             deleting: "Удаление...",
             reusePrompt: "Переиспользовать промпт",
             promptCopied: "Промпт скопирован",
+            action: {
+                hide: "Скрыть",
+                show: "Показать",
+                approve: "Одобрить"
+            },
+            proRequired: "Доступно для Pro аккаунта",
             privacy: {
                 visibleDesc: "Публичный доступ",
                 hiddenDesc: "Приватный доступ"
@@ -202,7 +211,8 @@ export const translations = {
             loading: "Загрузка моделей...",
             errorLoading: "Ошибка загрузки моделей",
             errorLoadingDesc: "Пожалуйста, убедитесь, что сервер работает и вы авторизованы.",
-            inputFile: "Выберите файл"
+            inputFile: "Выберите файл",
+            clear: "Очистить"
         },
         landing: {
             hero: {
@@ -478,7 +488,10 @@ export const translations = {
             models: "Модельдер",
             providers: "Провайдерлер",
             reports: "Есептер",
-            system: "Жүйе"
+            system: "Жүйе",
+            gallery: "Галерея",
+            review: "Модерация",
+            schemaViz: "Схема",
         },
         team: {
             title: "Команда",
@@ -542,7 +555,8 @@ export const translations = {
             loading: "Модельдер жүктелуде...",
             errorLoading: "Модельдерді жүктеу қатесі",
             errorLoadingDesc: "Сервердің жұмыс істеп тұрғанын және авторланғаныңызды тексеріңіз.",
-            inputFile: "Файлды таңдаңыз"
+            inputFile: "Файлды таңдаңыз",
+            clear: "Тазалау"
         },
         libraryWidget: {
             title: "Менің генерацияларым",
@@ -592,6 +606,12 @@ export const translations = {
             deleting: "Жойылуда...",
             reusePrompt: "Сұранысты қайталау",
             promptCopied: "Сұраныс көшірілді",
+            action: {
+                hide: "Жасыру",
+                show: "Көрсету",
+                approve: "Мақұлдау"
+            },
+            proRequired: "Pro аккаунты үшін қолжетімді",
         },
         landing: {
             hero: {
@@ -868,7 +888,10 @@ export const translations = {
             models: "Моделдер",
             providers: "Провайдерлер",
             reports: "Отчеттор",
-            system: "Система"
+            system: "Система",
+            gallery: "Галерея",
+            review: "Текшерүү",
+            schemaViz: "Схема",
         },
         team: {
             title: "Команда",
@@ -933,7 +956,8 @@ export const translations = {
         loading: "Моделдер жүктөлүүдө...",
         errorLoading: "Моделдерди жүктөө катасы",
         errorLoadingDesc: "Сервер иштеп жатканын жана авторизацияланганыңызды текшериңиз.",
-        inputFile: "Файлды тандаңыз"
+        inputFile: "Файлды тандаңыз",
+        clear: "Тазалоо"
     },
     libraryWidget: {
         title: "Менин генерацияларым",
@@ -983,6 +1007,12 @@ export const translations = {
         deleting: "Өчүрүлүүдө...",
         reusePrompt: "Суроону кайталоо",
         promptCopied: "Суроо көчүрүлдү",
+        action: {
+            hide: "Жашыруу",
+            show: "Көрсөтүү",
+            approve: "Макулдоо"
+        },
+        proRequired: "Pro аккаунты үчүн жеткиликтүү",
     },
     landing: {
         hero: {

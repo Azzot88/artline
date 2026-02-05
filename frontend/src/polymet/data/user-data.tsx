@@ -22,6 +22,7 @@ export interface User {
 
   // Computed fields (not in backend)
   total_credits_spent?: number           // Total credits spent (computed from ledger)
+  plan?: "free" | "pro" | "studio"       // Subscription plan
 }
 
 // Ledger entry for billing
@@ -71,7 +72,8 @@ export const currentUser: User = {
   language: "ru",
   created_at: "2024-01-01T00:00:00Z",
   updated_at: "2024-01-15T14:30:00Z",
-  total_credits_spent: 85
+  total_credits_spent: 85,
+  plan: "free"
 }
 
 export const mockUsers: User[] = [

@@ -433,10 +433,10 @@ export function Workbench() {
                     size="sm"
                     className="glass-effect hover:bg-white/20 transition-all font-semibold gap-2 text-muted-foreground hover:text-white"
                     onClick={handleClear}
-                    title="Очистить"
+                    title={t('workbench.clear')}
                   >
                     <EraserIcon className="w-4 h-4" />
-                    <span className="sr-only md:not-sr-only">Очистить</span>
+                    <span className="sr-only md:not-sr-only">{t('workbench.clear')}</span>
                   </Button>
 
                   <Button

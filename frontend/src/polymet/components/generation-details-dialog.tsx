@@ -82,6 +82,14 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
     }
 
     const handlePrivacyChange = async (val: string) => {
+        // Feature Gate: Private mode requires Pro plan
+        if (val === 'private' && user?.plan !== 'pro' && !user?.is_admin) {
+            toast(t('generationDetails.proRequired'), {
+                icon: <CoinsIcon className="w-4 h-4 text-amber-500" />
+            })
+            return
+        }
+
         setPrivacy(val)
         try {
             await api.patch(`/jobs/${generation.id}/privacy`, { visibility: val })
@@ -275,13 +283,12 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                             className={cn("h-8 gap-2", privacy === 'private' ? "text-indigo-500 bg-indigo-500/10" : "text-muted-foreground hover:text-foreground")}
                                             onClick={() => handlePrivacyChange(privacy === 'private' ? 'standard' : 'private')}
                                             title={privacy === 'private' ? (t('generationDetails.privacy.hiddenDesc') || "Private Mode") : (t('generationDetails.privacy.visibleDesc') || "Standard Visibility")}
-                                            disabled={
-                                                (privacy === 'public' && !user?.is_admin) ||
-                                                (!user?.is_admin && user?.id !== generation.user_id && guestId !== generation.user_id)
-                                            }
+                                            disabled={!user?.is_admin && user?.id !== generation.user_id}
                                         >
                                             {privacy === 'private' ? <EyeOffIcon className="w-4 h-4" /> : <GlobeIcon className="w-4 h-4" />}
-                                            <span className="text-xs">{privacy === 'private' ? "Private" : "Public"}</span>
+                                            <span className="text-xs">
+                                                {privacy === 'private' ? t('generationDetails.action.show') : t('generationDetails.action.hide')}
+                                            </span>
                                         </Button>
                                     )}
 
@@ -293,7 +300,7 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                             onClick={handleCurate}
                                         >
                                             <StarIcon className={cn("w-3.5 h-3.5", isCurated ? "fill-current" : "")} />
-                                            <span className="text-xs">Curate</span>
+                                            <span className="text-xs">{t('generationDetails.action.approve')}</span>
                                         </Button>
                                     )}
                                 </div>

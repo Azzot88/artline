@@ -14,7 +14,6 @@ import {
   Brain,
   CheckCircle,
   Video,
-  Video,
   Users,
   Database
 } from "lucide-react"
@@ -237,10 +236,10 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
                 {[
                   { href: "/admin", label: t('admin.dashboard'), icon: LayoutDashboardIcon, exact: true },
                   { href: "/admin/users", label: t('admin.users'), icon: UserIcon },
-                  { href: "/admin/gallery", label: "Gallery", icon: ImageIcon }, // Universal Gallery
+                  { href: "/admin/gallery", label: t('admin.gallery'), icon: ImageIcon }, // Universal Gallery
                   { href: "/admin/models", label: t('admin.models'), icon: SparklesIcon }, // Box/Sparkles for Models
                   { href: "/admin/providers", label: t('admin.providers'), icon: SlidersIcon }, // Shield/Sliders for Providers
-                  { href: "/admin/schema-visualizer", label: "Schema Viz", icon: Database },
+                  { href: "/admin/schema-visualizer", label: t('admin.schemaViz'), icon: Database },
                   { href: "/admin/reports", label: t('admin.reports'), icon: TrendingUpIcon },
                   { href: "/admin/system", label: t('admin.system'), icon: SettingsIcon },
                 ].map((item) => (
