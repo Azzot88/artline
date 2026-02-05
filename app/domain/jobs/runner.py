@@ -148,10 +148,15 @@ def process_job(self, job_id: str):
 def _fail_job(session, job, error_msg):
     logger.error(f"Failing job {job.id}: {error_msg}")
     try:
+        from app.domain.users.guest_models import GuestProfile
+        from sqlalchemy import update
+        
         job.status = "failed"
         job.error_message = error_msg
         
+        # User Refund
         if job.user_id and job.cost_credits > 0:
+            # 1. Add to Ledger
             refund = LedgerEntry(
                 user_id=job.user_id,
                 amount=job.cost_credits,
@@ -160,6 +165,25 @@ def _fail_job(session, job, error_msg):
                 currency="credits"
             )
             session.add(refund)
+            
+            # 2. Update Denormalized Balance (User.balance)
+            # We must do this explicitly to keep the cache in sync with ledger
+            stmt = (
+                update(User)
+                .where(User.id == job.user_id)
+                .values(balance=User.balance + job.cost_credits)
+            )
+            session.execute(stmt)
+            
+        # Guest Refund
+        elif job.guest_id and job.cost_credits > 0:
+            stmt = (
+                update(GuestProfile)
+                .where(GuestProfile.id == job.guest_id)
+                .values(balance=GuestProfile.balance + job.cost_credits)
+            )
+            session.execute(stmt)
+            
         session.commit()
     except Exception as e:
         logger.error(f"Failed to fail job safely: {e}")
