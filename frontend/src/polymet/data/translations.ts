@@ -1387,5 +1387,5 @@ export const translations = {
         }
     },
 }
-}
+
 
