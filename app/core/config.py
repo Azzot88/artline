@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     
     @computed_field
     @property
-    def SQLALCHEMY_DATABASE_URI_SYNC(self) -> str:
+    def DATABASE_URI_SYNC(self) -> str:
         """Sync database URI for Celery tasks (uses psycopg2 instead of asyncpg)"""
         return str(PostgresDsn.build(
             scheme="postgresql+psycopg2",
@@ -40,6 +40,7 @@ class Settings(BaseSettings):
             port=self.POSTGRES_PORT,
             path=self.POSTGRES_DB,
         ))
+
 
 
     @computed_field

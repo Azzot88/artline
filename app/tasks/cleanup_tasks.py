@@ -41,8 +41,9 @@ def send_email_verification_reminders():
     from app.core.config import settings
     
     # Create sync engine for Celery
-    engine = create_engine(settings.SQLALCHEMY_DATABASE_URI_SYNC)
+    engine = create_engine(settings.DATABASE_URI_SYNC)
     SessionLocal = sessionmaker(bind=engine)
+
     
     db = SessionLocal()
     try:
@@ -108,8 +109,9 @@ def delete_unverified_accounts():
     from app.core.config import settings
     
     # Create sync engine for Celery
-    engine = create_engine(settings.SQLALCHEMY_DATABASE_URI_SYNC)
+    engine = create_engine(settings.DATABASE_URI_SYNC)
     SessionLocal = sessionmaker(bind=engine)
+
     
     db = SessionLocal()
     try:
