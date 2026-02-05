@@ -27,12 +27,13 @@ import type { ParameterValues, ImageFormatType, VideoFormatType, Generation } fr
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
-import { useLocation, useSearchParams } from "react-router-dom"
+import { useLocation, useSearchParams, useNavigate } from "react-router-dom"
 import { useModelSpec } from "@/polymet/hooks/use-model-spec"
 
 export function Workbench() {
   const { t } = useLanguage()
-  const { refreshUser } = useAuth()
+  const { refreshUser, isGuest } = useAuth()
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [creationType, setCreationType] = useState<CreationType>(() => {
     const tab = searchParams.get('tab')
@@ -279,20 +280,50 @@ export function Workbench() {
       startPolling(res.id, commonData, tempId)
 
     } catch (err: any) {
-      console.error(err)
+      console.error("Generation error:", err)
+
+      let errorDetail: any = null
       let errorMessage = t('workbench.toasts.unknownError');
+
+      // Extract details
       if (err instanceof Error) {
-        errorMessage = err.message;
+        errorMessage = err.message
       } else if (typeof err === 'object' && err !== null) {
-        errorMessage = (err as any).detail || (err as any).message || JSON.stringify(err);
-        if (typeof errorMessage === 'object') {
-          errorMessage = (errorMessage as any).message || JSON.stringify(errorMessage);
+        // Check for nested detail from FastAPI: { detail: { code: "...", message: "..." } }
+        // Or simple { detail: "..." }
+        const detail = (err as any).detail || (err as any).message;
+
+        if (typeof detail === 'object' && detail !== null) {
+          errorDetail = detail
+          errorMessage = detail.message || JSON.stringify(detail)
+        } else if (detail) {
+          errorMessage = String(detail)
         }
-      } else if (typeof err === 'string') {
-        errorMessage = err;
       }
 
-      toast.error(t('workbench.toasts.genFailed'), { description: errorMessage })
+      // Check specific error codes
+      if (errorDetail?.code === "insufficient_credits" || errorMessage.includes("insufficient_credits") || errorMessage.includes("Insufficient credits")) {
+        const actionLabel = isGuest ? t('common.register') : t('common.buyMore')
+        const targetUrl = isGuest ? "/register" : "/account" // Or /landingpage#pricing
+
+        toast.error(t('common.outOfCredits'), {
+          description: isGuest ? t('auth.register.subtitle') : errorMessage,
+          action: {
+            label: actionLabel,
+            onClick: () => navigate(targetUrl)
+          },
+          duration: 5000
+        })
+
+        // Auto-navigate after small delay if needed? Or just let user click.
+        // User asked to "open window". A toast with action is good.
+        // But maybe forcing the modal is better?
+        navigate(targetUrl)
+
+        // We don't mark as failed in a way that breaks UI, just stop loading.
+      } else {
+        toast.error(t('workbench.toasts.genFailed'), { description: errorMessage })
+      }
 
       // 4. Mark optimistic generation as failed
       markAsFailed(tempId, errorMessage)
