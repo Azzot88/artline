@@ -420,6 +420,27 @@ export const translations = {
                 regFailed: "Ошибка регистрации"
             }
         },
+        emailVerification: {
+            title: "Подтвердите Email",
+            subtitle: "Введите 6-значный код, отправленный на почту:",
+            codePlaceholder: "000000",
+            verify: "Подтвердить",
+            resendCode: "Отправить код повторно",
+            resendIn: "Повторная отправка через {seconds} сек",
+            checkEmail: "Проверьте почту для получения кода верификации",
+            success: "Email успешно подтвержден!",
+            errors: {
+                invalidCode: "Неверный код верификации",
+                expired: "Код истек, запросите новый",
+                tooManyAttempts: "Слишком много попыток, попробуйте позже",
+                sendFailed: "Ошибка отправки кода"
+            },
+            banner: {
+                title: "Email не подтвержден",
+                description: "Подтвердите email чтобы разблокировать пополнение баланса",
+                action: "Подтвердить сейчас"
+            }
+        },
         documents: {
             title: "Документы и Информация",
             tabs: {
@@ -829,6 +850,28 @@ export const translations = {
                 regFailed: "Тіркелу қатесі"
             }
         },
+        emailVerification: {
+            title: "Email растаңыз",
+            subtitle: "Пошта арқылы жіберілген 6 таңбалы кодты енгізіңіз:",
+            codePlaceholder: "000000",
+            verify: "Растау",
+            resendCode: "Қайта жіберу",
+            resendIn: "Қайта жіберу {seconds} сек кейін",
+            checkEmail: "Растау коды үшін поштаңызды тексеріңіз",
+            success: "Email сәтті расталды!",
+            errors: {
+                invalidCode: "Жарамсыз растау коды",
+                expired: "Кодтың мерзімі өтті, жаңасын сұраңыз",
+                tooManyAttempts: "Тым көп әрекет, кейінірек қайталаңыз",
+                sendFailed: "Кодты жіберу қатесі"
+            },
+            banner: {
+                title: "Email расталмаған",
+                description: "Балансты толтыру үшін email растаңыз",
+                action: "Қазір растау"
+            }
+        },
+
         documents: {
             title: "Құжаттар мен Ақпарат",
             tabs: {
@@ -1267,6 +1310,28 @@ export const translations = {
             regFailed: "Катталуу катасы"
         }
     },
+    emailVerification: {
+        title: "Email тастыктаңыз",
+        subtitle: "Почта аркылуу жөнөтүлгөн 6 белгилүү коддуну киргизиңиз:",
+        codePlaceholder: "000000",
+        verify: "Тастыктоо",
+        resendCode: "Кайра жөнөтүү",
+        resendIn: "Кайра жөнөтүү {seconds} сек кийин",
+        checkEmail: "Тастыктоо коду үчүн почтаңызды текшериңиз",
+        success: "Email ийгиликтүү тастыкталды!",
+        errors: {
+            invalidCode: "Туура эмес тастыктоо коду",
+            expired: "Коддун мөөнөтү өттү, жаңыдан сураңыз",
+            tooManyAttempts: "Өтө көп аракет, кийинчерээк кайталаңыз",
+            sendFailed: "Кодду жөнөтүү катасы"
+        },
+        banner: {
+            title: "Email тастыкталган эмес",
+            description: "Балансты толуктоо үчүн email тастыктаңыз",
+            action: "Азыр тастыктоо"
+        }
+    },
+
     documents: {
         title: "Документтер жана Маалымат",
         tabs: {

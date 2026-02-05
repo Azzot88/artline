@@ -9,6 +9,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "@/polymet/components/auth-provider"
 import { useLanguage } from "@/polymet/components/language-provider"
 import { apiService } from "@/polymet/data/api-service"
+import { EmailVerificationDialog } from "@/polymet/components/email-verification-dialog"
 
 interface AuthDialogProps {
     open: boolean
@@ -28,6 +29,10 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
     const [agreed, setAgreed] = useState(false)
     const [mode, setMode] = useState<'register' | 'login'>('register')
 
+    // Email Verification Modal
+    const [showVerificationDialog, setShowVerificationDialog] = useState(false)
+    const [registeredEmail, setRegisteredEmail] = useState("")
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError("")
@@ -46,10 +51,17 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                 // Actually apiService returns the response directly. 
                 // api-client usually throws if error? 
                 // Let's check api.ts again. Yes, throws APIError.
-                // So if we are here, it's success.
+                // So if we are here,  it's success.
                 // BUT apiService.register returns { user, ... } ?
                 // Let's assume standard auth flow.
                 login((res as any).user || res)
+
+                // If registration, show email verification dialog
+                if (mode === 'register') {
+                    setRegisteredEmail(email)
+                    setShowVerificationDialog(true)
+                }
+
                 onOpenChange(false)
                 // navigate("/workbench") // Already there
             } else {
@@ -146,5 +158,13 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                 </div>
             </DialogContent>
         </Dialog>
+        
+        {/* Email Verification Dialog */ }
+    <EmailVerificationDialog
+        open={showVerificationDialog}
+        onOpenChange={setShowVerificationDialog}
+        email={registeredEmail}
+    />
+        </>
     )
 }

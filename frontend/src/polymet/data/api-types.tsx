@@ -106,6 +106,28 @@ export interface LogoutResponse {
 }
 
 // ============================================================================
+// Email Verification
+// ============================================================================
+
+export interface EmailVerificationStatus {
+  is_verified: boolean
+  can_resend: boolean
+  next_resend_at: string | null
+}
+
+export interface EmailVerificationResponse {
+  ok: boolean
+  message: string
+  user?: User
+}
+
+export interface EmailVerificationSendResponse {
+  ok: boolean
+  message: string
+}
+
+
+// ============================================================================
 // Jobs (Generations)
 // ============================================================================
 

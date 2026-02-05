@@ -64,6 +64,23 @@ export const apiService = {
   },
 
   // ==========================================================================
+  // Email Verification
+  // ==========================================================================
+
+  async sendEmailVerificationCode() {
+    return api.post<import("./api-types").EmailVerificationSendResponse>("/auth/email/send-code")
+  },
+
+  async verifyEmailCode(code: string) {
+    return api.post<import("./api-types").EmailVerificationResponse>("/auth/email/verify", { code })
+  },
+
+  async getEmailVerificationStatus() {
+    return api.get<import("./api-types").EmailVerificationStatus>("/auth/email/status")
+  },
+
+
+  // ==========================================================================
   // Jobs (Generations)
   // ==========================================================================
 
