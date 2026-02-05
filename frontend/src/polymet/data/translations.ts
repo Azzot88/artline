@@ -479,7 +479,11 @@ export const translations = {
             themeSystem: "Жүйелік",
             static: "Статика",
             dynamic: "Динамика",
-            viewAll: "Барлығын көру"
+            viewAll: "Барлығын көру",
+            team: "Команда",
+            active: "Белсенді",
+            disabled: "Өшірілген",
+            maintenance: "Қызмет көрсету"
         },
         admin: {
             title: "Диспетчерлік",
@@ -879,7 +883,11 @@ export const translations = {
             themeSystem: "Системалык",
             static: "Статика",
             dynamic: "Динамика",
-            viewAll: "Баарын көрүү"
+            viewAll: "Баарын көрүү",
+            team: "Команда",
+            active: "Активдүү",
+            disabled: "Өчүрүлгөн",
+            maintenance: "Кызмат көрсөтүү"
         },
         admin: {
             title: "Диспетчердик",
