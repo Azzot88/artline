@@ -6,15 +6,27 @@ Scheduled tasks for:
 """
 
 from celery import shared_task
-from datetime import datetime, timedelta
-from sqlalchemy import select, delete
+from datetime import datetime, timedelta, timezone
+from sqlalchemy import select, delete, create engine
 from sqlalchemy.orm import Session
-from app.core.db import SessionLocal
 from app.models import User, Job
 from app.core.config import settings
-from app.domain.users.email_service import send_reminder_email
 import boto3
 from urllib.parse import urlparse
+
+
+def _send_reminder_sync(email: str, days_left: int, language: str = "ru"):
+    """Synchronous email sending for Celery tasks"""
+    from app.domain.users.email_service import EmailService
+    
+    try:
+        subject, html_body = EmailService.get_reminder_email_template(days_left, language)
+        EmailService._send_email_sync(email, subject, html_body)
+        return True
+    except Exception as e:
+        print(f"Failed to send reminder email to {email}: {e}")
+        return False
+
 
 
 @shared_task(name="send_email_verification_reminders")
@@ -24,9 +36,18 @@ def send_email_verification_reminders():
     - 3 days after registration: first reminder
     - 15 days after registration: final reminder
     """
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from app.core.config import settings
+    
+    # Create sync engine for Celery
+    engine = create_engine(settings.SQLALCHEMY_DATABASE_URI_SYNC)
+    SessionLocal = sessionmaker(bind=engine)
+    
     db = SessionLocal()
     try:
-        now = datetime.utcnow()
+        from datetime import timezone
+        now = datetime.now(timezone.utc)
         
         # Find users needing 3-day reminder
         three_days_ago = now - timedelta(days=3)
@@ -40,12 +61,8 @@ def send_email_verification_reminders():
         for user in users_3d:
             try:
                 # Send reminder (27 days left until deletion)
-                import asyncio
-                asyncio.run(send_reminder_email(
-                    email=user.email,
-                    days_left=27,  # 30 - 3 = 27
-                    language=user.language
-                ))
+                # Use sync email sending for Celery tasks
+                _send_reminder_sync(user.email, 27, user.language)
                 user.email_verification_reminder_3d_sent = True
                 db.commit()
                 print(f"Sent 3-day reminder to {user.email}")
@@ -65,12 +82,7 @@ def send_email_verification_reminders():
         for user in users_15d:
             try:
                 # Send final reminder (15 days left until deletion)
-                import asyncio
-                asyncio.run(send_reminder_email(
-                    email=user.email,
-                    days_left=15,  # 30 - 15 = 15
-                    language=user.language
-                ))
+                _send_reminder_sync(user.email, 15, user.language)
                 user.email_verification_reminder_15d_sent = True
                 db.commit()
                 print(f"Sent 15-day reminder to {user.email}")
@@ -84,15 +96,24 @@ def send_email_verification_reminders():
         db.close()
 
 
+
 @shared_task(name="delete_unverified_accounts")
 def delete_unverified_accounts():
     """
     Daily task to delete accounts that have not verified email within 30 days.
     Cascade deletes jobs and archives S3 files.
     """
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from app.core.config import settings
+    
+    # Create sync engine for Celery
+    engine = create_engine(settings.SQLALCHEMY_DATABASE_URI_SYNC)
+    SessionLocal = sessionmaker(bind=engine)
+    
     db = SessionLocal()
     try:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         thirty_days_ago = now - timedelta(days=settings.ACCOUNT_DELETION_DAYS)
         
         # Find unverified users older than 30 days
@@ -139,6 +160,7 @@ def delete_unverified_accounts():
         
     finally:
         db.close()
+
 
 
 def _archive_s3_files(keys: list[str]):
