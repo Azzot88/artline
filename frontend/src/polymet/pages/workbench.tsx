@@ -367,13 +367,27 @@ export function Workbench() {
             <div className="absolute top-0 left-0 right-0 bg-background/40 backdrop-blur-xl border-b border-white/10 p-3 z-10 flex flex-wrap items-center gap-4">
               <CreationTypeToggle value={creationType} onChange={handleCreationTypeChange} />
               <InputTypeToggle value={inputType} onChange={setInputType} creationType={creationType} />
+
+              {/* Clear Button - Moved to Top */}
+              <div className="ml-auto">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="glass-effect hover:bg-white/10 transition-all font-semibold gap-2 text-muted-foreground hover:text-white"
+                  onClick={handleClear}
+                  title={t('workbench.clear')}
+                >
+                  <EraserIcon className="w-4 h-4" />
+                  <span className="hidden md:inline">{t('workbench.clear')}</span>
+                </Button>
+              </div>
             </div>
 
             {/* Input Area */}
             <div className="relative w-full flex min-h-[400px]">
 
-              {/* Left File Sidebar - Only visible if model has file inputs */}
-              {modelParameters.some(p => p.type === 'image' || p.name?.includes('image') || p.name === 'mask') && (
+              {/* Left File Sidebar - Hidden as requested */}
+              {/* {modelParameters.some(p => p.type === 'image' || p.name?.includes('image') || p.name === 'mask') && (
                 <div className="w-[120px] shrink-0 border-r border-white/10 bg-white/5 flex flex-col items-center gap-4 py-6 pt-20 overflow-y-auto custom-scrollbar">
                   {modelParameters
                     .filter(p => p.type === 'image' || p.name?.includes('image') || p.name === 'mask')
@@ -397,7 +411,7 @@ export function Workbench() {
                               <PlusIcon className="w-6 h-6 text-muted-foreground group-hover:text-foreground" />
                             )}
                           </button>
-                          {/* Floating Label */}
+                          
                           <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground whitespace-nowrap bg-black/50 px-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                             {param.label}
                           </span>
@@ -415,7 +429,7 @@ export function Workbench() {
                       </div>
                     ))}
                 </div>
-              )}
+              )} */}
 
               {/* Main Prompt Area */}
               <div className="flex-1 relative">
@@ -426,20 +440,12 @@ export function Workbench() {
                   placeholder={creationType === "image" ? t('workbench.describeImage') : t('workbench.describeVideo')}
                   className="w-full h-full resize-none bg-transparent border-0 focus-visible:ring-0 text-xl md:text-2xl p-8 pt-20 pb-36 font-medium placeholder:text-muted-foreground/40"
                 />
+                {/* Floating Action Buttons (Enhance - Hidden, Clear - Moved) */}
                 <div className="absolute top-20 right-8 flex gap-2">
-                  {/* Clear Button */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="glass-effect hover:bg-white/20 transition-all font-semibold gap-2 text-muted-foreground hover:text-white"
-                    onClick={handleClear}
-                    title={t('workbench.clear')}
-                  >
-                    <EraserIcon className="w-4 h-4" />
-                    <span className="sr-only md:not-sr-only">{t('workbench.clear')}</span>
-                  </Button>
+                  {/* Clear button moved to top toolbar */}
 
-                  <Button
+                  {/* Enhance Button - Temporarily hidden */}
+                  {/* <Button
                     variant="secondary"
                     size="sm"
                     className="glass-effect hover:bg-white/20 transition-all font-semibold gap-2"
@@ -447,7 +453,7 @@ export function Workbench() {
                   >
                     <SparklesIcon className="w-4 h-4 text-primary" />
                     {t('workbench.enhance')}
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
             </div>
@@ -468,8 +474,8 @@ export function Workbench() {
                 {/* Parameter List: Split into Primary (Inline) and Advanced (Popover) */}
                 <div className="flex flex-wrap items-center gap-2 max-h-[120px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
 
-                  {/* 1. Primary Params (Format, Aspect Ratio) */}
-                  {modelParameters
+                  {/* 1. Primary Params (Format, Aspect Ratio) - Temporarily disabled */}
+                  {/* {modelParameters
                     .filter(p => !p.hidden && (p.name === 'format' || p.name === 'aspect_ratio' || p.group === 'format'))
                     .map(param => (
                       <ModelParameterControl
@@ -481,7 +487,7 @@ export function Workbench() {
                         disabled={loading}
                         compact
                       />
-                    ))}
+                    ))} */}
 
                   {/* 2. Advanced Params (Popover) */}
                   <Popover>

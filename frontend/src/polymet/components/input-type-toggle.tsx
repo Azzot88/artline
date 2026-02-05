@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/polymet/components/language-provider"
+import { Type, Image as ImageIcon, Video as VideoIcon } from "lucide-react"
 
 export type InputType = "text" | "image"
 
@@ -21,22 +22,24 @@ export function InputTypeToggle({ value, onChange, creationType }: InputTypeTogg
   }
 
   return (
-    <div className="flex items-center gap-2 p-1 bg-muted rounded-lg w-fit">
+    <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg w-fit border border-border/50">
       <Button
         variant={value === "text" ? "default" : "ghost"}
         size="sm"
         onClick={() => onChange("text")}
-        className="gap-0 px-3 text-xs"
+        className="gap-2 px-3 text-xs min-w-[32px]"
       >
-        {getLabel("text")}
+        <Type className="w-4 h-4 md:hidden" />
+        <span className="hidden md:inline">{getLabel("text")}</span>
       </Button>
       <Button
         variant={value === "image" ? "default" : "ghost"}
         size="sm"
         onClick={() => onChange("image")}
-        className="gap-0 px-3 text-xs"
+        className="gap-2 px-3 text-xs min-w-[32px]"
       >
-        {getLabel("image")}
+        {creationType === 'image' ? <ImageIcon className="w-4 h-4 md:hidden" /> : <VideoIcon className="w-4 h-4 md:hidden" />}
+        <span className="hidden md:inline">{getLabel("image")}</span>
       </Button>
     </div>
   )
