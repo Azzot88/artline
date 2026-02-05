@@ -159,7 +159,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             </DialogContent>
         </Dialog>
         
-        {/* Email Verification Dialog */ }
+        {/* Email Verification Dialog */}
     <EmailVerificationDialog
         open={showVerificationDialog}
         onOpenChange={setShowVerificationDialog}
