@@ -19,7 +19,8 @@ async def generate_verification_code() -> str:
 
 async def send_verification_code(
     db: AsyncSession,
-    user: User
+    user: User,
+    language: Optional[str] = None
 ) -> Tuple[bool, Optional[str]]:
     """
     Generate and send verification code to user's email.
@@ -62,7 +63,7 @@ async def send_verification_code(
     email_sent = await send_verification_email(
         email=user.email,
         code=code,
-        language=user.language
+        language=language or user.language or "ru"
     )
     
     if not email_sent:

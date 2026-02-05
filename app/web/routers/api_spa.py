@@ -2,7 +2,7 @@ from datetime import timedelta
 from typing import List, Optional, Any, Dict
 from pydantic import BaseModel
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Response, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response, BackgroundTasks, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, func, delete
 import uuid
@@ -87,7 +87,8 @@ async def spa_register(
     creds: RegisterRequest,
     request: Request,
     response: Response,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    language: str = Query("ru")
 ):
     # 1. Check existing
     result = await db.execute(select(User).where(User.email == creds.email))
@@ -140,7 +141,7 @@ async def spa_register(
     from app.domain.users import verification_service
     email_sent = False
     try:
-        success, error = await verification_service.send_verification_code(db, new_user)
+        success, error = await verification_service.send_verification_code(db, new_user, language=language)
         email_sent = success
     except Exception as e:
         print(f"Failed to send verification email on registration: {e}")
@@ -156,12 +157,13 @@ async def spa_register(
 @router.post("/auth/email/send-code")
 async def send_email_verification_code(
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    language: str = Query("ru")
 ):
     """Send/resend verification code to user's email"""
     from app.domain.users import verification_service
     
-    success, error = await verification_service.send_verification_code(db, user)
+    success, error = await verification_service.send_verification_code(db, user, language=language)
     
     if not success:
         raise HTTPException(status_code=400, detail=error)

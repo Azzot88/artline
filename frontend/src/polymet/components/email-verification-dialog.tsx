@@ -13,7 +13,7 @@ interface EmailVerificationDialogProps {
 }
 
 export function EmailVerificationDialog({ open, onOpenChange, email }: EmailVerificationDialogProps) {
-    const { t } = useLanguage()
+    const { t, language } = useLanguage()
     const { refreshUser } = useAuth()
 
     const [code, setCode] = useState<string[]>(["", "", "", "", "", ""])
@@ -127,7 +127,7 @@ export function EmailVerificationDialog({ open, onOpenChange, email }: EmailVeri
         setError("")
 
         try {
-            await apiService.sendEmailVerificationCode()
+            await apiService.sendEmailVerificationCode(language)
             setCanResend(false)
             setResendCountdown(60) // 60 second cooldown
             setCode(["", "", "", "", "", ""]) // Clear inputs

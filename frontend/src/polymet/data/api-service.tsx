@@ -46,8 +46,8 @@ export const apiService = {
     return api.post<LoginResponse>("/auth/login", credentials)
   },
 
-  async register(credentials: RegisterRequest) {
-    return api.post<LoginResponse>("/auth/register", credentials)
+  async register(credentials: RegisterRequest, language: string = "ru") {
+    return api.post<LoginResponse>(`/auth/register?language=${language}`, credentials)
   },
 
   async guestInit() {
@@ -67,8 +67,8 @@ export const apiService = {
   // Email Verification
   // ==========================================================================
 
-  async sendEmailVerificationCode() {
-    return api.post<import("./api-types").EmailVerificationSendResponse>("/auth/email/send-code")
+  async sendEmailVerificationCode(language: string = "ru") {
+    return api.post<import("./api-types").EmailVerificationSendResponse>(`/auth/email/send-code?language=${language}`)
   },
 
   async verifyEmailCode(code: string) {

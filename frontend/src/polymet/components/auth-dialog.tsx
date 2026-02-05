@@ -17,7 +17,7 @@ interface AuthDialogProps {
 }
 
 export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
-    const { t } = useLanguage()
+    const { t, language } = useLanguage()
     const { login } = useAuth()
     const navigate = useNavigate()
 
@@ -42,7 +42,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             let res;
             if (mode === 'register') {
                 if (!agreed) return;
-                res = await apiService.register({ email, password })
+                res = await apiService.register({ email, password }, language)
             } else {
                 res = await apiService.login({ username: email, password })
             }
