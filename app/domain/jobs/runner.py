@@ -96,7 +96,14 @@ def process_job(self, job_id: str):
         raw_params["prompt"] = prompt_text
         
         schema = {"inputs": allowed_inputs} if allowed_inputs else {"inputs": [{"name": "prompt", "type": "string"}]}
+        
+        # DEBUG: Log Schema and Payload
+        logger.info(f"DEBUG SCHEMA: {[p['name'] + ':' + p['type'] for p in allowed_inputs]}")
+        
         payload = service.normalize_payload(raw_params, schema)
+        
+        # DEBUG LOG
+        logger.info(f"DEBUG PAYLOAD: {json.dumps(payload, default=str)}")
         
         if payload is None: payload = raw_params # Fallback
 
