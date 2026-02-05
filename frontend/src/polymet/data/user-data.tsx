@@ -15,6 +15,7 @@ export interface User {
 
   // Settings
   language: LanguageCode                 // Interface language
+  is_email_verified?: boolean            // Email verification status
 
   // Timestamps
   created_at: string                     // ISO 8601 timestamp

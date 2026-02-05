@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { useLanguage } from "@/polymet/components/language-provider"
 import { LanguageSwitcher } from "@/polymet/components/language-switcher"
 import { Checkbox } from "@/components/ui/checkbox"
+import { EmailVerificationDialog } from "@/polymet/components/email-verification-dialog"
 
 export function Register() {
     const navigate = useNavigate()
@@ -19,6 +20,7 @@ export function Register() {
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
     const [agreed, setAgreed] = useState(false)
+    const [showVerificationDialog, setShowVerificationDialog] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -32,7 +34,8 @@ export function Register() {
             const res = await apiService.register({ email, password })
             if (res.ok) {
                 login(res.user)
-                navigate("/workbench")
+                setShowVerificationDialog(true)
+                // navigate("/workbench") // Wait for verification dialog
             } else {
                 setError(t('auth.errors.regFailed'))
             }
@@ -117,6 +120,16 @@ export function Register() {
                     </Link>
                 </CardFooter>
             </Card>
+            <EmailVerificationDialog
+                open={showVerificationDialog}
+                onOpenChange={(open) => {
+                    setShowVerificationDialog(open)
+                    if (!open) {
+                        navigate("/workbench")
+                    }
+                }}
+                email={email}
+            />
         </div>
     )
 }

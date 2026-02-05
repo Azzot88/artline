@@ -4,6 +4,7 @@ import { AppSidebar } from "@/polymet/components/app-sidebar"
 import { RightSidebar } from "@/polymet/components/right-sidebar"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/polymet/components/language-provider"
+import { EmailVerificationBanner } from "@/polymet/components/email-verification-banner"
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -35,6 +36,7 @@ export function AppLayout({ children, showRightSidebar = true }: AppLayoutProps)
         </div>
 
         <div className="px-4 py-6 md:py-8 flex-1">
+          <EmailVerificationBanner />
           {children}
         </div>
       </main>
