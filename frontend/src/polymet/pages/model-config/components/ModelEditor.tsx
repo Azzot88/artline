@@ -7,6 +7,7 @@ import { Loader2, Save, Undo, Eye, Image as ImageIcon, ArrowLeft, SearchIcon, Sl
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -275,6 +276,19 @@ export function ModelEditor({ modelId }: ModelEditorProps) {
                                     />
                                 </div>
                                 {/* Future: Active Toggle? */}
+                                <div className="space-y-2">
+                                    <Label>Model Status</Label>
+                                    <div className="flex items-center space-x-2 border rounded p-2">
+                                        <Switch
+                                            id="model-active"
+                                            checked={state.isActive}
+                                            onCheckedChange={(checked) => updateMetadata({ isActive: checked })}
+                                        />
+                                        <Label htmlFor="model-active" className="cursor-pointer">
+                                            {state.isActive ? "Enabled (Visible in Workbench)" : "Disabled (Hidden)"}
+                                        </Label>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="space-y-2">

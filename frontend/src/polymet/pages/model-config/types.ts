@@ -11,6 +11,7 @@ export interface ModelEditorState {
     description: string
     coverImageUrl: string
     creditsPerGeneration: number
+    isActive: boolean
 
     // Legacy (Deprecated but used for basic non-param view?)
     parameters: RichParameter[]

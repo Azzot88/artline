@@ -190,6 +190,7 @@ export function useModelEditor(modelId: string) {
             description: m.description || "",
             coverImageUrl: m.cover_image_url || "",
             creditsPerGeneration: m.credits_per_generation || 5,
+            isActive: m.is_active ?? true,
             parameters: params,
             configs: initialConfigs,
             isDirty: false,
@@ -205,7 +206,7 @@ export function useModelEditor(modelId: string) {
     }, [model, initFromModel])
 
     // Actions
-    const updateMetadata = (updates: Partial<Pick<ModelEditorState, 'displayName' | 'description' | 'coverImageUrl' | 'creditsPerGeneration'>>) => {
+    const updateMetadata = (updates: Partial<Pick<ModelEditorState, 'displayName' | 'description' | 'coverImageUrl' | 'creditsPerGeneration' | 'isActive'>>) => {
         setState(prev => prev ? ({ ...prev, ...updates, isDirty: true }) : null)
     }
 
@@ -289,6 +290,7 @@ export function useModelEditor(modelId: string) {
                 description: state.description,
                 cover_image_url: state.coverImageUrl,
                 credits_per_generation: state.creditsPerGeneration,
+                is_active: state.isActive,
                 ui_config: newUiConfig,
                 // Pricing rules might still be needed if backend relies on them for ledger?? 
                 // But new system puts price in `values`. 
