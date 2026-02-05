@@ -1026,8 +1026,19 @@ export const translations = {
         title: "Китепкана",
         subtitle: "Сиздин жеке генерациялар топтомуңуз"
     },
+    navigation: {
+        workbench: "Устакана",
+        history: "Тарых",
+        gallery: "Галерея",
+        dashboard: "Дашборд",
+        account: "Аккаунт",
+        admin: "Админ",
+    },
     gallery: {
-        communityTitle: "Коомдук галерея"
+        title: "Галерея",
+        communityTitle: "Коомдук галерея",
+        myGenerations: "Менин генерацияларым",
+        noGenerations: "Генерациялар табылган жок"
     },
     workbench: {
         appTitle: "Устакана",

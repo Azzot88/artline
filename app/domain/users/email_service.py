@@ -82,40 +82,32 @@ class EmailService:
         """
         templates = {
             "ru": {
-                "subject": "Подтвердите ваш email - ArtLine",
-                "title": "Подтвердите ваш email",
-                "greeting": "Здравствуйте!",
-                "message": "Спасибо за регистрацию в ArtLine. Ваш код подтверждения:",
-                "instruction": "Введите этот код в приложении для подтверждения вашего email-адреса.",
-                "expires": "Код действителен в течение 30 минут.",
-                "footer": "Если вы не регистрировались в ArtLine, игнорируйте это письмо."
+                "subject": "Подтвердите ваш email",
+                "app_name": "Мастерская",
+                "title": "Подтвердите email",
+                "message": "Ваш код подтверждения:",
+                "expires": "Код действителен 30 минут"
             },
             "kk": {
-                "subject": "Email мекенжайыңызды растаңыз - ArtLine",
-                "title": "Email мекенжайыңызды растаңыз",
-                "greeting": "Сәлеметсіз бе!",
-                "message": "ArtLine-ға тіркелгеніңіз үшін рақмет. Сіздің растау кодыңыз:",
-                "instruction": "Email мекенжайыңызды растау үшін бұл кодты қолданбада енгізіңіз.",
-                "expires": "Код 30 минут бойы жарамды.",
-                "footer": "Егер сіз ArtLine-ға тіркелмесеңіз, бұл хатты елемеңіз."
+                "subject": "Email растаңыз",
+                "app_name": "Шеберхана",
+                "title": "Email растаңыз",
+                "message": "Растау коды:",
+                "expires": "Код 30 минут жарамды"
             },
             "ky": {
-                "subject": "Email дарегиңизди ырастаңыз - ArtLine",
-                "title": "Email дарегиңизди ырастаңыз",
-                "greeting": "Саламатсызбы!",
-                "message": "ArtLine'га катталганыңыз үчүн рахмат. Сиздин ырастоо кодуңуз:",
-                "instruction": "Email дарегиңизди ырастоо үчүн бул кодду тиркемеге киргизиңиз.",
-                "expires": "Код 30 мүнөткө жарактуу.",
-                "footer": "Эгер сиз ArtLine'га катталбаса, бул катты этибарга албаңыз."
+                "subject": "Email тастыктаңыз",
+                "app_name": "Устакана",
+                "title": "Email тастыктаңыз",
+                "message": "Тастыктоо коду:",
+                "expires": "Код 30 мүнөткө жарактуу"
             },
             "en": {
-                "subject": "Verify your email - ArtLine",
-                "title": "Verify your email",
-                "greeting": "Hello!",
-                "message": "Thank you for signing up for ArtLine. Your verification code is:",
-                "instruction": "Enter this code in the application to verify your email address.",
-                "expires": "The code is valid for 30 minutes.",
-                "footer": "If you did not sign up for ArtLine, please ignore this email."
+                "subject": "Verify your email",
+                "app_name": "Workbench",
+                "title": "Verify email",
+                "message": "Your verification code:",
+                "expires": "Code is valid for 30 minutes"
             }
         }
         
@@ -128,40 +120,37 @@ class EmailService:
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 0;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
         <tr>
             <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
                     <!-- Header -->
                     <tr>
-                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; text-align: center;">
-                            <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700;">ArtLine</h1>
+                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 32px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">{t['app_name']}</h1>
                         </td>
                     </tr>
                     
                     <!-- Content -->
                     <tr>
-                        <td style="padding: 40px;">
-                            <h2 style="margin: 0 0 20px 0; color: #333; font-size: 24px;">{t['title']}</h2>
-                            <p style="margin: 0 0 20px 0; color: #666; font-size: 16px; line-height: 1.5;">{t['greeting']}</p>
-                            <p style="margin: 0 0 30px 0; color: #666; font-size: 16px; line-height: 1.5;">{t['message']}</p>
+                        <td style="padding: 32px;">
+                            <h2 style="margin: 0 0 24px 0; color: #1f2937; font-size: 20px; font-weight: 500; text-align: center;">{t['title']}</h2>
+                            <p style="margin: 0 0 24px 0; color: #6b7280; font-size: 15px; text-align: center;">{t['message']}</p>
                             
                             <!-- Code Box -->
-                            <div style="background-color: #f8f9fa; border: 2px dashed #667eea; border-radius: 8px; padding: 30px; text-align: center; margin: 0 0 30px 0;">
-                                <div style="font-size: 48px; font-weight: 700; color: #667eea; letter-spacing: 8px; font-family: 'Courier New', monospace;">{code}</div>
+                            <div style="background-color: #f9fafb; border: 2px dashed #667eea; border-radius: 8px; padding: 24px; text-align: center; margin: 0 0 20px 0;">
+                                <div style="font-size: 42px; font-weight: 700; color: #667eea; letter-spacing: 10px; font-family: 'Courier New', monospace;">{code}</div>
                             </div>
                             
-                            <p style="margin: 0 0 10px 0; color: #666; font-size: 14px; line-height: 1.5;">{t['instruction']}</p>
-                            <p style="margin: 0 0 30px 0; color: #999; font-size: 13px; line-height: 1.5;"><em>{t['expires']}</em></p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 13px; text-align: center;"><em>{t['expires']}</em></p>
                         </td>
                     </tr>
                     
                     <!-- Footer -->
                     <tr>
-                        <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
-                            <p style="margin: 0; color: #999; font-size: 13px; line-height: 1.5;">{t['footer']}</p>
-                            <p style="margin: 10px 0 0 0; color: #999; font-size: 13px;">© 2026 ArtLine. workbench.ink</p>
+                        <td style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px;">© 2026 {t['app_name']}. workbench.ink</p>
                         </td>
                     </tr>
                 </table>
