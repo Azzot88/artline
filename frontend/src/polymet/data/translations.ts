@@ -36,7 +36,10 @@ export const translations = {
             themeSystem: "Системная",
             static: "Статика",
             dynamic: "Динамика",
-            team: "Команда"
+            team: "Команда",
+            guestBalance: "Гостевой баланс",
+            outOfCredits: "Закончились кредиты?",
+            topUp: "Пополнить баланс"
         },
         team: {
             title: "Команда",
@@ -483,7 +486,10 @@ export const translations = {
             team: "Команда",
             active: "Белсенді",
             disabled: "Өшірілген",
-            maintenance: "Қызмет көрсету"
+            maintenance: "Қызмет көрсету",
+            guestBalance: "Қонақ теңгерімі",
+            outOfCredits: "Кредиттер бітті ме?",
+            topUp: "Теңгерімді толтырыңыз"
         },
         admin: {
             title: "Диспетчерлік",
@@ -887,7 +893,10 @@ export const translations = {
             team: "Команда",
             active: "Активдүү",
             disabled: "Өчүрүлгөн",
-            maintenance: "Кызмат көрсөтүү"
+            maintenance: "Кызмат көрсөтүү",
+            guestBalance: "Конок балансы",
+            outOfCredits: "Кредиттер бүттүбү?",
+            topUp: "Балансты толуктаңыз"
         },
         admin: {
             title: "Диспетчердик",

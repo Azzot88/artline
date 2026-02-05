@@ -176,30 +176,61 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
 
         {/* Credits Display */}
         <div className="px-4 py-4">
-          <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-primary/10 border border-primary/20">
+          <div className={cn(
+            "flex items-center justify-between px-3 py-2 rounded-lg border transition-colors",
+            isGuest
+              ? "bg-yellow-500/10 border-yellow-500/50"
+              : "bg-primary/10 border-primary/20"
+          )}>
             <div className="flex items-center gap-2">
-              <CoinsIcon className="w-4 h-4 text-primary" />
+              <CoinsIcon className={cn("w-4 h-4", isGuest ? "text-yellow-500" : "text-primary")} />
               <div className="flex flex-col">
-                <span className="text-sm font-semibold text-primary">
+                <span className={cn("text-sm font-semibold", isGuest ? "text-yellow-500" : "text-primary")}>
                   {loading ? "..." : (balance ?? 0)}
                 </span>
                 {isGuest && (
                   <span className="text-[10px] text-muted-foreground leading-none">
-                    Guest Credits
+                    {t('common.guestBalance')}
                   </span>
                 )}
               </div>
             </div>
-            {/* Future: Buy More button */}
+            {/* Registered User: Buy More button if low balance */}
+            {!isGuest && (balance ?? 0) < 30 && (
+              <Link to="/account">
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-primary hover:bg-primary/20" title={t('common.buyMore')}>
+                  <span className="sr-only">{t('common.buyMore')}</span>
+                  <div className="relative">
+                    <CoinsIcon className="w-3 h-3" />
+                    <div className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                  </div>
+                </Button>
+              </Link>
+            )}
           </div>
+
+          {/* Out of credits actions */}
           {isGuest && (balance ?? 0) <= 0 && (
             <div className="mt-2 px-1">
               <p className="text-[10px] text-muted-foreground mb-1">
-                Out of guest credits?
+                {t('common.outOfCredits')}
               </p>
               <Link to="/register" onClick={onClose}>
-                <Button variant="outline" size="sm" className="w-full h-7 text-xs">
+                <Button variant="outline" size="sm" className="w-full h-7 text-xs border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10">
                   {t('common.register')}
+                </Button>
+              </Link>
+            </div>
+          )}
+
+          {!isGuest && (balance ?? 0) <= 0 && (
+            <div className="mt-2 px-1">
+              <p className="text-[10px] text-muted-foreground mb-1">
+                {t('common.outOfCredits')}
+              </p>
+              <Link to="/landingpage#pricing" onClick={onClose}>
+                <Button variant="outline" size="sm" className="w-full h-7 text-xs border-primary/50 text-primary hover:bg-primary/10">
+                  {t('common.topUp')}
                 </Button>
               </Link>
             </div>
