@@ -144,6 +144,8 @@ export const translations = {
             aspectRatio: "Соотношение сторон",
             deleteFromLibrary: "Удалить из библиотеки",
             deleting: "Удаление...",
+            reusePrompt: "Переиспользовать промпт",
+            promptCopied: "Промпт скопирован",
             privacy: {
                 visibleDesc: "Публичный доступ",
                 hiddenDesc: "Приватный доступ"
@@ -587,7 +589,9 @@ export const translations = {
             unknownModel: "Белгісіз модель",
             aspectRatio: "Тараптар қатынасы",
             deleteFromLibrary: "Кітапханадан жою",
-            deleting: "Жойылуда..."
+            deleting: "Жойылуда...",
+            reusePrompt: "Сұранысты қайталау",
+            promptCopied: "Сұраныс көшірілді",
         },
         landing: {
             hero: {
@@ -976,7 +980,9 @@ export const translations = {
         unknownModel: "Белгисиз модель",
         aspectRatio: "Тараптар катышы",
         deleteFromLibrary: "Китепканадан өчүрүү",
-        deleting: "Өчүрүлүүдө..."
+        deleting: "Өчүрүлүүдө...",
+        reusePrompt: "Суроону кайталоо",
+        promptCopied: "Суроо көчүрүлдү",
     },
     landing: {
         hero: {

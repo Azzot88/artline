@@ -70,6 +70,16 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
     // Clean name (remove ID prefixes or paths if they slipped in)
     const displayModelName = modelName.split('/').pop()?.split(':')[0].replace(/-/g, ' ') || "Generation"
 
+    const formatDate = (dateString: any) => {
+        if (!dateString) return ""
+        try {
+            const date = new Date(dateString)
+            if (isNaN(date.getTime())) return ""
+            return date.toLocaleDateString()
+        } catch (e) {
+            return ""
+        }
+    }
 
     const handlePrivacyChange = async (val: string) => {
         setPrivacy(val)
@@ -85,7 +95,7 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
     const handleCopyPrompt = () => {
         if (!generation?.prompt) return
         navigator.clipboard.writeText(generation.prompt)
-        toast.success(t('generationDetails.copied'))
+        toast.success(t('generationDetails.promptCopied'))
 
         if (onUsePrompt) {
             onUsePrompt(generation.prompt)
@@ -245,7 +255,7 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                                 {generation.kind}
                                             </Badge>
                                             <span className="text-xs text-muted-foreground font-mono">
-                                                {new Date(generation.created_at).toLocaleDateString()}
+                                                {formatDate(generation.created_at)}
                                             </span>
                                         </div>
                                     </div>
@@ -304,9 +314,9 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                         className="h-7 text-xs gap-1.5 px-3 bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
                                         onClick={handleCopyPrompt}
                                     >
-                                        <RefreshCwIcon className="w-3.5 h-3.5" />
+                                        <CopyIcon className="w-3.5 h-3.5" />
                                         {/* Localized "Reuse Prompt" */}
-                                        {t('generationDetails.reusePrompt') || "Переиспользовать промпт"}
+                                        {t('generationDetails.reusePrompt')}
                                     </Button>
                                 </div>
                                 <div className="relative group">
