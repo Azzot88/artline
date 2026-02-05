@@ -324,13 +324,7 @@ export function Workbench() {
     // 2. Add optimistic generation IMMEDIATELY
     addOptimistic(tempId, commonData)
 
-    // Clear inputs immediately for "Fire and Forget" feeling
-    if (inputType === "text") {
-      setPrompt("")
-      localStorage.removeItem('workbench_prompt')
-    } else {
-      setFile(null)
-    }
+
 
     try {
       const payload = {
@@ -344,6 +338,14 @@ export function Workbench() {
 
       // 3. Start polling with real ID, atomically replacing the temp ID
       startPolling(res.id, commonData, tempId)
+
+      // Clear inputs on success
+      if (inputType === "text") {
+        setPrompt("")
+        localStorage.removeItem('workbench_prompt')
+      } else {
+        setFile(null)
+      }
 
     } catch (err: any) {
       console.error("Generation error:", err)
