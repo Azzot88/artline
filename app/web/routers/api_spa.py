@@ -800,3 +800,65 @@ async def update_profile(
         user.hashed_password = get_password_hash(req.password)
         await db.commit()
     return {"ok": True}
+
+
+@router.delete("/admin/users/{user_id}")
+async def admin_delete_user(
+    user_id: str,
+    admin: User = Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Hard delete a user and all their data (jobs, ledger, etc).
+    Also archives their S3 files to 'deleted/'.
+    """
+    try:
+        uid = uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+        
+    res = await db.execute(select(User).where(User.id == uid))
+    target_user = res.scalar_one_or_none()
+    
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    # Prevent deleting self
+    if target_user.id == admin.id:
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+        
+    try:
+        # Get jobs to archive S3 files
+        jobs_res = await db.execute(select(Job).where(Job.user_id == uid))
+        jobs = jobs_res.scalars().all()
+        
+        s3_keys = []
+        for j in jobs:
+            if j.result_url:
+                try:
+                    path = urlparse(j.result_url).path.lstrip('/')
+                    if path:
+                        s3_keys.append(path)
+                except:
+                    pass
+        
+        # S3 Cleanup (Sync in thread)
+        if s3_keys and settings.AWS_ACCESS_KEY_ID:
+             import threading
+             def archive_batch(keys):
+                 for key in keys:
+                     archive_s3_object_bg(key)
+             
+             t = threading.Thread(target=archive_batch, args=(s3_keys,))
+             t.start()
+
+        # Delete User (Cascade deletes Jobs, Ledger, etc)
+        await db.delete(target_user)
+        await db.commit()
+        
+        return {"success": True, "detail": f"User {target_user.email} deleted"}
+        
+    except Exception as e:
+        await db.rollback()
+        print(f"Delete User Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

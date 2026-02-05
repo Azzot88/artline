@@ -43,8 +43,9 @@ export function AdminUsers() {
                                 <TableCell>{u.balance}</TableCell>
                                 <TableCell>{u.is_admin ? "Yes" : "No"}</TableCell>
                                 <TableCell>{new Date(u.created_at).toLocaleDateString()}</TableCell>
-                                <TableCell>
+                                <TableCell className="flex items-center gap-2">
                                     <CreditGrantButton userId={u.id} onGrant={loadUsers} />
+                                    <DeleteUserButton userId={u.id} email={u.email} onDelete={loadUsers} />
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -52,6 +53,35 @@ export function AdminUsers() {
                 </Table>
             </CardContent>
         </Card>
+    )
+}
+
+
+function DeleteUserButton({ userId, email, onDelete }: { userId: string, email: string, onDelete: () => void }) {
+    const [loading, setLoading] = useState(false)
+
+    async function handle() {
+        if (!confirm(`Are you sure you want to PERMANENTLY delete user ${email}? This cannot be undone.`)) return
+        setLoading(true)
+        try {
+            await apiService.deleteUser(userId)
+            onDelete()
+        } catch (e: any) {
+            alert("Failed to delete user: " + (e.message || e))
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <Button
+            size="sm"
+            variant="destructive"
+            onClick={handle}
+            disabled={loading}
+        >
+            {loading ? "..." : "Delete"}
+        </Button>
     )
 }
 

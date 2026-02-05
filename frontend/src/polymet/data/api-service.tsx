@@ -179,6 +179,10 @@ export const apiService = {
     return api.get<UserWithBalance[]>(`/admin/users?limit=${limit}&offset=${offset}`)
   },
 
+  async deleteUser(userId: string) {
+    return api.delete(`/admin/users/${userId}`)
+  },
+
   async grantCredits(userId: string, amount: number) {
     return api.post(`/admin/users/${userId}/credits`, { amount })
   },
