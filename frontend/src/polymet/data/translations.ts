@@ -39,7 +39,8 @@ export const translations = {
             team: "Команда",
             guestBalance: "Гостевой баланс",
             outOfCredits: "Закончились кредиты?",
-            topUp: "Пополнить баланс"
+            topUp: "Пополнить баланс",
+            insufficientCredits: "Недостаточно кредитов. Пополните баланс"
         },
         team: {
             title: "Команда",
@@ -489,7 +490,8 @@ export const translations = {
             maintenance: "Қызмет көрсету",
             guestBalance: "Қонақ теңгерімі",
             outOfCredits: "Кредиттер бітті ме?",
-            topUp: "Теңгерімді толтырыңыз"
+            topUp: "Теңгерімді толтырыңыз",
+            insufficientCredits: "Кредит жеткіліксіз. Теңгерімді толтырыңыз"
         },
         admin: {
             title: "Диспетчерлік",
@@ -896,7 +898,8 @@ export const translations = {
             maintenance: "Кызмат көрсөтүү",
             guestBalance: "Конок балансы",
             outOfCredits: "Кредиттер бүттүбү?",
-            topUp: "Балансты толуктаңыз"
+            topUp: "Балансты толуктаңыз",
+            insufficientCredits: "Кредит жетишсиз. Балансты толуктаңыз"
         },
         admin: {
             title: "Диспетчердик",

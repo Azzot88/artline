@@ -1,0 +1,150 @@
+
+import { useState } from "react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Link, useNavigate } from "react-router-dom"
+import { useAuth } from "@/polymet/components/auth-provider"
+import { useLanguage } from "@/polymet/components/language-provider"
+import { apiService } from "@/polymet/data/api-service"
+
+interface AuthDialogProps {
+    open: boolean
+    onOpenChange: (open: boolean) => void
+}
+
+export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
+    const { t } = useLanguage()
+    const { login } = useAuth()
+    const navigate = useNavigate()
+
+    // Form State
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [error, setError] = useState("")
+    const [loading, setLoading] = useState(false)
+    const [agreed, setAgreed] = useState(false)
+    const [mode, setMode] = useState<'register' | 'login'>('register')
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setError("")
+        setLoading(true)
+
+        try {
+            let res;
+            if (mode === 'register') {
+                if (!agreed) return;
+                res = await apiService.register({ email, password })
+            } else {
+                res = await apiService.login({ username: email, password })
+            }
+
+            if (res.ok) { // Check if ok property exists or implied by type
+                // Actually apiService returns the response directly. 
+                // api-client usually throws if error? 
+                // Let's check api.ts again. Yes, throws APIError.
+                // So if we are here, it's success.
+                // BUT apiService.register returns { user, ... } ?
+                // Let's assume standard auth flow.
+                login((res as any).user || res)
+                onOpenChange(false)
+                // navigate("/workbench") // Already there
+            } else {
+                // Should be caught by catch usually
+                setError(t('auth.errors.regFailed'))
+            }
+        } catch (err: any) {
+            console.error(err)
+            const msg = err.data?.detail || err.message || "Error"
+            if (typeof msg === 'object') {
+                setError(msg.message || JSON.stringify(msg))
+            } else {
+                setError(String(msg))
+            }
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>{mode === 'register' ? t('auth.register.title') : t('common.login')}</DialogTitle>
+                    <DialogDescription>
+                        {mode === 'register' ? t('auth.register.subtitle') : "Welcome back"}
+                    </DialogDescription>
+                </DialogHeader>
+
+                <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="email">{t('auth.email')}</Label>
+                        <Input
+                            id="email"
+                            type="email"
+                            placeholder="name@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="password">{t('auth.password')}</Label>
+                        <Input
+                            id="password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    {mode === 'register' && (
+                        <div className="flex items-start space-x-2">
+                            <Checkbox
+                                id="terms"
+                                checked={agreed}
+                                onCheckedChange={(c) => setAgreed(c as boolean)}
+                            />
+                            <div className="grid gap-1.5 leading-none">
+                                <label
+                                    htmlFor="terms"
+                                    className="text-xs text-muted-foreground leading-snug cursor-pointer select-none"
+                                >
+                                    {t('auth.register.agreement.start')} <span className="text-primary">{t('auth.register.agreement.termsLink')}</span>
+                                </label>
+                            </div>
+                        </div>
+                    )}
+
+                    {error && <p className="text-sm text-destructive">{error}</p>}
+
+                    <Button type="submit" disabled={loading || (mode === 'register' && !agreed)}>
+                        {loading ? "..." : (mode === 'register' ? t('auth.register.submit') : t('common.login'))}
+                    </Button>
+                </form>
+
+                <div className="text-center text-sm text-muted-foreground">
+                    {mode === 'register' ? (
+                        <>
+                            {t('auth.register.hasAccount')}
+                            <button onClick={() => setMode('login')} className="ml-1 text-primary hover:underline">
+                                {t('common.login')}
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            No account?
+                            <button onClick={() => setMode('register')} className="ml-1 text-primary hover:underline">
+                                {t('auth.register.submit')}
+                            </button>
+                        </>
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
+    )
+}

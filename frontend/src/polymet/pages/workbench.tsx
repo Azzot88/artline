@@ -8,6 +8,7 @@ import { GenerateButton } from "@/polymet/components/generate-button"
 import { FormatResolutionIndicator } from "@/polymet/components/format-resolution-indicator"
 import { Card, CardContent } from "@/components/ui/card"
 import { CommunityGallery } from "@/polymet/components/community-gallery"
+import { AuthDialog } from "@/polymet/components/auth-dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { PlusIcon, SparklesIcon, AlertCircle, Settings2, EraserIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -48,6 +49,7 @@ export function Workbench() {
     return ""
   })
   const [file, setFile] = useState<File | null>(null)
+  const [showAuthDialog, setShowAuthDialog] = useState(false)
 
   // Persist prompt
   useEffect(() => {
@@ -322,16 +324,23 @@ export function Workbench() {
         const actionLabel = isGuest ? t('common.register') : t('common.buyMore')
         const targetUrl = isGuest ? "/register" : "/account"
 
-        toast.error(t('common.outOfCredits'), {
+        toast.error(t('common.insufficientCredits'), {
           description: isGuest ? t('auth.register.subtitle') : errorMessage,
           action: {
             label: actionLabel,
-            onClick: () => navigate(targetUrl)
+            onClick: () => {
+              if (isGuest) setShowAuthDialog(true)
+              else navigate(targetUrl)
+            }
           },
           duration: 6000
         })
 
-        navigate(targetUrl)
+        if (isGuest) {
+          setShowAuthDialog(true)
+        } else {
+          navigate(targetUrl)
+        }
       } else {
         toast.error(t('workbench.toasts.genFailed'), { description: errorMessage })
       }
@@ -605,6 +614,8 @@ export function Workbench() {
           <CommunityGallery onUsePrompt={handleUsePrompt} />
         </CardContent>
       </Card>
+
+      <AuthDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} />
     </div>
   )
 }
