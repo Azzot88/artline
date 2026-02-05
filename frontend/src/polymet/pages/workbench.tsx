@@ -41,7 +41,19 @@ export function Workbench() {
     return (tab === 'video') ? 'video' : 'image'
   })
 
-  const [inputType, setInputType] = useState<InputType>("text")
+  const [inputType, setInputType] = useState<InputType>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('workbench_input_type')
+      return (stored === 'text' || stored === 'image') ? stored : 'text'
+    }
+    return "text"
+  })
+
+  // Persist inputType
+  useEffect(() => {
+    localStorage.setItem('workbench_input_type', inputType)
+  }, [inputType])
+
   const [prompt, setPrompt] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('workbench_prompt') || ""
@@ -95,13 +107,30 @@ export function Workbench() {
 
   // Use Dynamic Models
   const { models, loading: modelsLoading, error: modelsError } = useModels()
-  const [model, setModel] = useState("")
+  const [model, setModel] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('workbench_model') || ""
+    }
+    return ""
+  })
+
+  // Persist Model
+  useEffect(() => {
+    if (model) localStorage.setItem('workbench_model', model)
+  }, [model])
 
   // Select first model when loaded
   useEffect(() => {
     if (models.length > 0 && !model) {
-      const flux = models.find(m => m.name.toLowerCase().includes("flux"))
-      setModel(flux ? flux.id : models[0].id)
+      const saved = typeof window !== 'undefined' ? localStorage.getItem('workbench_model') : null
+      const target = saved && models.some(m => m.id === saved) ? saved : undefined
+
+      if (target) {
+        setModel(target)
+      } else {
+        const flux = models.find(m => m.name.toLowerCase().includes("flux"))
+        setModel(flux ? flux.id : models[0].id)
+      }
     }
   }, [models, model])
 
@@ -128,13 +157,28 @@ export function Workbench() {
 
   const [modelParameters, setModelParameters] = useState<any[]>([])
   const [modelConfigs, setModelConfigs] = useState<any[]>([])
-  const [parameterValues, setParameterValues] = useState<ParameterValues>({})
+  const [parameterValues, setParameterValues] = useState<ParameterValues>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('workbench_params')
+        return stored ? JSON.parse(stored) : {}
+      } catch (e) {
+        return {}
+      }
+    }
+    return {}
+  })
+
+  // Persist Parameters
+  useEffect(() => {
+    localStorage.setItem('workbench_params', JSON.stringify(parameterValues))
+  }, [parameterValues])
 
   // DEBUG: Monitor Data Flow
   useEffect(() => {
     console.log("[Workbench Debug] Selected Model:", selectedModel?.id, selectedModel?.name)
     console.log("[Workbench Debug] Spec State:", { loading: specLoading, hasSpec: !!spec, specParams: spec?.parameters?.length })
-    console.log("[Workbench Debug] Current Parameters:", modelParameters)
+    // console.log("[Workbench Debug] Current Parameters:", modelParameters) // Reduce noise
   }, [selectedModel, spec, specLoading, modelParameters])
 
   // Effect to sync Spec -> Internal State
@@ -183,24 +227,44 @@ export function Workbench() {
         custom_label: p.label
       })))
 
-      // Defaults
+      // Defaults & Merging
       const defaults: ParameterValues = {}
+      const validIds = new Set(mappedParams.map(p => p.id))
       mappedParams.forEach(p => {
         if (p.default_value !== undefined) defaults[p.id] = p.default_value
       })
-      setParameterValues(prev => ({ ...defaults, ...prev })) // Keep user edits? Or reset? Reset safer for now
-      setParameterValues(defaults)
+
+      setParameterValues(prev => {
+        const next = { ...defaults }
+        // Restore user values if they are valid for this model
+        Object.entries(prev).forEach(([k, v]) => {
+          if (validIds.has(k)) {
+            next[k] = v
+          }
+        })
+        return next
+      })
+      // setParameterValues(defaults) // Removed overwrite
 
     } else if (!specLoading && !spec) {
       // Fallback to legacy if no spec found (or error)
       // Keeping legacy logic for stability during migration
       const sortedParams = normalizeModelInputs(selectedModel)
       setModelParameters(sortedParams)
-      const initialValues: ParameterValues = {}
+
+      const defaults: ParameterValues = {}
+      const validIds = new Set(sortedParams.map((p: any) => p.id))
       sortedParams.forEach((param: any) => {
-        if (param.default_value !== undefined) initialValues[param.id] = param.default_value
+        if (param.default_value !== undefined) defaults[param.id] = param.default_value
       })
-      setParameterValues(initialValues)
+
+      setParameterValues(prev => {
+        const next = { ...defaults }
+        Object.entries(prev).forEach(([k, v]) => {
+          if (validIds.has(k)) next[k] = v
+        })
+        return next
+      })
     }
   }, [selectedModel, spec, specLoading])
 
@@ -326,13 +390,6 @@ export function Workbench() {
 
         toast.error(t('common.insufficientCredits'), {
           description: isGuest ? t('auth.register.subtitle') : errorMessage,
-          action: {
-            label: actionLabel,
-            onClick: () => {
-              if (isGuest) setShowAuthDialog(true)
-              else navigate(targetUrl)
-            }
-          },
           duration: 6000
         })
 
