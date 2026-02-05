@@ -32,6 +32,30 @@ class SchemaProcessingPipeline:
         raw_schema = raw_schema or {}
         ui_config = ui_config or {}
 
+        # --- Normalization Logic ---
+        # Handle structured UI Config from Schema Designer (Priority: 'parameters' > 'parameter_configs' > raw)
+        if "parameters" in ui_config and isinstance(ui_config["parameters"], dict):
+             ui_config = ui_config["parameters"]
+             
+        elif "parameter_configs" in ui_config:
+             p_configs = ui_config["parameter_configs"]
+             flat_config = {}
+             # Handle List format
+             if isinstance(p_configs, list):
+                  for cfg in p_configs:
+                       if isinstance(cfg, dict) and "parameter_id" in cfg:
+                            flat_config[cfg["parameter_id"]] = cfg
+                            
+             # Handle Dict format (indexed by numbers/strings)
+             elif isinstance(p_configs, dict):
+                  for cfg in p_configs.values():
+                       if isinstance(cfg, dict) and "parameter_id" in cfg:
+                            flat_config[cfg["parameter_id"]] = cfg
+             
+             if flat_config:
+                  ui_config = flat_config
+        # ---------------------------
+
         # 1. Calculate Schema Version Hash
         # We hash the raw_schema + ui_config to detect changes
         content_hash = self._calculate_hash(raw_schema, ui_config)
