@@ -44,7 +44,7 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const { t } = useLanguage()
-  const { user, isLoading: loading, isGuest, logout } = useAuth()
+  const { user, isLoading: loading, isGuest, logout, balance } = useAuth()
 
   // Use real admin flag from user object
   const isAdmin = user?.is_admin || false
@@ -179,12 +179,31 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
           <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-primary/10 border border-primary/20">
             <div className="flex items-center gap-2">
               <CoinsIcon className="w-4 h-4 text-primary" />
-              <span className="text-sm font-semibold text-primary">
-                {loading ? "..." : (user?.balance || 0)}
-              </span>
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-primary">
+                  {loading ? "..." : (balance ?? 0)}
+                </span>
+                {isGuest && (
+                  <span className="text-[10px] text-muted-foreground leading-none">
+                    Guest Credits
+                  </span>
+                )}
+              </div>
             </div>
             {/* Future: Buy More button */}
           </div>
+          {isGuest && (balance ?? 0) <= 0 && (
+            <div className="mt-2 px-1">
+              <p className="text-[10px] text-muted-foreground mb-1">
+                Out of guest credits?
+              </p>
+              <Link to="/register" onClick={onClose}>
+                <Button variant="outline" size="sm" className="w-full h-7 text-xs">
+                  {t('common.register')}
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
 
         <Separator />

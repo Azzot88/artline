@@ -43,7 +43,7 @@ interface GenerationDetailsDialogProps {
 
 export function GenerationDetailsDialog({ open, onOpenChange, generation, onDelete, onUsePrompt }: GenerationDetailsDialogProps) {
     const { t } = useLanguage()
-    const { user, guestId } = useAuth()
+    const { user, guestId, isGuest } = useAuth()
     const { models } = useModels()
     const [isDeleting, setIsDeleting] = useState(false)
     const [isPromptExpanded, setIsPromptExpanded] = useState(false)
@@ -379,7 +379,7 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                 <MetaItem
                                     icon={CoinsIcon}
                                     label={t('generationDetails.cost')}
-                                    value={cost > 0 ? `${cost} ${t('generationDetails.units.credits')}` : 'Free'}
+                                    value={cost > 0 ? `${cost} ${t('generationDetails.units.credits')}${isGuest ? ' (Guest)' : ''}` : 'Free'}
                                     className="text-indigo-400 font-bold"
                                 />
                             </div>
