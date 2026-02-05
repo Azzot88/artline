@@ -394,6 +394,7 @@ export const translations = {
             login: {
                 title: "Вход в систему",
                 subtitle: "Введите данные для входа",
+                welcomeBack: "С возвращением",
                 submit: "Войти",
                 noAccount: "Нет аккаунта?"
             },
@@ -802,6 +803,7 @@ export const translations = {
             login: {
                 title: "Жүйеге кіру",
                 subtitle: "Жүйеге кіру үшін деректерді енгізіңіз",
+                welcomeBack: "Қайтып оралғаныңызбен",
                 submit: "Кіру",
                 noAccount: "Аккаунт жоқ па?"
             },
@@ -900,6 +902,36 @@ export const translations = {
             outOfCredits: "Кредиттер бүттүбү?",
             topUp: "Балансты толуктаңыз",
             insufficientCredits: "Кредит жетишсиз. Балансты толуктаңыз"
+        },
+        auth: {
+            login: {
+                title: "Системага кирүү",
+                subtitle: "Кирүү үчүн маалыматтарды киргизиңиз",
+                welcomeBack: "Кош келиңиз",
+                submit: "Кирүү",
+                noAccount: "Аккаунт жокпу?"
+            },
+            register: {
+                title: "Катталуу",
+                subtitle: "Баштоо үчүн аккаунт түзүңүз",
+                submit: "Катталуу",
+                hasAccount: "Аккаунтуңуз барбы?",
+                agreement: {
+                    start: "Мен ",
+                    termsLink: "Колдонуучу келишиминин",
+                    middle: " шарттарын кабыл алам жана ",
+                    privacyLink: "жеке маалыматтарды иштетүүгө",
+                    end: " макулмун"
+                }
+            },
+            email: "Электрондук почта",
+            password: "Сыр сөз",
+            loading: "Жүктөлүүдө...",
+            errors: {
+                loginFailed: "Кирүү катасы",
+                invalidCredentials: "Маалыматтар туура эмес",
+                regFailed: "Катталуу катасы"
+            }
         },
         admin: {
             title: "Диспетчердик",

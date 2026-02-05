@@ -209,12 +209,9 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
             )}
           </div>
 
-          {/* Out of credits actions */}
-          {isGuest && (balance ?? 0) <= 0 && (
+          {/* Guest Action: Register */}
+          {isGuest && (
             <div className="mt-2 px-1">
-              <p className="text-[10px] text-muted-foreground mb-1">
-                {t('common.outOfCredits')}
-              </p>
               <Link to="/register" onClick={onClose}>
                 <Button variant="outline" size="sm" className="w-full h-7 text-xs border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10">
                   {t('common.register')}
@@ -223,11 +220,9 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
             </div>
           )}
 
-          {!isGuest && (balance ?? 0) <= 0 && (
+          {/* User Action: Top Up */}
+          {!isGuest && (
             <div className="mt-2 px-1">
-              <p className="text-[10px] text-muted-foreground mb-1">
-                {t('common.outOfCredits')}
-              </p>
               <Link to="/landingpage#pricing" onClick={onClose}>
                 <Button variant="outline" size="sm" className="w-full h-7 text-xs border-primary/50 text-primary hover:bg-primary/10">
                   {t('common.topUp')}
