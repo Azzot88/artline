@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, ConfigDict, Field
+from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator
 from typing import Optional
 from datetime import datetime
 import uuid
@@ -74,6 +74,26 @@ class JobRead(BaseModel):
     # Performance
     predict_time: Optional[float] = None
     provider_cost: Optional[float] = None
+    
+    @field_validator('prompt')
+    @classmethod
+    def clean_prompt(cls, v: str) -> str:
+        if not v:
+            return v
+        # Clean internal format: [UUID] {JSON} | Prompt
+        if v.startswith("["):
+            try:
+                end_sq = v.find("]")
+                if end_sq != -1:
+                    rest = v[end_sq+1:].strip()
+                    if "|" in rest:
+                        parts = rest.split("|", 1)
+                        # We discard the JSON config (parts[0])
+                        return parts[1].strip()
+                    return rest
+            except:
+                return v
+        return v
 
     model_config = ConfigDict(from_attributes=True, protected_namespaces=())
 
