@@ -6,9 +6,7 @@ import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
     DownloadIcon,
-    Share2Icon,
     CopyIcon,
-    CalendarIcon,
     FileImageIcon,
     BoxIcon,
     MaximizeIcon,
@@ -16,22 +14,23 @@ import {
     ClockIcon,
     CoinsIcon,
     ChevronDownIcon,
-    PlayIcon,
     XIcon,
     StarIcon,
-    LockIcon,
     GlobeIcon,
     EyeOffIcon,
-    ChevronUpIcon
+    ChevronUpIcon,
+    AlertCircle,
+    MusicIcon,
+    RotateCcwIcon,
+    RefreshCwIcon
 } from "lucide-react"
-import { Switch } from "@/components/ui/switch"
 import { useLanguage } from "@/polymet/components/language-provider"
 import { useAuth } from "@/polymet/components/auth-provider"
 import { useModels } from "@/hooks/use-models"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
 import { apiService } from "@/polymet/data/api-service"
-import { useState, useMemo, useRef, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 
 interface GenerationDetailsDialogProps {
@@ -48,7 +47,6 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
     const { models } = useModels()
     const [isDeleting, setIsDeleting] = useState(false)
     const [isPromptExpanded, setIsPromptExpanded] = useState(false)
-    const [canDownload, setCanDownload] = useState(true) // Optimistic
     const [isCurated, setIsCurated] = useState(false)
     const [privacy, setPrivacy] = useState<string>('private')
 
@@ -63,44 +61,46 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
 
     if (!generation) return null
 
-    // Handlers
-    const handlePrivacyChange = async (val: string) => {
-        // Optimistic update
-        setPrivacy(val)
+    // Determine Model Name
+    const modelName = models.find(m => m.id === generation.model_id)?.name
+        || generation.model_name
+        || generation.model_id
+        || t('generationDetails.unknownModel');
 
+    // Clean name (remove ID prefixes or paths if they slipped in)
+    const displayModelName = modelName.split('/').pop()?.split(':')[0].replace(/-/g, ' ') || "Generation"
+
+
+    const handlePrivacyChange = async (val: string) => {
+        setPrivacy(val)
         try {
             await api.patch(`/jobs/${generation.id}/privacy`, { visibility: val })
             toast.success(t('generationDetails.privacyUpdated') || "Privacy updated")
-
-            // Allow admin to auto-curate if publishing? (Optional, kept separate for now)
         } catch (e) {
             console.error(e)
             toast.error("Failed to update privacy")
-            // Revert state on error? (Simplified for MVP: user sees error)
         }
     }
 
-    // Handlers
     const handleCopyPrompt = () => {
         if (!generation?.prompt) return
         navigator.clipboard.writeText(generation.prompt)
         toast.success(t('generationDetails.copied'))
 
-        // Auto-use prompt if handler provided
         if (onUsePrompt) {
             onUsePrompt(generation.prompt)
+            // Optional: Close modal if reusing? Often preferred workflow.
+            onOpenChange(false)
         }
     }
 
     const handleDownload = async () => {
         try {
-            // New Endpoint Logic
             const res = await api.get(`/jobs/${generation.id}/download`);
             if (res.url) {
-                // If presigned URL, open it (browser handles download via Content-Disposition)
                 const link = document.createElement('a');
                 link.href = res.url;
-                link.setAttribute('download', ''); // Hint
+                link.setAttribute('download', '');
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -110,7 +110,6 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
             }
         } catch (e) {
             console.error("Download failed, trying direct fallback", e);
-            // Fallback: Open original URL
             window.open(generation.url, '_blank');
         }
     }
@@ -156,8 +155,6 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
 
     const cost = generation.credits_spent || 0
     const durationLabel = generation.duration ? `${Math.round(generation.duration)}s` : null
-
-    // Prompt logic
     const isPromptLong = generation.prompt.length > 280 || generation.prompt.split('\n').length > 4
 
     return (
@@ -178,8 +175,6 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
 
                 {/* --- LEFT: Media Viewport --- */}
                 <div className="bg-black/95 flex items-center justify-center relative overflow-hidden md:flex-1 w-full md:h-full md:p-4 min-h-[300px] flex-shrink-0 group-media">
-                    {/* Atmospheric Background Blur - Optimized */}
-                    {/* Using will-change-transform and limiting blur radius helps performance */}
                     <div
                         className="absolute inset-0 opacity-20 blur-2xl pointer-events-none"
                         style={{
@@ -189,9 +184,6 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                         }}
                     />
 
-                    {/* ... rest of content ... */}
-
-                    {/* Main Content - CONTAINED to ensure full visibility */}
                     <div className="relative z-10 w-full h-full flex items-center justify-center">
                         {generation.kind === 'video' ? (
                             <div className="relative w-full h-full flex items-center justify-center">
@@ -210,7 +202,6 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                     <MusicIcon className="w-20 h-20 text-white" />
                                 </div>
                                 <div className="w-full space-y-4">
-                                    {/* Audio Waveform Visualization */}
                                     <div className="flex items-center justify-center gap-1.5 h-16 w-full">
                                         {[...Array(40)].map((_, i) => (
                                             <div
@@ -242,49 +233,57 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                         <div className="p-6 space-y-8">
 
                             {/* Header Info */}
-                            <div className="flex items-start justify-between">
-                                <div className="space-y-1">
-                                    <div className="flex items-center gap-2">
-                                        <Badge variant="outline" className="uppercase tracking-widest text-[10px] font-bold px-2 py-0.5 border-primary/20 text-primary">
-                                            {generation.kind}
-                                        </Badge>
-                                        <span className="text-xs text-muted-foreground font-mono">
-                                            {new Date(generation.created_at).toLocaleDateString()}
-                                        </span>
+                            <div className="flex flex-col gap-4">
+                                <div className="flex items-start justify-between">
+                                    <div className="space-y-1">
+                                        {/* Model Name First - As requested */}
+                                        <h3 className="text-xl font-bold font-display tracking-tight leading-tight text-foreground/90">
+                                            {displayModelName}
+                                        </h3>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="outline" className="uppercase tracking-widest text-[10px] font-bold px-2 py-0.5 border-primary/20 text-primary">
+                                                {generation.kind}
+                                            </Badge>
+                                            <span className="text-xs text-muted-foreground font-mono">
+                                                {new Date(generation.created_at).toLocaleDateString()}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <h3 className="text-lg font-semibold font-display tracking-tight leading-tight">
-                                        {(generation.model_name || generation.model || t('generationDetails.unknownModel')).split('/').pop()?.split(':')[0].replace(/-/g, ' ') || "Generation"}
-                                    </h3>
+
+                                    {/* Action Buttons - Moved down/styled to separation */}
+                                    {/* Actually, user said: "cross leave, move buttons down" */}
+                                    {/* Since I am in a flex-col container now, I can put them below or keep them right but ensure gap */}
+
                                 </div>
-                                <div className="flex gap-1 items-center">
-                                    {/* Privacy Toggle (User) - Hidden if Admin is Owner (per request) */}
+
+                                {/* Action Row (Below Header) - Solves overlap issue */}
+                                <div className="flex gap-2 items-center justify-end">
                                     {!(user?.is_admin && user.id === generation.user_id) && (
                                         <Button
                                             variant="ghost"
-                                            size="icon"
-                                            className={cn("h-8 w-8", privacy === 'private' ? "text-indigo-500 bg-indigo-500/10" : "text-muted-foreground hover:text-foreground")}
+                                            size="sm"
+                                            className={cn("h-8 gap-2", privacy === 'private' ? "text-indigo-500 bg-indigo-500/10" : "text-muted-foreground hover:text-foreground")}
                                             onClick={() => handlePrivacyChange(privacy === 'private' ? 'standard' : 'private')}
                                             title={privacy === 'private' ? (t('generationDetails.privacy.hiddenDesc') || "Private Mode") : (t('generationDetails.privacy.visibleDesc') || "Standard Visibility")}
-                                            // Disabled if public/admin-locked OR if not owner (and not admin)
                                             disabled={
                                                 (privacy === 'public' && !user?.is_admin) ||
                                                 (!user?.is_admin && user?.id !== generation.user_id && guestId !== generation.user_id)
                                             }
                                         >
                                             {privacy === 'private' ? <EyeOffIcon className="w-4 h-4" /> : <GlobeIcon className="w-4 h-4" />}
+                                            <span className="text-xs">{privacy === 'private' ? "Private" : "Public"}</span>
                                         </Button>
                                     )}
 
-                                    {/* Admin Curation Toggle */}
                                     {user?.is_admin && (
                                         <Button
                                             variant={isCurated ? "default" : "outline"}
-                                            size="icon"
-                                            className={cn("h-8 w-8", isCurated ? "bg-amber-500 hover:bg-amber-600 text-white" : "")}
+                                            size="sm"
+                                            className={cn("h-8 gap-2", isCurated ? "bg-amber-500 hover:bg-amber-600 text-white" : "")}
                                             onClick={handleCurate}
-                                            title="Toggle for Community Gallery"
                                         >
-                                            <StarIcon className={cn("w-4 h-4", isCurated ? "fill-current" : "")} />
+                                            <StarIcon className={cn("w-3.5 h-3.5", isCurated ? "fill-current" : "")} />
+                                            <span className="text-xs">Curate</span>
                                         </Button>
                                     )}
                                 </div>
@@ -299,8 +298,15 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                         <span className="w-1 h-4 bg-primary rounded-full" />
                                         {t('generationDetails.prompt')}
                                     </h4>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-muted" onClick={handleCopyPrompt} title={t('generationDetails.copyPrompt')}>
-                                        <CopyIcon className="w-3.5 h-3.5" />
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        className="h-7 text-xs gap-1.5 px-3 bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
+                                        onClick={handleCopyPrompt}
+                                    >
+                                        <RefreshCwIcon className="w-3.5 h-3.5" />
+                                        {/* Localized "Reuse Prompt" */}
+                                        {t('generationDetails.reusePrompt') || "Переиспользовать промпт"}
                                     </Button>
                                 </div>
                                 <div className="relative group">
@@ -332,19 +338,7 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
                                 <MetaItem
                                     icon={BoxIcon}
                                     label={t('generationDetails.model')}
-                                    value={
-                                        // Try to find model name from context or direct prop
-                                        // We need to access models list to map ID -> Name if model_name is missing
-                                        // For now, let's use generation.model_name (which might be populated soon) or fallback to ID
-                                        // But per task, use ID lookup if possible.
-                                        // Actually, let's assume generation.model_name will be passed or we use model_id.
-                                        // Since we don't have 'models' context easily here without importing hook,
-                                        // Let's rely on generation fields first. 
-                                        // Wait, user asked: "Should be the model name specified in the admin properties"
-                                        // I should import useModels hook here to be safe?
-                                        // Let's import useModels to do the lookup.
-                                        (models.find(m => m.id === generation.model_id)?.name || generation.model_name || generation.model_id || t('generationDetails.unknownModel')).replace(/:.*/, '') || t('generationDetails.unknownModel')
-                                    }
+                                    value={displayModelName}
                                     subValue={generation.model_id ? "ID: " + generation.model_id.slice(0, 8) + "..." : undefined}
                                 />
                                 <MetaItem
@@ -389,9 +383,6 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
 
                     {/* Footer Actions */}
                     <div className="p-6 bg-muted/20 border-t border-border space-y-4">
-
-                        {/* Compact Privacy Control Removed - Moved to Header */}
-
                         <Button className="w-full shadow-lg shadow-primary/20 font-semibold" size="lg" onClick={handleDownload}>
                             <DownloadIcon className="w-4 h-4 mr-2" />
                             {t('generationDetails.download')} {fileExt.toUpperCase()}
@@ -408,7 +399,6 @@ export function GenerationDetailsDialog({ open, onOpenChange, generation, onDele
     )
 }
 
-// Updated MetaItem with lucide-react icon type ref
 function MetaItem({ icon: Icon, label, value, subValue, className }: { icon: any, label: string, value: string, subValue?: string, className?: string }) {
     return (
         <div className="flex flex-col gap-1 p-3 rounded-lg bg-muted/20 border border-border/30 hover:border-border/60 transition-colors">

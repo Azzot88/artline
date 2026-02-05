@@ -9,7 +9,7 @@ import { FormatResolutionIndicator } from "@/polymet/components/format-resolutio
 import { Card, CardContent } from "@/components/ui/card"
 import { CommunityGallery } from "@/polymet/components/community-gallery"
 import { Textarea } from "@/components/ui/textarea"
-import { PlusIcon, SparklesIcon, AlertCircle, Settings2 } from "lucide-react"
+import { PlusIcon, SparklesIcon, AlertCircle, Settings2, EraserIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -220,6 +220,20 @@ export function Workbench() {
     })
   }
 
+  const handleClear = () => {
+    setPrompt("")
+    setFile(null)
+    localStorage.removeItem('workbench_prompt')
+  }
+
+  const handleUsePrompt = (text: string) => {
+    setPrompt(prev => {
+      const spacer = prev.trim().length > 0 ? "\n" : ""
+      return prev + spacer + text
+    })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       toast.error(t('workbench.toasts.enterPrompt'))
@@ -412,7 +426,19 @@ export function Workbench() {
                   placeholder={creationType === "image" ? t('workbench.describeImage') : t('workbench.describeVideo')}
                   className="w-full h-full resize-none bg-transparent border-0 focus-visible:ring-0 text-xl md:text-2xl p-8 pt-20 pb-36 font-medium placeholder:text-muted-foreground/40"
                 />
-                <div className="absolute top-20 right-8">
+                <div className="absolute top-20 right-8 flex gap-2">
+                  {/* Clear Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="glass-effect hover:bg-white/20 transition-all font-semibold gap-2 text-muted-foreground hover:text-white"
+                    onClick={handleClear}
+                    title="Очистить"
+                  >
+                    <EraserIcon className="w-4 h-4" />
+                    <span className="sr-only md:not-sr-only">Очистить</span>
+                  </Button>
+
                   <Button
                     variant="secondary"
                     size="sm"
@@ -522,20 +548,14 @@ export function Workbench() {
           refreshTrigger={refreshLibrary}
           newGeneration={lastGeneration}
           activeGenerations={activeGenerations}
-          onUsePrompt={(text) => {
-            setPrompt(prev => {
-              const spacer = prev.trim().length > 0 ? "\n" : ""
-              return prev + spacer + text
-            })
-            window.scrollTo({ top: 0, behavior: 'smooth' })
-          }}
+          onUsePrompt={handleUsePrompt}
         />
       </div>
 
       {/* Community Gallery */}
       <Card className="border-0 shadow-xl glass-effect">
         <CardContent className="pt-8">
-          <CommunityGallery />
+          <CommunityGallery onUsePrompt={handleUsePrompt} />
         </CardContent>
       </Card>
     </div>
