@@ -56,7 +56,7 @@ class ReplicateRequestNormalizer(RequestNormalizer, BaseTypeNormalizer):
             
             try:
                 norm_value = self._normalize_field(value, field_def)
-                if norm_value is not None:
+                if norm_value is not None and norm_value != "":
                     cleaned[key] = norm_value
             except ValueError:
                 # Log? Skip invalid fields
