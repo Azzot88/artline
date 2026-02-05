@@ -1020,9 +1020,9 @@ export const translations = {
                     style: "Коммерциялык"
                 }
             }
-        }
+        },
 
-    library: {
+        library: {
             title: "Китепкана",
             subtitle: "Сиздин жеке генерациялар топтомуңуз"
         },
