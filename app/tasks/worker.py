@@ -15,9 +15,26 @@ celery_app.conf.update(
     enable_utc=True,
 )
 
+# Celery Beat Schedule for periodic tasks
+from celery.schedules import crontab
+
+celery_app.conf.beat_schedule = {
+    'send-verification-reminders': {
+        'task': 'send_email_verification_reminders',
+        'schedule': crontab(hour=10, minute=0),  # Daily at 10:00 UTC
+    },
+    'delete-unverified-accounts': {
+        'task': 'delete_unverified_accounts',
+        'schedule': crontab(hour=2, minute=0),  # Daily at 02:00 UTC
+    },
+}
+
 # Auto-discover tasks in the tasks module
-# Auto-discover tasks in the tasks module
-celery_app.autodiscover_tasks(["app.tasks.job_runner", "app.domain.jobs.runner"])
+celery_app.autodiscover_tasks([
+    "app.tasks.job_runner", 
+    "app.domain.jobs.runner",
+    "app.tasks.cleanup_tasks"  # Email verification cleanup tasks
+])
 
 # Explicit import of runner module to ensure register
 # (Sometimes autodiscover needs exact package path or module needs to be importable)

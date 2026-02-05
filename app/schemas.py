@@ -15,6 +15,7 @@ class UserRead(BaseModel):
     avatar_url: Optional[str] = None
     balance: int
     is_admin: bool = False
+    is_email_verified: bool = False
     language: str = "ru"
     total_generations: int = 0
     created_at: datetime
@@ -24,6 +25,22 @@ class UserRead(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+# Email Verification Schemas
+class EmailVerificationSendRequest(BaseModel):
+    """Request to send verification code (no params needed, uses current user)"""
+    pass
+
+class EmailVerificationCodeRequest(BaseModel):
+    """Request to verify email with code"""
+    code: str  # 6-digit code
+
+class EmailVerificationStatus(BaseModel):
+    """Email verification status response"""
+    is_verified: bool
+    can_resend: bool  # Rate limit check
+    next_resend_at: Optional[datetime] = None  # When can resend again
+
 
 # Job Schemas
 class JobCreate(BaseModel):

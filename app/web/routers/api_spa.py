@@ -13,7 +13,11 @@ from app.core.deps import get_current_user_optional, get_current_user
 from app.core.security import verify_password, create_access_token, get_password_hash
 from app.core.i18n import get_t
 from app.models import User, Job, AIModel, ProviderConfig, LedgerEntry
-from app.schemas import UserContext, JobRead, JobRequestSPA, UserRead, UserCreate, AdminStats, UserWithBalance, CreditGrantRequest, JobPrivacyUpdate
+from app.schemas import (
+    UserContext, JobRead, JobRequestSPA, UserRead, UserCreate, 
+    AdminStats, UserWithBalance, CreditGrantRequest, JobPrivacyUpdate,
+    EmailVerificationSendRequest, EmailVerificationCodeRequest, EmailVerificationStatus
+)
 from app.domain.billing.service import get_user_balance, add_ledger_entry
 from app.domain.jobs.service import create_job, get_user_jobs, get_public_jobs, get_review_jobs, delete_job, like_job, get_job_with_permission, get_admin_feed
 from app.domain.jobs.runner import process_job
@@ -131,8 +135,70 @@ async def spa_register(
         samesite="lax",
         secure=False 
     )
+    
+    # 5. Send verification email automatically
+    from app.domain.users import verification_service
+    email_sent = False
+    try:
+        success, error = await verification_service.send_verification_code(db, new_user)
+        email_sent = success
+    except Exception as e:
+        print(f"Failed to send verification email on registration: {e}")
+    
     await AnalyticsService.log_activity(db, "register", user_id=new_user.id, request=request)
-    return {"ok": True, "user": UserRead.model_validate(new_user)}
+    return {
+        "ok": True, 
+        "user": UserRead.model_validate(new_user),
+        "email_verification_sent": email_sent
+    }
+
+# Email Verification Endpoints
+@router.post("/auth/email/send-code")
+async def send_email_verification_code(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Send/resend verification code to user's email"""
+    from app.domain.users import verification_service
+    
+    success, error = await verification_service.send_verification_code(db, user)
+    
+    if not success:
+        raise HTTPException(status_code=400, detail=error)
+    
+    return {"ok": True, "message": "Verification code sent"}
+
+
+@router.post("/auth/email/verify")
+async def verify_email_code(
+    req: EmailVerificationCodeRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Verify email with 6-digit code"""
+    from app.domain.users import verification_service
+    
+    success, error = await verification_service.verify_code(db, user, req.code)
+    
+    if not success:
+        raise HTTPException(status_code=400, detail=error)
+    
+    return {
+        "ok": True, 
+        "message": "Email verified successfully",
+        "user": UserRead.model_validate(user)
+    }
+
+
+@router.get("/auth/email/status", response_model=EmailVerificationStatus)
+async def get_email_verification_status(
+    user: User = Depends(get_current_user)
+):
+    """Get current email verification status"""
+    from app.domain.users import verification_service
+    
+    return await verification_service.check_verification_status(user)
+
 
 @router.post("/auth/guest/init", response_model=GuestInitResponse)
 async def spa_guest_init(

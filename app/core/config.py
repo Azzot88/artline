@@ -58,5 +58,20 @@ class Settings(BaseSettings):
     AWS_REGION: str = "us-east-1"
     AWS_BUCKET_NAME: Optional[str] = None
 
+    # Email / SMTP (mailU configuration)
+    SMTP_HOST: str = "mail.dealvault.club"
+    SMTP_PORT: int = 465
+    SMTP_USER: Optional[str] = None  # admin@dealvault.club
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_FROM: str = "noreply@workbench.ink"
+    SMTP_USE_TLS: bool = True
+    SMTP_USE_SSL: bool = True  # Port 465 uses SSL
+
+    # Email Verification Settings
+    EMAIL_VERIFICATION_CODE_EXPIRE_MINUTES: int = 30
+    EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS: int = 60
+    ACCOUNT_DELETION_DAYS: int = 30
+
+
 
 settings = Settings()

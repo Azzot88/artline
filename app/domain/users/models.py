@@ -29,6 +29,14 @@ class User(Base):
     total_generations: Mapped[int] = mapped_column(Integer, default=0)
     total_credits_spent: Mapped[int] = mapped_column(Integer, default=0)
     
+    # Email Verification
+    is_email_verified: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    email_verification_code: Mapped[str | None] = mapped_column(String(6), nullable=True)
+    email_verification_code_expires_at: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    email_verification_sent_at: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    email_verification_reminder_3d_sent: Mapped[bool] = mapped_column(Boolean, default=False)
+    email_verification_reminder_15d_sent: Mapped[bool] = mapped_column(Boolean, default=False)
+    
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     
