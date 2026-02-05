@@ -489,8 +489,8 @@ export function Workbench() {
                       />
                     ))} */}
 
-                  {/* 2. Advanced Params (Popover) */}
-                  <Popover>
+                  {/* 2. Advanced Params (Popover) - Hidden as requested */}
+                  {/* <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:text-primary">
                         <Settings2 className="w-4 h-4" />
@@ -519,7 +519,6 @@ export function Workbench() {
                               />
                             ))}
 
-                          {/* Fallback if no advanced params */}
                           {modelParameters.filter(p => !p.hidden &&
                             !(p.type === 'image' || p.name?.includes('image') || p.name === 'mask') &&
                             !(p.name === 'format' || p.name === 'aspect_ratio' || p.group === 'format')
@@ -531,7 +530,7 @@ export function Workbench() {
                         </div>
                       </ScrollArea>
                     </PopoverContent>
-                  </Popover>
+                  </Popover> */}
                 </div>
 
                 <div className="md:ml-auto">
