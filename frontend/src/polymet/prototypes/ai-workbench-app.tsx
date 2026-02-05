@@ -25,7 +25,7 @@ const Register = lazy(() => import("@/polymet/pages/register").then(m => ({ defa
 const AdminReview = lazy(() => import("@/polymet/pages/admin-review").then(m => ({ default: m.AdminReview })))
 const UserProfile = lazy(() => import("@/polymet/pages/user-profile").then(m => ({ default: m.UserProfile })))
 const LandingPage = lazy(() => import("@/polymet/pages/landing-page").then(m => ({ default: m.LandingPage })))
-const DocumentsPage = lazy(() => import("@/polymet/pages/documents-pageV2").then(m => ({ default: m.default }))) // Note: Checking documents page often has default export issues, assuming default here or named
+const DocumentsPage = lazy(() => import("@/polymet/pages/documents-page").then(m => ({ default: m.default })))
 // Wait, DocumentsPage in original was: import DocumentsPage from "@/polymet/pages/documents-page"
 // I need to check if it's default or named. In original file it was: import DocumentsPage from "@/polymet/pages/documents-page"
 
