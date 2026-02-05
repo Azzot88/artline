@@ -75,6 +75,10 @@ class BaseTypeNormalizer:
         return False
 
     def validate_enum(self, value: Any, allowed: List[Any]) -> Any:
+        # Handle empty/none - return None so caller can decide (usually drop field)
+        if value is None or (isinstance(value, str) and not value.strip()):
+            return None
+            
         if value in allowed: return value
         
         str_allowed = [str(a) for a in allowed]
@@ -88,7 +92,11 @@ class BaseTypeNormalizer:
              if value.lower() in lower_map:
                  return lower_map[value.lower()]
                  
-        raise ValueError(f"Value '{value}' not in allowed options: {allowed}")
+        # If strict validation fails:
+        # Return None to signal "invalid value, drop field".
+        # This allows Replicate default to take over if field isn't required.
+        # If required and missing, Replicate will 422, which we now handle.
+        return None
 
     def normalize_array(self, value: Any, rules: Dict[str, Any], item_normalizer_callback=None) -> List[Any]:
         if isinstance(value, str):

@@ -98,7 +98,7 @@ def process_job(self, job_id: str):
         schema = {"inputs": allowed_inputs} if allowed_inputs else {"inputs": [{"name": "prompt", "type": "string"}]}
         payload = service.normalize_payload(raw_params, schema)
         
-        if not payload: payload = raw_params # Fallback
+        if payload is None: payload = raw_params # Fallback
 
         # 7. Execute
         webhook_host = settings.WEBHOOK_HOST or 'https://api.artline.dev'
@@ -124,6 +124,10 @@ def process_job(self, job_id: str):
             
         except Exception as e:
             logger.error(f"Submission Exception: {e}")
+            
+            # Stop retrying on 422 Validation Error
+            if "422" in str(e):
+                 return _fail_job(session, job, f"Validation Error: {e}")
             
             current_retries = self.request.retries or 0
             max_retries = self.max_retries or 3
