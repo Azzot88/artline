@@ -71,7 +71,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] top-[40%] sm:top-[50%] scale-95 sm:scale-100">
                 <DialogHeader>
                     <DialogTitle>{mode === 'register' ? t('auth.register.title') : t('common.login')}</DialogTitle>
                     <DialogDescription>
@@ -123,7 +123,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                     {error && <p className="text-sm text-destructive">{error}</p>}
 
                     <Button type="submit" disabled={loading || (mode === 'register' && !agreed)}>
-                        {loading ? "..." : (mode === 'register' ? t('auth.register.submit') : t('common.login'))}
+                        {loading ? t('auth.loading') : (mode === 'register' ? t('auth.register.submit') : t('common.login'))}
                     </Button>
                 </form>
 
