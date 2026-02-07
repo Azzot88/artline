@@ -23,9 +23,7 @@ from app.domain.jobs.service import create_job, get_user_jobs, get_public_jobs, 
 from app.domain.jobs.runner import process_job
 from app.domain.users.guest_service import get_or_create_guest
 from app.domain.analytics.service import AnalyticsService
-import boto3
 import asyncio
-from botocore.exceptions import ClientError
 
 router = APIRouter()
 
@@ -518,6 +516,9 @@ async def remove_job(
 
 # Renamed to strictly imply background usage (synchronous wrapper for boto3)
 def archive_s3_object_bg(key: str):
+    import boto3
+    from botocore.exceptions import ClientError
+
     if not settings.AWS_ACCESS_KEY_ID:
         return
     try:
@@ -603,6 +604,7 @@ async def download_job(
         return {"url": job.result_url}
 
 def generate_presigned_url(key: str, filename: str):
+    import boto3
     s3 = boto3.client(
         's3',
         aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
