@@ -866,9 +866,9 @@ export const translations = {
             contacts: "Байланыс",
             rights: "Барлық құқықтар қорғалған.",
             email: "contact@workbench.ink"
-        }
+        },
 
-    auth: {
+        auth: {
             login: {
                 title: "Жүйеге кіру",
                 subtitle: "Жүйеге кіру үшін деректерді енгізіңіз",
