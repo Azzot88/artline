@@ -52,7 +52,7 @@ export default {
         DEFAULT: "hsl(var(--border))",
       },
       fontFamily: {
-        sans: "var(--font-sans)",
+        sans: ['Manrope', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', '"Noto Sans"', 'sans-serif', '"Apple Color Emoji"', '"Segoe UI Emoji"', '"Segoe UI Symbol"', '"Noto Color Emoji"'],
         serif: "var(--font-serif)",
         mono: "var(--font-mono)",
       },
