@@ -1292,35 +1292,7 @@ export const translations = {
                 email: "workbenchai@gmx.com"
             }
         },
-        auth: {
-            login: {
-                title: "Системага кирүү",
-                subtitle: "Кирүү үчүн маалыматтарды киргизиңиз",
-                submit: "Кирүү",
-                noAccount: "Аккаунт жокпу?"
-            },
-            register: {
-                title: "Катталуу",
-                subtitle: "Баштоо үчүн аккаунт түзүңүз",
-                submit: "Катталуу",
-                hasAccount: "Аккаунтуңуз барбы?",
-                agreement: {
-                    start: "Мен ",
-                    termsLink: "Колдонуучу макулдашуусунун",
-                    middle: " шарттарын кабыл алам жана ",
-                    privacyLink: "жеке маалыматтарды иштетүүгө",
-                    end: " макулдугумду берем"
-                }
-            },
-            email: "Электрондук почта",
-            password: "Сыр сөз",
-            loading: "Жүктөлүүдө...",
-            errors: {
-                loginFailed: "Кирүү катасы",
-                invalidCredentials: "Туура эмес маалыматтар",
-                regFailed: "Катталуу катасы"
-            }
-        },
+
         emailVerification: {
             title: "Email тастыктаңыз",
             subtitle: "Почта аркылуу жөнөтүлгөн 6 белгилүү коддуну киргизиңиз:",
