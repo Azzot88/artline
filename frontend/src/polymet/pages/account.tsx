@@ -132,7 +132,7 @@ export function Account() {
           <Card className="border-border/50 shadow-sm">
             <CardHeader>
               <CardTitle className="text-xl">{t('account.profile')}</CardTitle>
-              <CardDescription>Manage your personal information</CardDescription>
+              <CardDescription>{t('account.manageInfo')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex flex-col sm:flex-row gap-6 items-start">
@@ -172,7 +172,7 @@ export function Account() {
 
               <div className="flex items-center gap-2 text-sm text-muted-foreground bg-secondary/30 p-3 rounded-lg w-fit">
                 <CalendarIcon className="w-4 h-4" />
-                <span>Member since {user.created_at ? new Date(user.created_at).toLocaleDateString() : "N/A"}</span>
+                <span>{t('account.memberSince')} {user.created_at ? new Date(user.created_at).toLocaleDateString() : "N/A"}</span>
               </div>
 
               <div className="flex gap-3">
@@ -189,7 +189,7 @@ export function Account() {
                 <HistoryIcon className="w-5 h-5" />
                 {t('navigation.history')}
               </CardTitle>
-              <CardDescription>Recent generation activity</CardDescription>
+              <CardDescription>{t('account.recentActivity')}</CardDescription>
             </CardHeader>
             <CardContent>
               {jobsLoading ? (
@@ -365,20 +365,20 @@ export function Account() {
           {/* Subscription */}
           <Card className="border-border/50 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground">Plan</CardTitle>
+              <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground">{t('account.plan')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between mb-4">
                 <Badge variant={user.is_admin ? "default" : "secondary"} className="text-sm px-3 py-1">
-                  {user.is_admin ? "Admin / Unlimited" : "Free Plan"}
+                  {user.is_admin ? t('account.plans.admin') : t('account.plans.free')}
                 </Badge>
               </div>
 
               <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-                Upgrade to Pro for higher priority, private generations, and 2x monthly credits.
+                {t('account.plans.upgradeDesc')}
               </p>
               <Button variant="outline" className="w-full" size="sm">
-                Upgrade to Pro
+                {t('account.plans.upgradeBtn')}
               </Button>
             </CardContent>
           </Card>
