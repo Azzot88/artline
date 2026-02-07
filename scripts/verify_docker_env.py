@@ -28,7 +28,7 @@ HOST_ENDPOINTS = [
 # Internal (Container) Endpoints - Fallback if running inside ArtLine network
 INTERNAL_ENDPOINTS = [
     {"name": "Backend Internal", "url": "http://web:8000/health", "expected_code": 200},
-    {"name": "Frontend Internal", "url": "http://frontend:3000", "expected_code": 200},
+    {"name": "Frontend Internal", "url": "http://frontend:80", "expected_code": 200},
 ]
 
 def run_command(command):
@@ -59,23 +59,34 @@ def check_container_status(container_name):
         print(f"❌ {container_name:<25} [{status or 'MISSING'}]")
         return False
 
-def check_endpoint(name, url, expected_code):
-    try:
-        req = urllib.request.Request(url)
-        with urllib.request.urlopen(req, timeout=5) as response:
-            code = response.getcode()
-            if code == expected_code:
-                print(f"✅ {name:<25} [OK] ({code})")
-                return True
+def check_endpoint(name, url, expected_code, retries=5, delay=2):
+    for i in range(retries):
+        try:
+            req = urllib.request.Request(url)
+            with urllib.request.urlopen(req, timeout=5) as response:
+                code = response.getcode()
+                if code == expected_code:
+                    print(f"✅ {name:<25} [OK] ({code})")
+                    return True
+                else:
+                    if i == retries - 1:
+                        print(f"❌ {name:<25} [FAIL] (Expected {expected_code}, got {code})")
+                    else:
+                        time.sleep(delay)
+                        continue
+        except urllib.error.URLError as e:
+            if i == retries - 1:
+                print(f"❌ {name:<25} [FAIL] ({e.reason})")
             else:
-                print(f"❌ {name:<25} [FAIL] (Expected {expected_code}, got {code})")
-                return False
-    except urllib.error.URLError as e:
-        print(f"❌ {name:<25} [FAIL] ({e.reason})")
-        return False
-    except Exception as e:
-        print(f"❌ {name:<25} [FAIL] ({e})")
-        return False
+                time.sleep(delay)
+                continue
+        except Exception as e:
+            if i == retries - 1:
+                print(f"❌ {name:<25} [FAIL] ({e})")
+            else:
+                time.sleep(delay)
+                continue
+    return False
 
 def check_db_connection_host(container_name, db_user="user"):
     print(f"\nChecking Database Connection ({container_name})...")
