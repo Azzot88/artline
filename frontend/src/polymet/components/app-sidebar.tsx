@@ -199,18 +199,7 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
                 )}
               </div>
             </div>
-            {/* Registered User: Buy More button if low balance */}
-            {!isGuest && (balance ?? 0) < 30 && (
-              <Link to="/account">
-                <Button variant="ghost" size="icon" className="h-6 w-6 text-primary hover:bg-primary/20" title={t('common.buyMore')}>
-                  <span className="sr-only">{t('common.buyMore')}</span>
-                  <div className="relative">
-                    <CoinsIcon className="w-3 h-3" />
-                    <div className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
-                  </div>
-                </Button>
-              </Link>
-            )}
+
           </div>
 
           {/* Guest Action: Register */}
