@@ -48,6 +48,7 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
   const { t } = useLanguage()
   const { user, isLoading: loading, isGuest, logout, balance } = useAuth()
   const [showAuthDialog, setShowAuthDialog] = useState(false)
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('register')
 
   // Use real admin flag from user object
   const isAdmin = user?.is_admin || false
@@ -391,7 +392,7 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
         </div>
       </div>
 
-      <AuthDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} />
+      <AuthDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} defaultMode={authMode} />
     </>
   )
 }
