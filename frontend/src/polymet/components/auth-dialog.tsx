@@ -1,5 +1,5 @@
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,9 +14,10 @@ import { EmailVerificationDialog } from "@/polymet/components/email-verification
 interface AuthDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
+    defaultMode?: 'login' | 'register'
 }
 
-export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
+export function AuthDialog({ open, onOpenChange, defaultMode = 'register' }: AuthDialogProps) {
     const { t, language } = useLanguage()
     const { login } = useAuth()
     const navigate = useNavigate()
@@ -28,6 +29,18 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
     const [loading, setLoading] = useState(false)
     const [agreed, setAgreed] = useState(false)
     const [mode, setMode] = useState<'register' | 'login'>('register')
+
+    // Effect to update mode if defaultMode changes when opening? 
+    // Usually we want to reset mode when dialog opens. 
+    // But for simplicity, we can just initialize it. 
+    // Better: Update mode when 'open' becomes true?
+    // Let's just use a useEffect watching `open` and `defaultMode`.
+
+    useEffect(() => {
+        if (open) {
+            setMode(defaultMode)
+        }
+    }, [open, defaultMode])
 
     // Email Verification Modal
     const [showVerificationDialog, setShowVerificationDialog] = useState(false)

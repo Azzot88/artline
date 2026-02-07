@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import { LanguageProvider } from "@/polymet/components/language-provider"
 import { AuthProvider } from "@/polymet/components/auth-provider"
 import { ProtectedRoute } from "@/polymet/components/protected-route"
@@ -51,7 +51,7 @@ export default function AIWorkbenchApp() {
           <Suspense fallback={<div className="flex h-screen w-full items-center justify-center bg-background"><Spinner className="w-8 h-8 opacity-50" /></div>}>
             <Routes>
               {/* Public Routes */}
-              <Route path="/login" element={<Login />} />
+              <Route path="/login" element={<Navigate to="/?auth=login" replace />} />
               <Route path="/register" element={<Register />} />
 
               {/* Public App Routes (Accessible by Guests) */}

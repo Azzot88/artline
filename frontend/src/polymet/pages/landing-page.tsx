@@ -9,6 +9,7 @@ import { useLanguage } from "@/polymet/components/language-provider"
 import { LanguageSwitcher } from "@/polymet/components/language-switcher"
 import { ModeToggle } from "@/components/mode-toggle"
 import { SiteFooter } from "@/components/site-footer"
+import { AuthDialog } from "@/polymet/components/auth-dialog"
 
 export function LandingPage() {
     const { t } = useLanguage()
@@ -25,6 +26,23 @@ export function LandingPage() {
             }
         }
     }, [location])
+
+    // Auth Modal State
+    const [showAuthDialog, setShowAuthDialog] = useState(false)
+    const [authMode, setAuthMode] = useState<'login' | 'register'>('login')
+
+    // Check URL params for ?auth=login
+    useEffect(() => {
+        const params = new URLSearchParams(location.search)
+        const authParam = params.get("auth")
+        if (authParam === "login") {
+            setAuthMode("login")
+            setShowAuthDialog(true)
+        } else if (authParam === "register") {
+            setAuthMode("register")
+            setShowAuthDialog(true)
+        }
+    }, [location.search])
 
     // Helper for carousel dots
     const [paygIndex, setPaygIndex] = useState(0)
@@ -82,9 +100,9 @@ export function LandingPage() {
                         <LanguageSwitcher variant="ghost" />
                     </nav>
                     <div className="flex items-center gap-4">
-                        <Link to="/login">
-                            <Button variant="ghost" size="sm">{t('common.login')}</Button>
-                        </Link>
+                        <Button variant="ghost" size="sm" onClick={() => { setAuthMode('login'); setShowAuthDialog(true) }}>
+                            {t('common.login')}
+                        </Button>
                         <Link to="/register">
                             <Button size="sm">{t('common.register')}</Button>
                         </Link>
@@ -460,6 +478,12 @@ export function LandingPage() {
             {/* 10. Footer */}
             {/* 10. Footer */}
             <SiteFooter />
+
+            <AuthDialog
+                open={showAuthDialog}
+                onOpenChange={setShowAuthDialog}
+                defaultMode={authMode}
+            />
         </div>
     )
 }
