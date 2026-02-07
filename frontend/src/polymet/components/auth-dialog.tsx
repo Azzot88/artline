@@ -115,6 +115,7 @@ export function AuthDialog({ open, onOpenChange, defaultMode = 'register' }: Aut
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
+                                autoComplete="username"
                             />
                         </div>
                         <div className="grid gap-2">
@@ -125,6 +126,7 @@ export function AuthDialog({ open, onOpenChange, defaultMode = 'register' }: Aut
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
+                                autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
                             />
                         </div>
 

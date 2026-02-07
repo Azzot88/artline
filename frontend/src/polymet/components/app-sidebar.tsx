@@ -221,6 +221,7 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
                 size="sm"
                 className="w-full h-7 text-xs border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10"
                 onClick={() => {
+                  setAuthMode('register')
                   setShowAuthDialog(true)
                   if (onClose) onClose()
                 }}
@@ -362,6 +363,7 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
                 className="w-full justify-start text-primary hover:text-primary hover:bg-primary/10"
                 size="sm"
                 onClick={() => {
+                  setAuthMode('login')
                   setShowAuthDialog(true)
                   if (onClose) onClose()
                 }}
