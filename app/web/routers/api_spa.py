@@ -12,7 +12,7 @@ from app.core.config import settings
 from app.core.deps import get_current_user_optional, get_current_user, get_current_admin_user
 from app.core.security import verify_password, create_access_token, get_password_hash
 from app.core.i18n import get_t
-from app.models import User, Job, AIModel, ProviderConfig, LedgerEntry
+from app.models import User, Job, AIModel, ProviderConfig, LedgerEntry, GuestProfile
 from app.schemas import (
     UserContext, JobRead, JobRequestSPA, UserRead, UserCreate, 
     AdminStats, UserWithBalance, CreditGrantRequest, JobPrivacyUpdate,
@@ -107,6 +107,24 @@ async def spa_register(
     if guest_id_cookie:
         try:
             gid = uuid.UUID(guest_id_cookie)
+            
+            # Transfer Balance
+            result = await db.execute(select(GuestProfile).where(GuestProfile.id == gid))
+            guest_profile = result.scalar_one_or_none()
+            
+            if guest_profile and guest_profile.balance > 0:
+                amount = guest_profile.balance
+                new_user.balance += amount
+                await add_ledger_entry(
+                    db, 
+                    new_user.id, 
+                    amount, 
+                    "Guest Balance Transfer", 
+                    external_id=f"guest-transfer-{gid}"
+                )
+                guest_profile.balance = 0
+                db.add(guest_profile)
+
             # Update jobs: set user_id, owner_type='user', clear guest_id, clear expires_at
             stmt = (
                 update(Job)
