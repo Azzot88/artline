@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://workbench.ink/sitemap.xml
