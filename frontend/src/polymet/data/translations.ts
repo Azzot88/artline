@@ -564,9 +564,9 @@ export const translations = {
                 upgradeDesc: "Жоғары басымдық, жеке генерациялар және 2 есе айлық кредиттер үшін Pro-ға өтіңіз.",
                 upgradeBtn: "Pro-ға өту"
             }
-        }
+        },
 
-    navigation: {
+        navigation: {
             workbench: "Шеберхана",
             history: "Тарих",
             gallery: "Галерея",
