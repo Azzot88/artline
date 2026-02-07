@@ -5,11 +5,41 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/png" href="/brain-favicon.png?v=4" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preload" href="/fonts/manrope-medium.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/manrope-semibold.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/manrope-bold.woff2" as="font" type="font/woff2" crossorigin />
   <title>Мастерская</title>
+  <style>
+    /* Critical CSS for initial loader - inlined for speed */
+    .initial-loader {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: hsl(240 10% 3.9%); /* Matches dark theme background */
+      color: hsl(0 0% 98%);
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <!-- Initial Content Paint (FCP) -->
+    <div class="initial-loader">
+      <div class="spinner"></div>
+    </div>
+  </div>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 
