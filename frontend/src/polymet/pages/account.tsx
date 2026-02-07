@@ -20,13 +20,13 @@ import {
 } from "lucide-react"
 import { useLanguage } from "@/polymet/components/language-provider"
 import { LanguageSelector } from "@/polymet/components/language-selector"
-import { useUser } from "@/polymet/components/user-provider"
+import { useAuth } from "@/polymet/components/auth-provider"
 import { api } from "@/lib/api"
 import { JobRead } from "@/polymet/data/api-types"
 import { formatDate } from "@/polymet/lib/utils" // Assumed util, or we use standard Intl
 
 export function Account() {
-  const { user, loading: userLoading } = useUser()
+  const { user, isLoading: userLoading } = useAuth()
   const { t } = useLanguage()
 
   // Local state for profile form (initializing from user when readily available)
