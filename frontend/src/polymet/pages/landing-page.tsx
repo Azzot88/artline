@@ -25,6 +25,26 @@ export function LandingPage() {
                 }, 100)
             }
         }
+
+        // PRELOAD KEY APP CHUNKS
+        // This ensures that when user clicks "Start", the heavy JS is already downloading/cached
+        const preloadApp = async () => {
+            try {
+                // Import the main layout and workbench page in background
+                await Promise.all([
+                    import("@/polymet/pages/workbench"),
+                    import("@/polymet/layouts/app-layout")
+                ])
+                console.log("App chunks preloaded")
+            } catch (e) {
+                // Ignore preload errors
+            }
+        }
+
+        // Start preloading after 2.5s (when LCP is likely done)
+        const timer = setTimeout(preloadApp, 2500)
+        return () => clearTimeout(timer)
+
     }, [location])
 
     // Auth Modal State
