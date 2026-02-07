@@ -300,7 +300,7 @@ export function Account() {
                   {t('account.buyMore')}
                 </Button>
                 <p className="text-xs text-center text-muted-foreground">
-                  Avg. cost per run: <span className="font-mono text-foreground">{stats.avgCost}</span> credits
+                  {t('account.avgCost')}: <span className="font-mono text-foreground">{stats.avgCost}</span> {t('account.credits')}
                 </p>
               </div>
             </CardContent>
