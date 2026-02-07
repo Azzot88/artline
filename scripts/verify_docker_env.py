@@ -5,6 +5,8 @@ import time
 import json
 import urllib.request
 import urllib.error
+import shutil
+import socket
 
 # Configuration
 CONTAINERS = [
@@ -17,10 +19,16 @@ CONTAINERS = [
     "artline-nginx-1"
 ]
 
-ENDPOINTS = [
+# External (Host) Endpoints
+HOST_ENDPOINTS = [
     {"name": "Backend Health", "url": "http://localhost:8000/health", "expected_code": 200},
-    {"name": "Frontend Health", "url": "http://localhost:3000", "expected_code": 200}, # Assuming exposed on 3000 internal or host
-    # Adjust ports if mapped differently in docker-compose.prod.yml
+    {"name": "Frontend Health", "url": "http://localhost:3000", "expected_code": 200},
+]
+
+# Internal (Container) Endpoints - Fallback if running inside ArtLine network
+INTERNAL_ENDPOINTS = [
+    {"name": "Backend Internal", "url": "http://web:8000/health", "expected_code": 200},
+    {"name": "Frontend Internal", "url": "http://frontend:3000", "expected_code": 200},
 ]
 
 def run_command(command):
@@ -35,11 +43,12 @@ def run_command(command):
         )
         return result.stdout.strip()
     except subprocess.CalledProcessError as e:
-        print(f"Error running command '{command}': {e.stderr}")
         return None
 
+def check_docker_available():
+    return shutil.which("docker") is not None
+
 def check_container_status(container_name):
-    # Check if container is running
     cmd = f"docker inspect -f '{{{{.State.Status}}}}' {container_name}"
     status = run_command(cmd)
     
@@ -62,15 +71,14 @@ def check_endpoint(name, url, expected_code):
                 print(f"❌ {name:<25} [FAIL] (Expected {expected_code}, got {code})")
                 return False
     except urllib.error.URLError as e:
-        print(f"❌ {name:<25} [FAIL] ({e})")
+        print(f"❌ {name:<25} [FAIL] ({e.reason})")
         return False
     except Exception as e:
         print(f"❌ {name:<25} [FAIL] ({e})")
         return False
 
-def check_db_connection(container_name, db_user="user", db_name="artline"):
+def check_db_connection_host(container_name, db_user="user"):
     print(f"\nChecking Database Connection ({container_name})...")
-    # Simple query to check if DB is ready
     cmd = f"docker exec {container_name} pg_isready -U {db_user}"
     result = run_command(cmd)
     
@@ -78,39 +86,47 @@ def check_db_connection(container_name, db_user="user", db_name="artline"):
         print(f"✅ Database accepting connections")
         return True
     else:
-        print(f"❌ Database not ready: {result}")
+        print(f"❌ Database not ready")
         return False
 
 def main():
     print("="*60)
-    print("🚀 ArtLine Server-Side Verification")
+    print("🚀 ArtLine Environment Verification")
     print("="*60)
     
-    # 1. Check Container Status
-    print("\n1. Checking Container Status...")
+    # 1. Check Execution Context
+    if not check_docker_available():
+        print("\n⚠️  DOCKER CLI NOT FOUND")
+        print("   You seem to be running this script inside a container.")
+        print("   Switching to 'Internal Network Mode' to check connectivity between services.\n")
+        
+        all_ok = True
+        print("1. Checking Internal Endpoints...")
+        for ep in INTERNAL_ENDPOINTS:
+            if not check_endpoint(ep['name'], ep['url'], ep['expected_code']):
+                all_ok = False
+        
+        print("\n" + "="*60)
+        if all_ok:
+            print("✅ INTERNAL CONNECTIVITY VERIFIED")
+            sys.exit(0)
+        else:
+            print("❌ INTERNAL CONNECTIVITY ISSUES")
+            sys.exit(1)
+
+    # 2. Host Mode
+    print("\n1. Checking Container Status (Host Mode)...")
     all_containers_ok = True
     for container in CONTAINERS:
         if not check_container_status(container):
             all_containers_ok = False
             
-    # 2. Check Database
     print("\n2. Checking Services...")
-    db_ok = check_db_connection("artline-db-1", "postgres") # Adjust user if needed
+    db_ok = check_db_connection_host("artline-db-1", "postgres")
     
-    # 3. Check Endpoints
-    # Note: This assumes the script runs on the host where ports are mapped.
-    # If using nginx proxy, might need to check localhost:80 or specific mapped ports.
-    print("\n3. Checking Endpoints (localhost)...")
+    print("\n3. Checking Host Endpoints...")
     endpoints_ok = True
-    # We might need to inspect docker port mappings if localhost fails, but let's try defaults first
-    # Or assuming docker network calls internal? No, verifying from Host.
-    
-    # Let's dynamically find ports if possible or stick to defaults
-    # For now, trying default mapped ports: 8000 (API) and 80/3000 (Web)
-    # If verifying from *inside* a container, URLs would be http://artline-web:8000
-    
-    # Assuming Host Execution:
-    for ep in ENDPOINTS:
+    for ep in HOST_ENDPOINTS:
          if not check_endpoint(ep['name'], ep['url'], ep['expected_code']):
              endpoints_ok = False
 
