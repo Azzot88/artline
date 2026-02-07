@@ -1,4 +1,4 @@
-
+import { Eye, EyeOff } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -118,7 +118,7 @@ export function AuthDialog({ open, onOpenChange, defaultMode = 'register' }: Aut
                                 autoComplete="username"
                             />
                         </div>
-                        import {Eye, EyeOff} from "lucide-react"
+
 
                         // ... inside component ...
                         const [showPassword, setShowPassword] = useState(false)
