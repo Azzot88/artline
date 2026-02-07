@@ -29,6 +29,7 @@ export function AuthDialog({ open, onOpenChange, defaultMode = 'register' }: Aut
     const [loading, setLoading] = useState(false)
     const [agreed, setAgreed] = useState(false)
     const [mode, setMode] = useState<'register' | 'login'>('register')
+    const [showPassword, setShowPassword] = useState(false)
 
     // Effect to update mode if defaultMode changes when opening? 
     // Usually we want to reset mode when dialog opens. 
@@ -117,7 +118,7 @@ export function AuthDialog({ open, onOpenChange, defaultMode = 'register' }: Aut
                                 required
                                 autoComplete="username"
                             />
-                            const [showPassword, setShowPassword] = useState(false)
+
                             <div className="grid gap-2">
                                 <Label htmlFor="password">{t('auth.password')}</Label>
                                 <div className="relative">
