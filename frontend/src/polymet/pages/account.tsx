@@ -19,19 +19,21 @@ import {
   HistoryIcon
 } from "lucide-react"
 import { useLanguage } from "@/polymet/components/language-provider"
-import { LanguageSelector } from "@/polymet/components/language-selector"
+// Removed LanguageSelector
 import { useAuth } from "@/polymet/components/auth-provider"
 import { api } from "@/lib/api"
 import { JobRead } from "@/polymet/data/api-types"
-import { formatDate } from "@/polymet/lib/utils" // Assumed util, or we use standard Intl
+import { formatDate } from "@/polymet/lib/utils"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 
 export function Account() {
   const { user, isLoading: userLoading } = useAuth()
-  const { t } = useLanguage()
+  const { t, language, setLanguage } = useLanguage()
 
   // Local state for profile form (initializing from user when readily available)
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
+  const [selectedJob, setSelectedJob] = useState<JobRead | null>(null)
 
   // Jobs state
   const [jobs, setJobs] = useState<JobRead[]>([])
@@ -185,7 +187,7 @@ export function Account() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
                 <HistoryIcon className="w-5 h-5" />
-                History
+                {t('navigation.history')}
               </CardTitle>
               <CardDescription>Recent generation activity</CardDescription>
             </CardHeader>
@@ -197,22 +199,40 @@ export function Account() {
                   No activity yet. Start generating!
                 </div>
               ) : (
-                <div className="space-y-1">
-                  {/* Show last 10 jobs as history */}
-                  {jobs.slice(0, 10).map((job) => (
-                    <div key={job.id} className="flex items-center justify-between py-3 px-2 hover:bg-muted/30 rounded-lg transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${job.kind === 'video' ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'
-                          }`}>
-                          {job.kind === 'video' ? <VideoIcon className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
-                        </div>
-                        <div className="grid gap-0.5">
-                          <p className="text-sm font-medium leading-none truncate max-w-[200px]">{job.prompt}</p>
-                          <p className="text-xs text-muted-foreground">{new Date(job.created_at).toLocaleDateString()}</p>
+                <div className="space-y-2">
+                  {/* Show last 20 jobs as history */}
+                  {jobs.slice(0, 20).map((job) => (
+                    <div
+                      key={job.id}
+                      className="flex items-center gap-4 p-2 hover:bg-muted/50 rounded-lg transition-colors cursor-pointer group border border-transparent hover:border-border/50"
+                      onClick={() => setSelectedJob(job)}
+                    >
+                      {/* Thumbnail */}
+                      <div className="w-12 h-12 rounded-md bg-secondary/30 overflow-hidden flex-shrink-0 border border-border/50 relative">
+                        {job.result_url ? (
+                          <img src={job.result_url} className="w-full h-full object-cover" loading="lazy" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                            {job.kind === 'video' ? <VideoIcon className="w-5 h-5" /> : <ImageIcon className="w-5 h-5" />}
+                          </div>
+                        )}
+                        {job.kind === 'video' && <div className="absolute inset-0 flex items-center justify-center bg-black/20"><VideoIcon className="w-4 h-4 text-white drop-shadow-md" /></div>}
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0 grid gap-1">
+                        <p className="text-sm font-medium leading-none truncate pr-2 group-hover:text-primary transition-colors">{job.prompt}</p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {job.format && <Badge variant="secondary" className="text-[10px] h-4 px-1 rounded-[4px] font-normal text-muted-foreground">{job.format}</Badge>}
+                          {job.resolution && <span>{job.resolution}</span>}
+                          <span className="opacity-50">•</span>
+                          <span>{new Date(job.created_at).toLocaleDateString()}</span>
                         </div>
                       </div>
-                      <div className="text-sm font-medium text-orange-500">
-                        -{job.credits_spent || job.cost_credits || 0} Credits
+
+                      {/* Cost */}
+                      <div className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                        <span className="text-orange-500 font-bold">-{job.credits_spent || job.cost_credits || 0}</span> cr
                       </div>
                     </div>
                   ))}
@@ -230,7 +250,23 @@ export function Account() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <LanguageSelector isAdmin={user.is_admin} />
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { code: 'ru', label: 'Русский' },
+                  { code: 'kk', label: 'Қазақша' },
+                  { code: 'ky', label: 'Кыргызча' }
+                ].map((lang) => (
+                  <Button
+                    key={lang.code}
+                    variant={language === lang.code ? "default" : "outline"}
+                    onClick={() => setLanguage(lang.code as any)}
+                    className={language === lang.code ? "bg-primary text-primary-foreground" : ""}
+                    size="sm"
+                  >
+                    {lang.label}
+                  </Button>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
@@ -288,7 +324,7 @@ export function Account() {
                     </div>
                     <div>
                       <span className="text-sm font-medium display-block">{t('common.image')}</span>
-                      <span className="text-xs text-muted-foreground">Generations</span>
+                      <span className="text-xs text-muted-foreground"></span>
                     </div>
                   </div>
                   <span className="text-xl font-bold">{stats.imageCount}</span>
@@ -301,7 +337,7 @@ export function Account() {
                     </div>
                     <div>
                       <span className="text-sm font-medium display-block">{t('common.video')}</span>
-                      <span className="text-xs text-muted-foreground">Generations</span>
+                      <span className="text-xs text-muted-foreground"></span>
                     </div>
                   </div>
                   <span className="text-xl font-bold">{stats.videoCount}</span>
@@ -321,7 +357,7 @@ export function Account() {
 
               <Button variant="outline" className="w-full">
                 <DownloadIcon className="w-4 h-4 mr-2" />
-                {t('common.download')} Report
+                {t('account.downloadArchive')}
               </Button>
             </CardContent>
           </Card>
@@ -348,6 +384,38 @@ export function Account() {
           </Card>
         </div>
       </div>
+
+      {/* Lightbox Preview */}
+      <Dialog open={!!selectedJob} onOpenChange={(open) => !open && setSelectedJob(null)}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-transparent border-none shadow-none text-white">
+          <div className="relative w-full h-[80vh] flex items-center justify-center">
+            {selectedJob?.kind === 'image' && selectedJob.result_url && (
+              <img
+                src={selectedJob.result_url}
+                alt={selectedJob.prompt}
+                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+              />
+            )}
+            {selectedJob?.kind === 'video' && selectedJob.result_url && (
+              <video
+                src={selectedJob.result_url}
+                controls
+                autoPlay
+                loop
+                className="max-w-full max-h-full rounded-lg shadow-2xl"
+              />
+            )}
+            {!selectedJob?.result_url && (
+              <div className="p-8 bg-background text-foreground rounded-lg">Preview not available</div>
+            )}
+          </div>
+          {selectedJob && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur px-4 py-2 rounded-full text-sm">
+              {selectedJob.resolution} • {selectedJob.format}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

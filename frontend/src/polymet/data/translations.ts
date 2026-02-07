@@ -4,6 +4,7 @@ export const translations = {
     ru: {
         common: {
             brand: "Мастерская",
+            profile: "Профиль",
             startUsing: "Начать использовать",
             createImage: "Создать изображение",
             createVideo: "Создать видео",
@@ -192,6 +193,7 @@ export const translations = {
             creditsUsed: "Использовано",
             avgCost: "Среднее за генерацию",
             quickStats: "Быстрая статистика",
+            downloadArchive: "Скачать архивом",
         },
         workbench: {
             appTitle: "Мастерская",
@@ -487,6 +489,7 @@ export const translations = {
     kk: {
         common: {
             brand: "Шеберхана",
+            profile: "Профиль",
             startUsing: "Қолдануды бастау",
             createImage: "Сурет жасау",
             createVideo: "Видео жасау",
@@ -526,6 +529,21 @@ export const translations = {
             gallery: "Галерея",
             review: "Модерация",
             schemaViz: "Схема",
+        },
+        account: {
+            title: "Аккаунт",
+            description: "Профиль мен жазылымды басқару",
+            profile: "Профиль",
+            language: "Тіл",
+            selectLanguage: "Интерфейс тілін таңдаңыз",
+            creditBalance: "Кредит теңгерімі",
+            purchaseHistory: "Сатып алу тарихы",
+            credits: "Кредиттер",
+            buyMore: "Көбірек сатып алу",
+            creditsUsed: "Қолданылды",
+            avgCost: "Генерацияның орташа құны",
+            quickStats: "Жылдам статистика",
+            downloadArchive: "Архив жүктеу"
         },
         team: {
             title: "Команда",
@@ -918,6 +936,7 @@ export const translations = {
     ky: {
         common: {
             brand: "Устакана",
+            profile: "Профиль",
             startUsing: "Колдонуп баштоо",
             createImage: "Сүрөт жасоо",
             createVideo: "Видео жасоо",
@@ -987,6 +1006,21 @@ export const translations = {
             gallery: "Галерея",
             review: "Текшерүү",
             schemaViz: "Схема",
+        },
+        account: {
+            title: "Аккаунт",
+            description: "Профиль жана жазылууну башкаруу",
+            profile: "Профиль",
+            language: "Тил",
+            selectLanguage: "Интерфейс тилин тандаңыз",
+            creditBalance: "Кредит балансы",
+            purchaseHistory: "Сатып алуу тарыхы",
+            credits: "Кредиттер",
+            buyMore: "Көбүрөөк сатып алуу",
+            creditsUsed: "Колдонулду",
+            avgCost: "Генерациянын орточо баасы",
+            quickStats: "Тез статистика",
+            downloadArchive: "Архив жүктөп алуу"
         },
         team: {
             title: "Команда",

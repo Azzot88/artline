@@ -288,16 +288,15 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
                   {t('admin.title')}
                 </p>
 
-                {/* Admin Sub-Items */}
+                {/* Main Admin Items */}
                 {[
                   { href: "/admin", label: t('admin.dashboard'), icon: LayoutDashboardIcon, exact: true },
                   { href: "/admin/users", label: t('admin.users'), icon: UserIcon },
-                  { href: "/admin/gallery", label: t('admin.gallery'), icon: ImageIcon }, // Universal Gallery
-                  { href: "/admin/models", label: t('admin.models'), icon: SparklesIcon }, // Box/Sparkles for Models
-                  { href: "/admin/providers", label: t('admin.providers'), icon: SlidersIcon }, // Shield/Sliders for Providers
+                  { href: "/admin/gallery", label: t('admin.gallery'), icon: ImageIcon },
+                  { href: "/admin/models", label: t('admin.models'), icon: SparklesIcon },
+                  { href: "/admin/providers", label: t('admin.providers'), icon: SlidersIcon },
                   { href: "/admin/schema-visualizer", label: t('admin.schemaViz'), icon: Database },
                   { href: "/admin/reports", label: t('admin.reports'), icon: TrendingUpIcon },
-                  { href: "/admin/system", label: t('admin.system'), icon: SettingsIcon },
                 ].map((item) => (
                   <Link key={item.href} to={item.href} onClick={onClose}>
                     <div
@@ -313,14 +312,42 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
                     </div>
                   </Link>
                 ))}
+
+                {/* Nested Settings Group */}
+                <div className="pt-2">
+                  <div className="flex items-center gap-2 px-3 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    <SettingsIcon className="w-3 h-3" />
+                    <span>{t('common.settings')}</span>
+                  </div>
+                  <div className="mt-1 space-y-1 border-l-2 border-border/50 ml-4 pl-2">
+                    {[
+                      { href: "/admin/system", label: t('admin.system'), icon: SettingsIcon },
+                      { href: "/account", label: t('common.profile'), icon: UserIcon },
+                    ].map((item) => (
+                      <Link key={item.href} to={item.href} onClick={onClose}>
+                        <div
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group",
+                            isActive(item.href)
+                              ? "bg-primary/10 text-primary" // Different active style for nested
+                              : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
+                          )}
+                        >
+                          <item.icon className={cn("w-4 h-4 transition-colors", isActive(item.href) ? "text-primary" : "group-hover:text-primary")} />
+                          <span>{item.label}</span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               </div>
             ) : (
               <>
                 <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  {t('common.settings')}
+                  {t('common.profile')}
                 </p>
 
-                {/* Standard Settings Button */}
+                {/* Profile Button */}
                 <div
                   onClick={handleSettingsClick}
                   className={cn(
@@ -330,8 +357,8 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
                       : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
                   )}
                 >
-                  <SettingsIcon className={cn("w-4 h-4 transition-colors", (isActive("/account") || isActive("/login")) ? "text-primary-foreground" : "group-hover:text-primary")} />
-                  <span>{t('common.settings')}</span>
+                  <UserIcon className={cn("w-4 h-4 transition-colors", (isActive("/account") || isActive("/login")) ? "text-primary-foreground" : "group-hover:text-primary")} />
+                  <span>{t('common.profile')}</span>
                 </div>
               </>
             )}
